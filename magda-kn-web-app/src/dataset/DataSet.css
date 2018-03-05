@@ -1,0 +1,66 @@
+.org-name{
+    height: 40px;
+}
+.thumbnail>img{
+    height: 160px;
+}
+
+.padding-top{
+    padding-top: 85px;
+}
+
+.kn-stats{
+    padding-left: 20px;
+}
+ul{
+    padding-left: 5px;
+}
+li{
+    list-style: none;
+    text-decoration-style: none;
+    
+}
+
+.label a{
+    text-decoration: none;
+    text-decoration-line: none;
+    text-decoration-color: none;
+    color: white
+}
+
+.label a:link{
+    text-decoration: none;
+    text-decoration-line: none;
+    text-decoration-color: none;
+    color: white
+}
+
+.img{
+
+    padding: 20px 0px 20px 0px;
+    
+}
+.label{
+    margin-left: 5px;
+}
+.small-img{
+    height: 150px;
+    padding: 10px;
+}
+.media{
+    border-bottom: gray 1px solid;
+}
+.media-body{
+    padding: 10px 5px 5px 10px;
+}
+.display-padding{
+    padding: 20px 10px 10px 20px
+}
+.btn-custome {
+    border: 1px solid #42DCA3;
+    color: #42DCA3;
+    background-color: transparent;
+}
+pre{
+    white-space:pre-wrap;
+}

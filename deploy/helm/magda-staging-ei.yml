@@ -1,16 +1,16 @@
 global:
   useCombinedDb: true
-  externalUrl: http://kn-v2-dev.oznome.csiro.au
+  externalUrl: http://kn-v2-staging.oznome.csiro.au
   rollingUpdate:
     maxUnavailable: 1
   image:
     pullPolicy: Always
-    tag: "0.0.31"
+    tag: "0.0.33-0"
 gateway:
-  loadBalancerIP: "35.201.6.121"
+  loadBalancerIP: "35.197.191.208"
   auth:
     facebookClientId: "173073926555600"
-    googleClientId: "275237095477-f7ej2gsvbl2alb8bcqcn7r5jk0ur719p.apps.googleusercontent.com"
+    googleClientId: "442398651188-qof8758nahla7tk6pirlls6obdu05vcg.apps.googleusercontent.com"
   resources:
     requests:
       cpu: 50m
@@ -73,14 +73,6 @@ search-api:
       cpu: 200m
       memory: 1000Mi
 web-server:
-  resources:
-    requests:
-      cpu: 0
-      memory: 0
-    limits:
-      cpu: 200m
-      memory: 150Mi
-kn-web-app:
   resources:
     requests:
       cpu: 0

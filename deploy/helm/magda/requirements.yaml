@@ -92,3 +92,8 @@ dependencies:
     tags:
       - all
       - web-server
+  - name: kn-web-app
+    version: 0.1.0
+    tags:
+      - all
+      - kn-web-app
