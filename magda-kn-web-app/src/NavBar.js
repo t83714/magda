@@ -1,32 +1,38 @@
 import React, {Component} from 'react'
-import { Nav, Navbar, NavItem, NavDropdown, MenuItem} from 'react-bootstrap'
+import { Nav, Navbar, NavItem, NavDropdown, MenuItem } from 'react-bootstrap'
 import { LinkContainer } from 'react-router-bootstrap'
 import './NavBar.css'
 
 export default class NavBar extends Component {
   render() {
     return(
-      <Navbar fixedTop>
+      <Navbar  fixedTop>
         <Navbar.Header>
           <Navbar.Brand>
             <a href="/"> <img  alt="Knowledge Network" src='/img/kn-logo.png' /> </a>
           </Navbar.Brand>
+          <Navbar.Toggle />
         </Navbar.Header>
+        <Navbar.Collapse>
 
         <Nav pullRight>
           <NavItem href="/">Home</NavItem>
-          <LinkContainer to='/dataset'>
-            <NavItem>Dataset</NavItem>
-          </LinkContainer>
-          <LinkContainer to='/datasource'>
-            <NavItem>Data Source</NavItem>
-          </LinkContainer>
-          <LinkContainer to='/organisation'>
-            <NavItem>Organisation</NavItem>
-          </LinkContainer>
           <LinkContainer to='/about'>
             <NavItem>About</NavItem>
           </LinkContainer>
+   
+          <NavDropdown title="Browse" id="browse-dropdown">
+            <LinkContainer to='/dataset'>
+              <MenuItem>Dataset</MenuItem>
+            </LinkContainer>
+            <LinkContainer to='/datasource'>
+              <MenuItem>Data Source</MenuItem>
+            </LinkContainer>
+            <LinkContainer to='/organisation'>
+              <MenuItem>Organisation</MenuItem>
+            </LinkContainer>
+          </NavDropdown>
+
           {/* <NavDropdown id="nav-dropdown" title="Browse">
               <LinkContainer to='/about' >
                 <MenuItem>Spatial Collections</MenuItem>
@@ -40,13 +46,16 @@ export default class NavBar extends Component {
               <LinkContainer to='/about' >
                 <MenuItem >Users</MenuItem>
               </LinkContainer>
-          </NavDropdown> */}
+          </NavDropdown>
           <NavItem href="/">Sign In</NavItem>
+          */}
+
         </Nav>
+        </Navbar.Collapse>
       </Navbar>
     )
   }
-  
+
 }
 
 

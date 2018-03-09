@@ -1,4 +1,4 @@
-import React, {Component, PropTypes } from 'react'
+import React, {Component } from 'react'
 
 import {Badge } from 'react-bootstrap'
 import './SearchResult.css'
@@ -38,10 +38,5 @@ class Checkbox extends Component {
       );
     }
   }
-  
-//   Checkbox.propTypes = {
-//     label: PropTypes.string.isRequired,
-//     handleCheckboxChange: PropTypes.func.isRequired,
-//   };
   
   export default Checkbox;

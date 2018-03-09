@@ -1,5 +1,7 @@
 {
   "name": "@magda/kn-web-app",
+  "description": "The MAGDA in-browser KN web app.",
+  "license": "Apache-2.0",
   "version": "0.0.32-0",
   "dependencies": {
     "immutable": "^3.8.2",
@@ -17,17 +19,16 @@
     "start": "react-scripts start",
     "build": "react-scripts build",
     "test": "react-scripts test --env=jsdom",
-    "eject": "react-scripts eject",
-    "docker-build-local": "create-docker-context-for-node-component --build --push --tag auto --local",
-    "docker-build-prod": "create-docker-context-for-node-component --build --push --tag auto"
+    "eject": "react-scripts eject"
   },
-  "devDependencies": {
-    "@magda/scripts": "^0.0.32-0"
+  "proxy": {
+    "/server-config.js": {
+      "target": "http://localhost:6107/"
+    }
   },
   "config": {
     "docker": {
-      "name": "dambusters/magda-kn-web-app",
-      "include": "node_modules package.json Dockerfile"
+      "include": "node_modules build"
     }
   }
 }

@@ -1,7 +1,6 @@
 import React, {Component} from 'react'
-import {Grid, Row, Col, Panel, Label, Tabs, Tab, Table, OverlayTrigger, Tooltip} from 'react-bootstrap'
+import {Grid, Row, Col, Panel, Label, Table, OverlayTrigger, Tooltip} from 'react-bootstrap'
 import {Link } from 'react-router-dom'
-import { Map } from 'immutable'
 
 import './DataSet.css'
 import API from '../api/Api'

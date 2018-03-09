@@ -1,5 +1,5 @@
 import React, {Component} from 'react'
-import {Tabs, Tab,Grid, Row, Col, Badge, ButtonToolbar, ButtonGroup, Button} from 'react-bootstrap'
+import {Grid, Row, Col, Button} from 'react-bootstrap'
 import Slider from 'rc-slider'
 import {OrderedSet} from 'immutable'
 import SearchResultView from './SearchResultView'
@@ -154,29 +154,16 @@ export default class SearchNavPills extends Component{
 
         return (
             <div className="paddomg-top">
-                {/* <ButtonToolbar>
-                    <ButtonGroup>
-                        {this.state.pageOffset>0 ? <Button onClick={this.handlePageOffsetBack}> Back </Button> : <Button disabled> Back </Button>}
-                        {Array(this.state.searchResult.hitCount).fill().map( (_, i) => { 
-                            // Display two button for navigation by default
-                            if( i>=this.state.pageOffset && i<=this.state.pageOffset+this.perPage*10 && i%this.perPage === 0) {
-                                if( i/this.perPage === this.state.currentPage) return (<Button disabled key={i}>{i/this.perPage + 1}</Button>)
-                                else return (<Button onClick={() => this.handlePageNavClick(i)} key={i}>{i/this.perPage +1}</Button>)
-                            }else return ("")
-                            })}
-                            {this.state.pageOffset + this.perPage*10 < this.state.searchResult.hitCount ? <Button onClick={this.handlePageOffsetForward}> Forward </Button> : <Button disabled> Forward </Button>}
-                    </ButtonGroup>
-                </ButtonToolbar> */}
                 <hr/>
                 <nav aria-label="Page navigation">
                     <ul class="pagination">
                         {this.state.pageOffset>0 ? 
                             <li  onClick={this.handlePageOffsetBack}>
-                                <a href="#"><span aria-hidden="true">&laquo;</span></a>
+                                <a><span aria-hidden="true">&laquo;</span></a>
                             </li>
                             : 
                             <li className="disabled">
-                                <a href="#" aria-label="Previous" >
+                                <a aria-label="Previous" >
                                 <span aria-hidden="true">&laquo;</span>
                                 </a>
                             </li>
@@ -184,17 +171,17 @@ export default class SearchNavPills extends Component{
                         {Array(this.state.searchResult.hitCount).fill().map( (_, i) => { 
                             // Display two button for navigation by default
                             if( i>=this.state.pageOffset && i<=this.state.pageOffset+this.perPage*10 && i%this.perPage === 0) {
-                                if( i/this.perPage === this.state.currentPage) return (<li className="active" key={i}> <a href="#">{i/this.perPage + 1} </a></li>)
-                                else return (<li onClick={() => this.handlePageNavClick(i)} key={i}> <a href="#">{i/this.perPage +1} </a></li>)
+                                if( i/this.perPage === this.state.currentPage) return (<li className="active" key={i}> <a>{i/this.perPage + 1} </a></li>)
+                                else return (<li onClick={() => this.handlePageNavClick(i)} key={i}> <a>{i/this.perPage +1} </a></li>)
                             }else return ("")
                             })}
                         {this.state.pageOffset + this.perPage*10 < this.state.searchResult.hitCount ?
                             <li onClick={this.handlePageOffsetForward}>
-                                <a href="#"><span aria-hidden="true">&raquo;</span></a>
+                                <a><span aria-hidden="true">&raquo;</span></a>
                             </li>
                             :
                             <li className="disabled">
-                            <a href="#"><span aria-hidden="true">&raquo;</span></a>
+                            <a><span aria-hidden="true">&raquo;</span></a>
                             </li>
                         }
                     </ul>

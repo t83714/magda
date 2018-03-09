@@ -38,6 +38,7 @@
   "dependencies": {
     "@magda/typescript-common": "^0.0.32-0",
     "@magda/web-admin": "^0.0.32-0",
+    "@magda/kn-web-app": "^0.0.32-0",
     "@magda/web-client": "^0.0.32-0",
     "express": "^4.15.3",
     "sitemap": "^1.13.0",

@@ -1,5 +1,5 @@
 import React, {Component} from 'react'
-import {Grid, Row, Col, Panel} from 'react-bootstrap'
+import {Grid, Row, Col} from 'react-bootstrap'
 import SearchNavPills from './SearchNavPills'
 import SearchForm from './SearchForm'
 import './SearchResult.css'

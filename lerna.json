@@ -3,7 +3,6 @@
   "packages": [
     "deploy/",
     "magda-kn-web-app",
-    "magda-admin-api/",
     "magda-authorization-api/",
     "magda-authorization-db/",
     "magda-sleuther-framework/",
