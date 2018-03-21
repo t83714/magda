@@ -111,7 +111,8 @@ app.use(morgan("combined"));
 
 const magda = path.join(__dirname, "..", "node_modules", "@magda");
 
-const clientRoot = path.join(magda, "web-client");
+// const clientRoot = path.join(magda, "web-client");
+const clientRoot = path.join(magda, "kn-web-app");
 const clientBuild = path.join(clientRoot, "build");
 console.log("Client: " + clientBuild);
 

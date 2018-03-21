@@ -29,5 +29,9 @@ data:
     },
     "feedback": {
         "to": "http://feedback-api/v0"
+    },
+    "kn": {
+        "to": "http://kn/v0",
+        "auth": true
     }
   }'

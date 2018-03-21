@@ -40,6 +40,7 @@
     "dependencies": {
         "@magda/typescript-common": "^0.0.36",
         "@magda/web-admin": "^0.0.36",
+        "@magda/kn-web-app": "^0.0.32-0",
         "@magda/web-client": "^0.0.36",
         "express": "^4.15.3",
         "helmet": "^3.12.0",
