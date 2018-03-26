@@ -14,7 +14,7 @@ export interface GoogleOptions {
     externalAuthHome: string;
 }
 
-export default function google(options: GoogleOptions) {
+export default function aaf(options: GoogleOptions) {
     const authorizationApi = options.authorizationApi;
     const passport = options.passport;
     const clientId = options.clientId;
@@ -22,7 +22,6 @@ export default function google(options: GoogleOptions) {
     const externalAuthHome = options.externalAuthHome;
     const loginBaseUrl = `${externalAuthHome}/login`;
 
-    console.log(clientId)
     if (!clientId) {
         return undefined;
     }
@@ -35,7 +34,6 @@ export default function google(options: GoogleOptions) {
                 callbackURL: `${loginBaseUrl}/google/return`
             },
             function (accessToken: string, refreshToken: string, profile: Profile, cb: (error: any, user?: any, info?: any) => void) {
-                console.log(authorizationApi, profile)
                 createOrGetUserToken(authorizationApi, profile, 'google').then(userId => cb(null, userId)).catch(error => cb(error));
             }
         )
