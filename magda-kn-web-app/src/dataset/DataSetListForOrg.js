@@ -6,7 +6,7 @@ import Slider from 'rc-slider'
 import SearchResultView from '../search/SearchResultView'
 import Checkbox from '../search/Checkbox'
 import './DataSet.css'
-import API from '../api/Api'
+import API from '../config'
 
 import 'rc-slider/assets/index.css';
 import 'rc-tooltip/assets/bootstrap.css';
@@ -36,7 +36,7 @@ export default class DataSetListForOrg extends Component {
     }
 
     getPublisherById(id){
-        fetch(API.baseUri + API.dataSetOrgInfo+id)
+        fetch(API.dataSetOrgInfo+id)
                 .then((response) => {
                     if (response.status === 200) {
                         return response.json()
@@ -54,7 +54,7 @@ export default class DataSetListForOrg extends Component {
     getData(query){
         const preparedQuery = this.preparSearchText(query)
         // console.log(query)
-        fetch(API.baseUri + API.search  + preparedQuery + '&start=0&limit=2000')
+        fetch( API.search  + preparedQuery + '&start=0&limit=2000')
         .then((response) => {
             if (response.status === 200) {
                 return response.json()
@@ -158,7 +158,7 @@ export default class DataSetListForOrg extends Component {
                     <div className="right-filter">
                         <Row>
                             <h4 className="col-xs-8">Top 10 {this.state.result.facets[2].id} </h4>
-                            <span  className="col-xs-4"><Button bsStyle="info pull-right" onClick={this.filterButtonSubmit}> Refine Result </Button></span>
+                            <span  className="col-xs-4"><Button bsStyle="info" className="pull-right" onClick={this.filterButtonSubmit}> Refine Result </Button></span>
                         </Row>
                         <hr />
                         <ul className="cust-list">
@@ -185,7 +185,7 @@ export default class DataSetListForOrg extends Component {
                                 <i>{this.state.min}</i><i className="pull-right">{this.state.max} </i>
                         </div>
                         <hr />
-                        <Button bsStyle="info pull-right" onClick={this.filterButtonSubmit}> Refine Result </Button>
+                        <Button bsStyle="info" className="pull-right" onClick={this.filterButtonSubmit}> Refine Result </Button>
                     </div>
                     </Col>
                 </Row>

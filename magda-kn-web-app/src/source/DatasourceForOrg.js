@@ -2,7 +2,7 @@
 import React, {Component} from 'react'
 import {Grid, Row} from 'react-bootstrap'
 
-import API from '../api/Api'
+import API from '../config'
 import PublisherViews from '../dataset/PublisherViews'
 import'./Datasource.css'
 
@@ -22,7 +22,7 @@ export default class DatasourceForOrg extends Component {
     
     getDataSource(){
         console.log('load data ... ')
-        fetch(API.baseUri + API.dataSource)
+        fetch(API.dataSource)
         .then((response) => {
             // console.log(response)
             if (response.status === 200) {

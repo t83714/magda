@@ -4,7 +4,7 @@ import Slider from 'rc-slider'
 import {OrderedSet} from 'immutable'
 import SearchResultView from './SearchResultView'
 import Checkbox from './Checkbox'
-import API from '../api/Api'
+import API from '../config'
 
 import 'rc-slider/assets/index.css';
 import 'rc-tooltip/assets/bootstrap.css';
@@ -65,7 +65,8 @@ export default class SearchNavPills extends Component{
 
     getData(query, start, limit){
         // console.log(query)
-        fetch(API.baseUri + API.search  + query + '&start='+start + '&limit='+limit)
+        // console.log(API.search)
+        fetch(API.search  + query + '&start='+start + '&limit='+limit)
         .then((response) => {
             if (response.status === 200) {
                 return response.json()
@@ -156,7 +157,7 @@ export default class SearchNavPills extends Component{
             <div className="paddomg-top">
                 <hr/>
                 <nav aria-label="Page navigation">
-                    <ul class="pagination">
+                    <ul className="pagination">
                         {this.state.pageOffset>0 ? 
                             <li  onClick={this.handlePageOffsetBack}>
                                 <a><span aria-hidden="true">&laquo;</span></a>
@@ -202,7 +203,7 @@ export default class SearchNavPills extends Component{
                             <div className="right-filter">
                                 <Row>
                                 <h4 className="col-xs-8">Top 10 {this.state.searchResult.facets[0].id} </h4>
-                                <span  className="col-xs-4"><Button bsStyle="info pull-right" onClick={this.filterButtonSubmit}> Refine Result </Button></span>
+                                <span  className="col-xs-4"><Button bsStyle="info" className="pull-right" onClick={this.filterButtonSubmit}> Refine Result </Button></span>
                                 </Row>
                                 <hr />
                                 <ul className="cust-list">
@@ -240,7 +241,7 @@ export default class SearchNavPills extends Component{
                                     <i>{this.state.min}</i><i className="pull-right">{this.state.max} </i>
                                 </div>
                                 <hr />
-                                <Button bsStyle="info pull-right" onClick={this.filterButtonSubmit}> Refine Result </Button>
+                                <Button bsStyle="info" className="pull-right" onClick={this.filterButtonSubmit}> Refine Result </Button>
                             </div>
                         </Col>
                     </Row>

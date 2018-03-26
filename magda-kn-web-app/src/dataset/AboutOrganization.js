@@ -2,7 +2,7 @@ import React, {Component} from 'react'
 import {Grid, Row, Col} from 'react-bootstrap'
 import {Link } from 'react-router-dom'
 
-import API from '../api/Api'
+import API from '../config'
 import './DataSet.css'
 
 export default class AboutOrganization extends Component {
@@ -19,7 +19,7 @@ export default class AboutOrganization extends Component {
     }
     getData(){
         if(this.state.pub_id !== '')
-            fetch(API.baseUri + API.dataSetOrgInfo + this.state.pub_id + '?aspect=organization-details&optionalAspect=source')
+            fetch(API.dataSetOrgInfo + this.state.pub_id + '?aspect=organization-details&optionalAspect=source')
             .then((response) => {
                 if (response.status === 200) {
                     return response.json()
@@ -33,7 +33,7 @@ export default class AboutOrganization extends Component {
             });
     }
     getDatasetCountByPublisher(publisher){
-        fetch(API.baseUri + API.search + '*+by+' + publisher + '&start=0&limit=0')
+        fetch(API.search + '*+by+' + publisher + '&start=0&limit=0')
                 .then((response) => {
                     if (response.status === 200) {
                         return response.json()
