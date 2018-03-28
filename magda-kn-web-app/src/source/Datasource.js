@@ -3,7 +3,7 @@ import React, {Component} from 'react'
 import {Grid, Row, ButtonToolbar} from 'react-bootstrap'
 import {Link} from 'react-router-dom'
 
-import API from '../api/Api'
+import API from '../config'
 import'./Datasource.css'
 
 export default class Datasource extends Component {
@@ -17,8 +17,8 @@ export default class Datasource extends Component {
     }
     
     getDataSource(){
-        console.log('load data ... ')
-        fetch(API.baseUri + API.dataSource)
+        // console.log('load data ... ')
+        fetch(API.dataSource)
         .then((response) => {
             // console.log(response)
             if (response.status === 200) {
@@ -53,7 +53,7 @@ export default class Datasource extends Component {
         for(const key in keys){
             const datasourceObject = this.state.datasource.get(keys[key])
             const datasourceName = datasourceObject.name
-            console.log(datasourceName)
+            // console.log(datasourceName)
             datasourceView.push(
                 <div className="col-xs-3" key={key}>
                 <div className="thumbnail"  >

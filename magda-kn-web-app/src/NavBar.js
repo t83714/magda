@@ -32,7 +32,9 @@ export default class NavBar extends Component {
               <MenuItem>Organisation</MenuItem>
             </LinkContainer>
           </NavDropdown>
-
+          <LinkContainer to='/signin'>
+            <NavItem>Sign In</NavItem>
+          </LinkContainer>
           {/* <NavDropdown id="nav-dropdown" title="Browse">
               <LinkContainer to='/about' >
                 <MenuItem>Spatial Collections</MenuItem>

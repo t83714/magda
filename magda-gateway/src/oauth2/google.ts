@@ -22,6 +22,7 @@ export default function google(options: GoogleOptions) {
     const externalAuthHome = options.externalAuthHome;
     const loginBaseUrl = `${externalAuthHome}/login`;
 
+    console.log(clientId)
     if (!clientId) {
         return undefined;
     }

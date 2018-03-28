@@ -1,7 +1,7 @@
 import React, {Component} from 'react'
 import {Grid, Row} from 'react-bootstrap'
 
-import API from '../api/Api'
+import API from '../config'
 import PublisherViews from './PublisherViews'
 import './DataSet.css'
 
@@ -16,7 +16,7 @@ export default class AllPublishers extends Component {
         this.getData()
     }
     getData(){
-        fetch(API.baseUri + API.dataSetOrg)
+        fetch(API.dataSetOrg)
         .then((response) => {
             if (response.status === 200) {
                 return response.json()

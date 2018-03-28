@@ -3,7 +3,7 @@ import {Grid, Row, Col, Panel, Label, Table, OverlayTrigger, Tooltip} from 'reac
 import {Link } from 'react-router-dom'
 
 import './DataSet.css'
-import API from '../api/Api'
+import API from '../config'
 
 const tooltip = (
     <Tooltip id="tooltip">
@@ -28,7 +28,7 @@ export default class DataSetDetail extends Component {
 
 
     getData(){
-        fetch(API.baseUri + API.dataSetDetail + this.state.id + API.dataSetDetail_allAspects)
+        fetch(API.dataSetDetail + this.state.id + API.dataSetDetail_allAspects)
         .then((response) => {
             // console.log(response)
             if (response.status === 200) {
@@ -137,7 +137,7 @@ export default class DataSetDetail extends Component {
             <Row>
                 <Col xs={10}>
                 <hr/>
-                  <Panel id="dataset-detail" bsStyle="info ">
+                  <Panel id="dataset-detail" bsStyle="info">
                     <Panel.Heading>
                         <Panel.Title toggle >
                             Click to get More Detail

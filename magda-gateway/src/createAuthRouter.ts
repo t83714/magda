@@ -10,6 +10,7 @@ export interface AuthRouterOptions {
     facebookClientSecret: string;
     googleClientId: string;
     googleClientSecret: string;
+    aafClientUri: string;
     ckanUrl: string;
     authorizationApi: string;
     externalUrl: string;
@@ -59,6 +60,17 @@ export default function createAuthRouter(options: AuthRouterOptions): Router {
             authRouter: require("./oauth2/ckan").default({
                 authorizationApi: authApi,
                 passport: passport,
+                externalAuthHome: `${options.externalUrl}/auth`
+            })
+        },
+        {
+            id: "aaf",
+            enabled: options.aafClientUri ? true : false,
+            authRouter: require("./oauth2/aaf").default({
+                authorizationApi: authApi,
+                passport: passport,
+                clientId: options.googleClientId,
+                clientSecret: options.googleClientSecret,
                 externalAuthHome: `${options.externalUrl}/auth`
             })
         }
