@@ -2,6 +2,8 @@
 *.log
 .classpath
 .metadata
+docker-context*
+*/package-lock.json
 
 # sbt specific
 .cache
