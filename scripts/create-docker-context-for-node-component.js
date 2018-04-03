@@ -33,6 +33,12 @@ const argv = yargs
                 "Push the build image to the docker registry.  This parameter is only used if --build is specified.",
             type: "boolean",
             default: false
+        },
+        registry: {
+            description:
+                "Specify the container registry",
+            type: "string",
+            default: "localhost:5000/"
         }
     })
     .help().argv;
@@ -158,7 +164,7 @@ function getVersion() {
 function getTag() {
     let tag = argv.tag;
     if (tag === "auto") {
-        const tagPrefix = argv.local ? "localhost:5000/" : "";
+        const tagPrefix = argv.local ? argv.registry: "";
 
         const name = process.env.npm_package_config_docker_name
             ? process.env.npm_package_config_docker_name
