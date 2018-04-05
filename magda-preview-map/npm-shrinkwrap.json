@@ -14975,6 +14975,7 @@
             "integrity": "sha1-cOwp4RCrn2QpcYGYC+Jp8PRG23Q=",
             "dev": true,
             "requires": {
+                "jsonschema": "github:terriajs/jsonschema#55cedb27a265bbae2b366a3824863c586c5d34cf",
                 "when": "3.7.8",
                 "yargs": "3.32.0"
             },
@@ -15030,7 +15031,8 @@
                     }
                 },
                 "jsonschema": {
-                    "version": "git+https://github.com/terriajs/jsonschema.git#55cedb27a265bbae2b366a3824863c586c5d34cf"
+                    "version": "github:terriajs/jsonschema#55cedb27a265bbae2b366a3824863c586c5d34cf",
+                    "dev": true
                 },
                 "lcid": {
                     "version": "1.0.0",
@@ -21940,8 +21942,7 @@
                         "jsbn": {
                             "version": "0.1.1",
                             "bundled": true,
-                            "dev": true,
-                            "optional": true
+                            "dev": true
                         },
                         "json-schema": {
                             "version": "0.2.3",

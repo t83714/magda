@@ -1,71 +1,80 @@
 import * as express from 'express';
-import { Strategy as GoogleStrategy } from "passport-google-oauth20";
-import { Passport, Profile } from 'passport';
-
+const CustomStrategy = require('passport-custom').Strategy;
+import { Passport , Profile} from 'passport';
+var jwt = require('jwt-simple');
 import ApiClient from '@magda/typescript-common/dist/authorization-api/ApiClient';
 import createOrGetUserToken from '../createOrGetUserToken';
 import { redirectOnSuccess, redirectOnError } from './redirect';
 
-export interface GoogleOptions {
+export interface aafOptions {
     authorizationApi: ApiClient;
     passport: Passport;
-    clientId: string;
-    clientSecret: string;
-    externalAuthHome: string;
+    aafClientUri: string;
+    externalUrl: string;
 }
 
-export default function aaf(options: GoogleOptions) {
+export default function aaf(options: aafOptions) {
     const authorizationApi = options.authorizationApi;
     const passport = options.passport;
-    const clientId = options.clientId;
-    const clientSecret = options.clientSecret;
-    const externalAuthHome = options.externalAuthHome;
-    const loginBaseUrl = `${externalAuthHome}/login`;
+    const aafClientUri = options.aafClientUri;
+    const aafSuccessRedirect = `${options.externalUrl}/sign-in-redirect?redirectTo=/`;
+    const aafFailRedirect = `${options.externalUrl}/sign-in-redirect?redirectTo=/signin`;
+    // const loginBaseUrl = `${externalAuthHome}/login`;
 
-    if (!clientId) {
+    if (!aafClientUri) {
         return undefined;
     }
 
-    passport.use(
-        new GoogleStrategy(
-            {
-                clientID: clientId,
-                clientSecret: clientSecret,
-                callbackURL: `${loginBaseUrl}/google/return`
-            },
-            function (accessToken: string, refreshToken: string, profile: Profile, cb: (error: any, user?: any, info?: any) => void) {
-                createOrGetUserToken(authorizationApi, profile, 'google').then(userId => cb(null, userId)).catch(error => cb(error));
-            }
-        )
-    );
+    passport.use(new CustomStrategy(
+        function(req:any, done:any) {
+            var verified_jwt = jwt.decode(req.body['assertion'], '[([2b&}JLjeq-*4d21"P]s8L^cM4Q-{|')
+            console.log(verified_jwt)
+            var attribute = verified_jwt['https://aaf.edu.au/attributes']
+            // Use mail as id because AAF return identites will change for every request though the user is the same
+            // DB will use this unique mail address to hash and to get an unique id in db
+            var profile:Profile =
+                {id: attribute["mail"], 
+                    displayName: attribute["displayname"], 
+                    name: {"familyName": attribute["surname"], "givenName": attribute["givenname"]},
+                    emails: [{value:attribute["mail"]}],
+                    photos: [{value: "none-photoURL"}],
+                    provider: "aaf",
+                }   
+          createOrGetUserToken(authorizationApi, profile, "aaf")
+                    .then(userId => {
+                        console.log('create or get token:',userId)
+                        return done(null, userId)
+                    })
+                    .catch(error => done(error));
+        }
+      ));
 
     const router: express.Router = express.Router();
 
     router.get(
         "/",
-        (req, res, next) => {
-            const options: any = {
-                scope: ["profile", "email"],
-                state: req.query.redirect || externalAuthHome
-            };
-            passport.authenticate("google", options)(req, res, next);
-        }
-    );
-
-    router.get(
-        "/return",
         (req: express.Request, res: express.Response, next: express.NextFunction) => {
-            passport.authenticate("google", {
+            console.log(req.query)
+            res.redirect(aafClientUri)
+         }
+    );
+    router.get('/success', (req: express.Request, res: express.Response, next: express.NextFunction) => {
+       console.log("redirect success")
+    } )
+    
+    router.post('/jwt', 
+        (req: express.Request, res: express.Response, next: express.NextFunction) => {
+            passport.authenticate('custom', {
                 failWithError: true
             })(req, res, next)
         },
         (req: express.Request, res: express.Response, next: express.NextFunction) => {
-            redirectOnSuccess(req.query.state, req, res);
+            redirectOnSuccess(aafSuccessRedirect, req, res);
         },
         (err: any, req: express.Request, res: express.Response, next: express.NextFunction): any => {
-            redirectOnError(err, req.query.state, req, res);
-        }
-    );
+            console.log('error redirect')
+            redirectOnError(err, aafFailRedirect, req, res);
+        })
 
     return router;
 }

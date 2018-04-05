@@ -2,9 +2,11 @@
 const fallbackApiHost = "https://kn-v2-dev.oznome.csiro.au/";
 const serverConfig = window.magda_server_config || '';
 const registryApiUrl = serverConfig.registryApiBaseUrl || fallbackApiHost + "api/v0/registry/";
-
+const authApiUrl = serverConfig.authApiBaseUrl || fallbackApiHost + "api/v0/auth/"
 const API = {
     baseUri     : serverConfig || fallbackApiHost,
+    gatwayUrl   : 'http://localhost:6100/',
+    authApiUrl  : 'http://localhost:6100/api/v0/auth/',
     datasetCount : registryApiUrl+'records?limit=0&aspect=dcat-dataset-strings',
     organisationsCount: registryApiUrl+'records?limit=0&aspect=organization-details',
     search       : serverConfig || fallbackApiHost + 'api/v0/search/datasets?query=',

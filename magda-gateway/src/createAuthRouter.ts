@@ -69,9 +69,8 @@ export default function createAuthRouter(options: AuthRouterOptions): Router {
             authRouter: require("./oauth2/aaf").default({
                 authorizationApi: authApi,
                 passport: passport,
-                clientId: options.googleClientId,
-                clientSecret: options.googleClientSecret,
-                externalAuthHome: `${options.externalUrl}/auth`
+                aafClientUri: options.aafClientUri,
+                externalUrl: options.externalUrl
             })
         }
     ];

@@ -22,7 +22,6 @@ export default function google(options: GoogleOptions) {
     const externalAuthHome = options.externalAuthHome;
     const loginBaseUrl = `${externalAuthHome}/login`;
 
-    console.log(clientId)
     if (!clientId) {
         return undefined;
     }
@@ -73,6 +72,7 @@ export default function google(options: GoogleOptions) {
             res: express.Response,
             next: express.NextFunction
         ) => {
+            console.log(req.query.state)
             redirectOnSuccess(req.query.state, req, res);
         },
         (

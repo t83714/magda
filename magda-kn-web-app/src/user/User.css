@@ -1,6 +1,19 @@
 .padding-top{
     padding-top:65px;
 }
+.profile{
+	align-content: center;
+	padding: 15px;
+	float: left;
+}
+.profile img{
+	border-radius: 5px;
+	width: 90px;
+}
+.detail{
+	padding: 15px;
+	float: left;
+}
 a, a:active, a:hover{
     text-decoration: none;
 }

@@ -14,6 +14,8 @@ export default class Signin extends Component {
         }
     }
     render() {
+        const baseRedirectUrl = `${window.location.protocol}//${window.location.host}`;
+        // console.log(this.props)
         return (
             <div className="row padding-top">
                 <div className="col-md-6 col-md-offset-3">
@@ -21,8 +23,15 @@ export default class Signin extends Component {
                         <div className="at-title">
                             <h3>Sign In</h3>
                         </div>
+                        {this.props.location.state && (
+                            <div className="col-md-6 col-md-offset-3">
+                                <div className="alert alert-danger">
+                                    <strong>Sign In Failed!</strong> {this.props.location.state.signInError}
+                                </div>
+                            </div>
+                        )}
                         <div className="at-oauth">
-                            <a href="/auth/login/aaf">
+                            <a href={"/auth/login/aaf?redirect=" + encodeURIComponent(baseRedirectUrl+'/sign-in-redirect?redirectTo=/')}>
                             <button className="btn at-social-btn" id="at-aaf" name="aaf">
                                 <i className="fa-aaf"></i>
                                 Sign In with AAF
@@ -31,7 +40,7 @@ export default class Signin extends Component {
 
                         </div>
                         <div className="at-oauth">
-                            <a href="/auth/login/google">
+                            <a href={ "/auth/login/google?redirect=" + encodeURIComponent(baseRedirectUrl+'/sign-in-redirect?redirectTo=/')}>
                             <button className="btn at-social-btn" id="at-google" name="google">
                                 <i className="fa fa-google"></i>
                                 Sign In with Google
@@ -40,7 +49,7 @@ export default class Signin extends Component {
 
                         </div>
                         <div className="at-oauth">
-                            <a href="/auth/login/facebook">
+                            <a href={"/auth/login/facebook?redirect=" + encodeURIComponent(baseRedirectUrl+'/sign-in-redirect?redirectTo=/')}>
                             <button className="btn at-social-btn" id="at-facebook" name="facebook">
                                 <i className="fa fa-facebook"></i>
                                 Sign In with Facebook
