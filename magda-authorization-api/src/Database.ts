@@ -13,9 +13,7 @@ export default class Database {
     private pool: pg.Pool;
 
     constructor(options: DatabaseOptions) {
-        console.log(options)
         this.pool = createPool(options);
-        console.log(this.pool)
     }
 
     getUser(id: string): Promise<Maybe<User>> {
