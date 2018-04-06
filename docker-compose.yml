@@ -9,3 +9,4 @@ services:
         - type: bind
           source: .
           target: /app
+     command: tail -f /dev/null
