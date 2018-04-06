@@ -1,11 +1,11 @@
 global:
   useCombinedDb: true
-  externalUrl: http://kn-v2-staging.oznome.csiro.au
+  externalUrl: http://k8s-dev.oznome.csiro.au
   rollingUpdate:
     maxUnavailable: 1
   image:
     pullPolicy: Always
-    tag: "0.0.33-0"
+    tag: "0.0.36"
 gateway:
   loadBalancerIP: "35.197.191.208"
   auth:
