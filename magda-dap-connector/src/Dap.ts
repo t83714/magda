@@ -1,0 +1,389 @@
+import AsyncPage, {
+    forEachAsync
+} from "@magda/typescript-common/dist/AsyncPage";
+import DapUrlBuilder from "./DapUrlBuilder";
+import formatServiceError from "@magda/typescript-common/dist/formatServiceError";
+import { ConnectorSource } from "@magda/typescript-common/dist/JsonConnector";
+import retry from "@magda/typescript-common/dist/retry";
+import * as request from "request";
+import * as URI from "urijs";
+
+export interface DapThing {
+    id: string;
+    name: string;
+    [propName: string]: any;
+}
+
+export interface DapResource extends DapThing {}
+
+export interface DapDataset extends DapThing {
+    resources: DapResource[];
+}
+
+export interface DapOrganization extends DapThing {}
+
+export interface DapPackageSearchResponse {
+    result: DapPackageSearchResult;
+    [propName: string]: any;
+}
+
+export interface DapPackageSearchResult {
+    count: number;
+    results: DapDataset[];
+    [propName: string]: any;
+}
+
+export interface DapOrganizationListResponse {
+    result: DapOrganization[];
+    [propName: string]: any;
+}
+
+export interface DapOptions {
+    baseUrl: string;
+    id: string;
+    name: string;
+    apiBaseUrl?: string;
+    pageSize?: number;
+    maxRetries?: number;
+    secondsBetweenRetries?: number;
+    ignoreHarvestSources?: string[];
+}
+
+export default class Dap implements ConnectorSource {
+    public readonly id: string;
+    public readonly name: string;
+    public readonly pageSize: number;
+    public readonly maxRetries: number;
+    public readonly secondsBetweenRetries: number;
+    public readonly urlBuilder: CkanUrlBuilder;
+    private ignoreHarvestSources: string[];
+
+    constructor({
+        baseUrl,
+        id,
+        name,
+        apiBaseUrl,
+        pageSize = 1000,
+        maxRetries = 10,
+        secondsBetweenRetries = 10,
+        ignoreHarvestSources = []
+    }: DapOptions) {
+        this.id = id;
+        this.name = name;
+        this.pageSize = pageSize;
+        this.maxRetries = maxRetries;
+        this.secondsBetweenRetries = secondsBetweenRetries;
+        this.ignoreHarvestSources = ignoreHarvestSources;
+        this.urlBuilder = new DapUrlBuilder({
+            id: id,
+            name: name,
+            baseUrl,
+            apiBaseUrl
+        });
+    }
+
+    public packageSearch(options?: {
+        ignoreHarvestSources?: string[];
+        title?: string;
+        sort?: string;
+        start?: number;
+        maxResults?: number;
+    }): AsyncPage<DapPackageSearchResponse> {
+        const url = new URI(this.urlBuilder.getPackageSearchUrl());
+
+        const solrQueries = [];
+
+        if (
+            options &&
+            options.ignoreHarvestSources &&
+            options.ignoreHarvestSources.length > 0
+        ) {
+            solrQueries.push(
+                ...options.ignoreHarvestSources.map(title => {
+                    const encoded =
+                        title === "*"
+                            ? title
+                            : encodeURIComponent('"' + title + '"');
+                    return `-harvest_source_title:${encoded}`;
+                })
+            );
+        }
+
+        if (options && options.title && options.title.length > 0) {
+            const encoded = encodeURIComponent('"' + options.title + '"');
+            solrQueries.push(`title:${encoded}`);
+        }
+
+        let fqComponent = "";
+
+        if (solrQueries.length > 0) {
+            fqComponent = "&fq=" + solrQueries.join("+");
+        }
+
+        if (options && options.sort) {
+            url.addSearch("sort", options.sort);
+        }
+
+        const startStart = options.start || 0;
+        let startIndex = startStart;
+
+        return AsyncPage.create<DapPackageSearchResponse>(previous => {
+            if (previous) {
+                startIndex += previous.result.results.length;
+                if (
+                    startIndex >= previous.result.count ||
+                    (options.maxResults &&
+                        startIndex - startStart >= options.maxResults)
+                ) {
+                    return undefined;
+                }
+            }
+
+            const remaining = options.maxResults
+                ? options.maxResults - (startIndex - startStart)
+                : undefined;
+            return this.requestPackageSearchPage(
+                url,
+                fqComponent,
+                startIndex,
+                remaining
+            );
+        });
+    }
+
+    public organizationList(): AsyncPage<DapOrganizationListResponse> {
+        const url = new URI(this.urlBuilder.getOrganizationListUrl())
+            .addSearch("all_fields", "true")
+            .addSearch("include_users", "true")
+            .addSearch("include_groups", "true")
+            .addSearch("include_extras", "true")
+            .addSearch("include_tags", "true");
+
+        let startIndex = 0;
+        return AsyncPage.create<DapOrganizationListResponse>(previous => {
+            if (previous) {
+                if (previous.result.length === 0) {
+                    return undefined;
+                }
+                startIndex += previous.result.length;
+            }
+
+            return this.requestOrganizationListPage(url, startIndex, previous);
+        });
+    }
+
+    public getJsonDatasets(): AsyncPage<any[]> {
+        const packagePages = this.packageSearch({
+            ignoreHarvestSources: this.ignoreHarvestSources,
+            sort: "metadata_created asc"
+        });
+        return packagePages.map(packagePage => packagePage.result.results);
+    }
+
+    public getJsonDataset(id: string): Promise<any> {
+        const url = this.urlBuilder.getPackageShowUrl(id);
+
+        return new Promise<any>((resolve, reject) => {
+            request(url, { json: true }, (error, response, body) => {
+                if (error) {
+                    reject(error);
+                    return;
+                }
+                resolve(body.result);
+            });
+        });
+    }
+
+    public searchDatasetsByTitle(
+        title: string,
+        maxResults: number
+    ): AsyncPage<any[]> {
+        const packagePages = this.packageSearch({
+            ignoreHarvestSources: this.ignoreHarvestSources,
+            title: title,
+            maxResults: maxResults
+        });
+        return packagePages.map(packagePage => packagePage.result.results);
+    }
+
+    public getJsonDistributions(dataset: any): AsyncPage<object[]> {
+        return AsyncPage.single<object[]>(dataset.resources || []);
+    }
+
+    public readonly hasFirstClassOrganizations = true;
+
+    public getJsonFirstClassOrganizations(): AsyncPage<object[]> {
+        const organizationPages = this.organizationList();
+        return organizationPages.map(
+            organizationPage => organizationPage.result
+        );
+    }
+
+    public getJsonFirstClassOrganization(id: string): Promise<object> {
+        const url = this.urlBuilder.getOrganizationShowUrl(id);
+
+        return new Promise<any>((resolve, reject) => {
+            request(url, { json: true }, (error, response, body) => {
+                if (error) {
+                    reject(error);
+                    return;
+                }
+                resolve(body.result);
+            });
+        });
+    }
+
+    public searchFirstClassOrganizationsByTitle(
+        title: string,
+        maxResults: number
+    ): AsyncPage<any[]> {
+        // CKAN doesn't have an equivalent of package_search for organizations, so we'll use
+        // organization_autocomplete plus separate requests to look up the complete organization details.
+        const url = new URI(
+            this.urlBuilder.getOrganizationAutocompleteUrl(title)
+        )
+            .addSearch("limit", maxResults)
+            .toString();
+
+        const promise = new Promise<any>((resolve, reject) => {
+            request(url, { json: true }, (error, response, body) => {
+                if (error) {
+                    reject(error);
+                    return;
+                }
+                resolve(body.result);
+            });
+        });
+
+        // CKAN (at least v2.5.2 currently on data.gov.au) doesn't honor the `limit` parameter.  So trim the results here.
+        const trimmedResults = AsyncPage.singlePromise<any[]>(promise).map(
+            organizations => organizations.slice(0, maxResults)
+        );
+
+        const result: any[] = [];
+        return AsyncPage.singlePromise<any[]>(
+            forEachAsync(trimmedResults, 6, (organization: any) => {
+                return this.getJsonFirstClassOrganization(organization.id).then(
+                    organizationDetails => {
+                        result.push(organizationDetails);
+                    }
+                );
+            }).then(() => result)
+        );
+    }
+
+    public getJsonDatasetPublisherId(dataset: any): string {
+        if (!dataset.organization) {
+            return undefined;
+        }
+        return dataset.organization.id;
+    }
+
+    public getJsonDatasetPublisher(dataset: any): Promise<any> {
+        if (!dataset.organization) {
+            return undefined;
+        }
+        return this.getJsonFirstClassOrganization(dataset.organization.id);
+    }
+
+    private requestPackageSearchPage(
+        url: uri.URI,
+        fqComponent: string,
+        startIndex: number,
+        maxResults: number
+    ): Promise<DapPackageSearchResponse> {
+        const pageSize =
+            maxResults && maxResults < this.pageSize
+                ? maxResults
+                : this.pageSize;
+
+        const pageUrl = url.clone();
+        pageUrl.addSearch("start", startIndex);
+        pageUrl.addSearch("rows", pageSize);
+
+        const operation = () =>
+            new Promise<DapPackageSearchResponse>((resolve, reject) => {
+                const requestUrl = pageUrl.toString() + fqComponent;
+                console.log("Requesting " + requestUrl);
+                request(requestUrl, { json: true }, (error, response, body) => {
+                    if (error) {
+                        reject(error);
+                        return;
+                    }
+                    console.log("Received@" + startIndex);
+                    resolve(body);
+                });
+            });
+
+        return retry(
+            operation,
+            this.secondsBetweenRetries,
+            this.maxRetries,
+            (e, retriesLeft) =>
+                console.log(
+                    formatServiceError(
+                        `Failed to GET ${pageUrl.toString()}.`,
+                        e,
+                        retriesLeft
+                    )
+                )
+        );
+    }
+
+    private requestOrganizationListPage(
+        url: uri.URI,
+        startIndex: number,
+        previous: DapOrganizationListResponse
+    ): Promise<DapOrganizationListResponse> {
+        const pageUrl = url.clone();
+        pageUrl.addSearch("offset", startIndex);
+        pageUrl.addSearch("limit", this.pageSize);
+
+        const operation = () =>
+            new Promise<DapOrganizationListResponse>((resolve, reject) => {
+                console.log("Requesting " + pageUrl.toString());
+                request(
+                    pageUrl.toString(),
+                    { json: true },
+                    (error, response, body) => {
+                        if (error) {
+                            reject(error);
+                            return;
+                        }
+                        console.log("Received@" + startIndex);
+
+                        // Older versions of CKAN ignore the offset and limit parameters and just return all orgs.
+                        // To avoid paging forever in that scenario, we check if this page is identical to the last one
+                        // and ignore the items if so.
+                        if (
+                            previous &&
+                            body &&
+                            previous.result &&
+                            body.result &&
+                            previous.result.length === body.result.length &&
+                            JSON.stringify(previous.result) ===
+                                JSON.stringify(body.result)
+                        ) {
+                            body.result.length = 0;
+                        }
+
+                        resolve(body);
+                    }
+                );
+            });
+
+        return retry(
+            operation,
+            this.secondsBetweenRetries,
+            this.maxRetries,
+            (e, retriesLeft) =>
+                console.log(
+                    formatServiceError(
+                        `Failed to GET ${pageUrl.toString()}.`,
+                        e,
+                        retriesLeft
+                    )
+                )
+        );
+    }
+}
