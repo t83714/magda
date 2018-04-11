@@ -42,8 +42,7 @@ export default class DapUrlBuilder {
     public getPackageShowUrl(id: string): string {
         return this.apiBaseUrl
             .clone()
-            .segment("3/action/package_show")
-            .addSearch("id", id)
+            .segment(`/${id}`)
             .toString();
     }
 

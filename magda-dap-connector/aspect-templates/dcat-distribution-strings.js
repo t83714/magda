@@ -1,18 +1,15 @@
 var moment = libraries.moment;
 
 return {
-    title: distribution.name || distribution.id,
+    title: distribution.title || distribution.id,
     description: distribution.description || undefined,
-    issued: distribution.created
-        ? moment.utc(distribution.created).format()
+    issued: distribution.published
+        ? moment.utc(distribution.published).format()
         : undefined,
-    modified: distribution.last_modified
-        ? moment.utc(distribution.last_modified).format()
-        : undefined,
-    license: dataset.license_title || undefined,
-    accessURL: distribution.webstore_url || undefined,
-    downloadURL: distribution.url || undefined,
-    mediaType:
-        distribution.mimetype || distribution.mimetype_inner || undefined,
+    modified: undefined,
+    license: dataset.licence || undefined,
+    accessURL: dataset.self || undefined,
+    downloadURL: dataset.data || undefined,
+    mediaType: dataset.collectionType || undefined,
     format: distribution.format || undefined
 };

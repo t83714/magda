@@ -3,23 +3,21 @@ var dap = libraries.dap;
 
 return {
     title: dataset.title || dataset.name,
-    description: dataset.notes,
-    issued: dataset.metadata_created
-        ? moment.utc(dataset.metadata_created).format()
+    description: dataset.description,
+    issued: dataset.published
+        ? moment.utc(dataset.published).format()
         : undefined,
-    modified: dataset.metadata_modified
-        ? moment.utc(dataset.metadata_modified).format()
-        : undefined,
-    languages: dataset.language ? [dataset.language] : [],
-    publisher: (dataset.organization || {}).title,
-    accrualPeriodicity: dataset.update_freq,
-    spatial: dataset.spatial_coverage,
+    modified:  undefined,
+    languages: ['English'],
+    publisher: 'CSIRO (Australia)',
+    accrualPeriodicity: '',
+    spatial: '',
     temporal: {
-        start: dataset.temporal_coverage_from,
-        end: dataset.temporal_coverage_to
+        start: dataset.dataStartDate,
+        end: dataset.dataEndDate
     },
-    themes: (dataset.groups || []).map(group => group.title),
-    keywords: (dataset.tags || []).map(tag => tag.name),
-    contactPoint: dataset.contact_point,
-    landingPage: dap.getDatasetLandingPageUrl(dataset.id)
+    themes: dataset.fieldOfResearch || [],
+    keywords: dataset.keywords.splite(';'),
+    contactPoint: '',
+    landingPage: dataset.landingPage.href
 };

@@ -55,7 +55,7 @@ export default class Dap implements ConnectorSource {
     public readonly pageSize: number;
     public readonly maxRetries: number;
     public readonly secondsBetweenRetries: number;
-    public readonly urlBuilder: CkanUrlBuilder;
+    public readonly urlBuilder: DapUrlBuilder;
     private ignoreHarvestSources: string[];
 
     constructor({
