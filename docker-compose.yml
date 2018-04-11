@@ -1,0 +1,12 @@
+version: "3.2"
+services: 
+  kmagda:
+     build: .  
+     volumes:
+        - type: bind
+          source: /var/run/docker.sock
+          target: /var/run/docker.sock
+        - type: bind
+          source: .
+          target: /app
+     command: tail -f /dev/null

@@ -10,6 +10,7 @@
         "start": "node dist/index.js",
         "dev": "run-typescript-in-nodemon src/index.ts",
         "docker-build-local": "create-docker-context-for-node-component --build --push --tag auto --local",
+        "docker-build-kn": "create-docker-context-for-node-component --build --push --tag auto --local --registry=\"gcr.io/knowledge-network-192205/\"",
         "docker-build-prod": "create-docker-context-for-node-component --build --push --tag auto",
         "test": "mocha --compilers ts:@magda/scripts/node_modules/ts-node/register --require @magda/scripts/node_modules/tsconfig-paths/register \"src/test/**/*.spec.ts\""
     },
