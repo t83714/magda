@@ -190,7 +190,7 @@ const organizationAspectBuilders: AspectBuilder[] = [
     }
 ];
 
-const ckan = new Ckan({
+const ckan = new Dap({
     baseUrl: argv.sourceUrl,
     id: argv.id,
     name: argv.name,

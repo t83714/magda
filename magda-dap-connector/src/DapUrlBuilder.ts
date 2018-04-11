@@ -42,7 +42,8 @@ export default class DapUrlBuilder {
     public getPackageShowUrl(id: string): string {
         return this.apiBaseUrl
             .clone()
-            .segment(`/${id}`)
+            .segment("/")
+            .segment(id)
             .toString();
     }
 
@@ -73,7 +74,7 @@ export default class DapUrlBuilder {
     public getDatasetLandingPageUrl(id: string): string {
         return this.baseUrl
             .clone()
-            .segment("dataset")
+            .segment("/")
             .segment(id)
             .toString();
     }
