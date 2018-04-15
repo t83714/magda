@@ -72,6 +72,7 @@ export default function google(options: GoogleOptions) {
             res: express.Response,
             next: express.NextFunction
         ) => {
+            console.log(req.query.state)
             redirectOnSuccess(req.query.state, req, res);
         },
         (

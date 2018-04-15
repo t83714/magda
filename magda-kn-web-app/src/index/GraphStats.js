@@ -1,7 +1,7 @@
 import React, {Component} from 'react'
 import { Link  } from 'react-router-dom'
 import { Well } from 'react-bootstrap'
-import API from '../api/Api'
+import API from '../config'
 import './Home.css'
 
 export default class GraphStats extends Component {
@@ -19,7 +19,7 @@ export default class GraphStats extends Component {
     this.getDataSource()
   }
   getData(){
-    fetch(API.baseUri + API.datasetCount)
+    fetch(API.datasetCount)
     .then((response) => {
         // console.log(response)
         if (response.status === 200) {
@@ -31,7 +31,7 @@ export default class GraphStats extends Component {
     }).catch((error) => {
       console.log('error on .catch', error);
     });
-    fetch(API.baseUri + API.organisationsCount)
+    fetch(API.organisationsCount)
     .then((response) => {
         // console.log(response)
         if (response.status === 200) {
@@ -47,7 +47,7 @@ export default class GraphStats extends Component {
   }
 getDataSource(){
 
-    fetch(API.baseUri + API.dataSource)
+    fetch(API.dataSource)
     .then((response) => {
         // console.log(response)
         if (response.status === 200) {

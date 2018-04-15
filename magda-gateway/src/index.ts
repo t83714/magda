@@ -132,16 +132,16 @@ app.set("views", path.join(__dirname, "..", "views"));
 app.set("view engine", "ejs");
 app.engine(".ejs", ejs.__express); // This stops express trying to do its own require of 'ejs'
 app.use(require("morgan")("combined"));
-
 app.use(
     "/auth",
     createAuthRouter({
         authenticator: authenticator,
         jwtSecret: argv.jwtSecret,
-        facebookClientId: argv.facebookClientId,
-        facebookClientSecret: argv.facebookClientSecret,
-        googleClientId: argv.googleClientId,
-        googleClientSecret: argv.googleClientSecret,
+        facebookClientId: argv.facebookClientId || '',
+        facebookClientSecret: argv.facebookClientSecret || '',
+        googleClientId: argv.googleClientId || '1049152486192-csgrnu1jcp9u8qoja90rbn3s5fpot5mh.apps.googleusercontent.com',
+        googleClientSecret: argv.googleClientSecret || 'BfcVqUZWmD_eUhqiDyVpJ_7w',
+        aafClientUri: argv.aafClientUri || 'https://rapid.test.aaf.edu.au/jwt/authnrequest/research/IeiWdzrJ47-eSowf3rfLTQ',
         ckanUrl: argv.ckanUrl,
         authorizationApi: argv.authorizationApi,
         externalUrl: argv.externalUrl,

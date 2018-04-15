@@ -5,6 +5,7 @@
   "version": "0.0.32-0",
   "dependencies": {
     "immutable": "^3.8.2",
+    "query-string": "^6.0.0",
     "rc-slider": "^8.6.0",
     "rc-tooltip": "^3.7.0",
     "react": "^16.2.0",

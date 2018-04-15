@@ -1,10 +1,34 @@
 import React, {Component} from 'react'
-import { Nav, Navbar, NavItem, NavDropdown, MenuItem } from 'react-bootstrap'
+import { Nav, Navbar, NavItem, NavDropdown,Glyphicon, ButtonToolbar, Dropdown, MenuItem, Image } from 'react-bootstrap'
 import { LinkContainer } from 'react-router-bootstrap'
+import API from './config'
 import './NavBar.css'
 
 export default class NavBar extends Component {
+  constructor(props){
+    super(props)
+    this.state = {user: ''}
+  }
+
+  componentDidMount(){
+    fetch(API.authApiUrl+"users/whoami", {credentials: "include"})
+    .then(res =>{
+      if (res.status === 200){
+        return res.json()
+      }else if (res.status === 401){
+        console.log('User is unauthorized')
+        return
+      }
+    })
+    .then(json => {
+      if(json)  this.setState({user:json})
+    })
+    .catch(error => console.log(error))
+  }
+
+
   render() {
+    console.log(this.state.user)
     return(
       <Navbar  fixedTop>
         <Navbar.Header>
@@ -32,7 +56,30 @@ export default class NavBar extends Component {
               <MenuItem>Organisation</MenuItem>
             </LinkContainer>
           </NavDropdown>
-
+         {
+           this.state.user === '' ? 
+            <LinkContainer to='/signin'>
+              <NavItem>Sign In</NavItem>
+            </LinkContainer>
+            :
+            <NavDropdown title= {
+                this.state.user.photoURL === 'none-photoURL'? 
+                <Image src='/img/default-user.png' circle /> 
+                : <Image src={this.state.user.photoURL} circle />
+                }  id="profile-dropdown" noCaret>
+              <LinkContainer to='/profile'>
+                <MenuItem>Profile</MenuItem>
+              </LinkContainer>
+              {/* <LinkContainer to='/datasource'>
+                <MenuItem>Data Source</MenuItem>
+              </LinkContainer> */}
+              <MenuItem divider />
+              <LinkContainer to='/signout'>
+                <MenuItem>Sign Out</MenuItem>
+              </LinkContainer>
+            </NavDropdown>
+         }
+          
           {/* <NavDropdown id="nav-dropdown" title="Browse">
               <LinkContainer to='/about' >
                 <MenuItem>Spatial Collections</MenuItem>

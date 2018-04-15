@@ -10,6 +10,10 @@ import SearchResult from './search/SearchResult'
 import DefaultPastYearSearch from './search/DefaultPastYearSearch'
 import Datasource from './source/Datasource'
 import DatasourceForOrg from './source/DatasourceForOrg'
+import Signin from './user/Signin'
+import signInRedirect from './user/signInRedirect'
+import Profile from './user/Profile'
+import Signout from './user/Signout'
 
 
 const NavMainContent = () =>(
@@ -26,7 +30,10 @@ const NavMainContent = () =>(
             <Route exact path='/datasource' component={Datasource}/>
                 <Route exact path='/datasource/:source_id' component={DatasourceForOrg}/>
             <Route path='/thematic' component={About}/>
-            <Route path='/signin' component={About}/>
+            <Route path='/signin' component={Signin}/>
+                <Route exact path="/sign-in-redirect" component={signInRedirect} />
+            <Route path='/signout' component={Signout} />
+            <Route path='/profile' component={Profile} />
             <Route path='/about' component={About}/>
             
         </Switch>
