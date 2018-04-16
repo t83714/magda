@@ -21,23 +21,16 @@ export default class DapUrlBuilder {
         if (options.apiBaseUrl) {
             this.apiBaseUrl = new URI(options.apiBaseUrl);
         } else {
-            this.apiBaseUrl = this.baseUrl.clone().segment("api");
+            this.apiBaseUrl = this.baseUrl.clone().segment("collections");
         }
     }
 
     public getPackageSearchUrl(): string {
         return this.apiBaseUrl
             .clone()
-            .segment("3/action/package_search")
             .toString();
     }
 
-    public getOrganizationListUrl(): string {
-        return this.apiBaseUrl
-            .clone()
-            .segment("3/action/organization_list")
-            .toString();
-    }
 
     public getPackageShowUrl(id: string): string {
         return this.apiBaseUrl
@@ -50,32 +43,9 @@ export default class DapUrlBuilder {
     public getResourceShowUrl(id: string): string {
         return this.apiBaseUrl
             .clone()
-            .segment("3/action/resource_show")
             .addSearch("id", id)
+            .segment("data")
             .toString();
     }
 
-    public getOrganizationShowUrl(id: string): string {
-        return this.apiBaseUrl
-            .clone()
-            .segment("3/action/organization_show")
-            .addSearch("id", id)
-            .toString();
-    }
-
-    public getOrganizationAutocompleteUrl(query: string): string {
-        return this.apiBaseUrl
-            .clone()
-            .segment("3/action/organization_autocomplete")
-            .addSearch("q", query)
-            .toString();
-    }
-
-    public getDatasetLandingPageUrl(id: string): string {
-        return this.baseUrl
-            .clone()
-            .segment("/")
-            .segment(id)
-            .toString();
-    }
 }

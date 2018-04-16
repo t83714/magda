@@ -6,7 +6,7 @@ import JsonConnector from "@magda/typescript-common/dist/JsonConnector";
 import Registry from "@magda/typescript-common/dist/registry/AuthorizedRegistryClient";
 import * as fs from "fs";
 import * as yargs from "yargs";
-
+//npm run dev -- --config ../deploy/connector-config/csiro-dap.json --userId="00000000-0000-4000-8000-000000000000" --jwtSecret="squirrel"
 const argv = addJwtSecretFromEnvVar(
     yargs
         .config()
@@ -81,12 +81,12 @@ const argv = addJwtSecretFromEnvVar(
 const datasetAspectBuilders: AspectBuilder[] = [
     {
         aspectDefinition: {
-            id: "ckan-dataset",
-            name: "CKAN Dataset",
+            id: "dap-dataset",
+            name: "DAP Dataset",
             jsonSchema: require("@magda/registry-aspects/ckan-dataset.schema.json")
         },
         builderFunctionString: fs.readFileSync(
-            "aspect-templates/ckan-dataset.js",
+            "aspect-templates/dap-dataset.js",
             "utf8"
         )
     },
@@ -137,7 +137,7 @@ const distributionAspectBuilders: AspectBuilder[] = [
             jsonSchema: require("@magda/registry-aspects/ckan-resource.schema.json")
         },
         builderFunctionString: fs.readFileSync(
-            "aspect-templates/ckan-resource.js",
+            "aspect-templates/dap-resource.js",
             "utf8"
         )
     },

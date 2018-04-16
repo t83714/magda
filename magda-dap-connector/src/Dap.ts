@@ -1,6 +1,4 @@
-import AsyncPage, {
-    forEachAsync
-} from "@magda/typescript-common/dist/AsyncPage";
+import AsyncPage from "@magda/typescript-common/dist/AsyncPage";
 import DapUrlBuilder from "./DapUrlBuilder";
 import formatServiceError from "@magda/typescript-common/dist/formatServiceError";
 import { ConnectorSource } from "@magda/typescript-common/dist/JsonConnector";
@@ -57,7 +55,7 @@ export default class Dap implements ConnectorSource {
     public readonly secondsBetweenRetries: number;
     public readonly urlBuilder: DapUrlBuilder;
     private ignoreHarvestSources: string[];
-
+    readonly hasFirstClassOrganizations: boolean = false;
     constructor({
         baseUrl,
         id,
@@ -82,12 +80,54 @@ export default class Dap implements ConnectorSource {
         });
     }
 
+    public getJsonDatasets(): AsyncPage<any[]> {
+        console.log('getJsonDatasets()')
+        const packagePages = this.packageSearch({
+            ignoreHarvestSources: this.ignoreHarvestSources,
+        });
+        console.log(packagePages)
+        return packagePages.map(packagePage => packagePage.dataCollection);
+    }
+
+    public getJsonDataset(id: string): Promise<any> {
+
+        const url = this.urlBuilder.getPackageShowUrl(id);
+        console.log('getJsonDataset()')
+        return new Promise<any>((resolve, reject) => {
+            request(url, { json: true }, (error, response, body) => {
+                if (error) {
+                    reject(error);
+                    return;
+                }
+                resolve(body);
+            });
+        });
+    }
+    public getJsonDistributions(dataset: any): AsyncPage<object[]> {
+        this.requestDistributions(dataset.data).then(res =>{
+            return res.json()
+        }).then(json =>{
+            let distributionArray:any = []
+            for(let index in json.file){
+                let fileObj = json.file[index]
+                fileObj['licence'] = json.file[index].licence
+                fileObj['rights'] = json.file[index].rights
+                fileObj['access'] = json.file[index].access
+                fileObj['self'] = json.file[index].self
+                distributionArray.push(fileObj)
+            }
+            return AsyncPage.single<object[]>(distributionArray || []);
+        }).catch(error => console.log(error))
+        return AsyncPage.single<object[]>( []);
+    }
+
     public packageSearch(options?: {
         ignoreHarvestSources?: string[];
-        title?: string;
-        sort?: string;
-        start?: number;
-        maxResults?: number;
+        q?: string;
+        p?: number;
+        soud?: string;
+        sb?: string;
+        rpp?: number;
     }): AsyncPage<DapPackageSearchResponse> {
         const url = new URI(this.urlBuilder.getPackageSearchUrl());
 
@@ -109,39 +149,39 @@ export default class Dap implements ConnectorSource {
             );
         }
 
-        if (options && options.title && options.title.length > 0) {
-            const encoded = encodeURIComponent('"' + options.title + '"');
-            solrQueries.push(`title:${encoded}`);
-        }
-
         let fqComponent = "";
 
         if (solrQueries.length > 0) {
-            fqComponent = "&fq=" + solrQueries.join("+");
+            fqComponent = "&q=" + solrQueries.join("+");
         }
 
-        if (options && options.sort) {
-            url.addSearch("sort", options.sort);
+        if (options && options.sb) {
+            url.addSearch("sb", options.sb);
+        }
+        if (options && options.soud) {
+            url.addSearch("soud", options.soud);
         }
 
-        const startStart = options.start || 0;
+        const startStart = options.p || 1;
         let startIndex = startStart;
 
         return AsyncPage.create<DapPackageSearchResponse>(previous => {
+            console.log('asyncpage', url, startIndex)
             if (previous) {
-                startIndex += previous.result.results.length;
+                startIndex += previous.dataCollection.length;
                 if (
-                    startIndex >= previous.result.count ||
-                    (options.maxResults &&
-                        startIndex - startStart >= options.maxResults)
+                    startIndex >= previous.totalResults ||
+                    (options.rpp &&
+                        startIndex - startStart >= options.rpp)
                 ) {
                     return undefined;
                 }
             }
 
-            const remaining = options.maxResults
-                ? options.maxResults - (startIndex - startStart)
+            const remaining = options.rpp
+                ? options.rpp - (startIndex - startStart)
                 : undefined;
+    console.log(url, fqComponent, startIndex, remaining)
             return this.requestPackageSearchPage(
                 url,
                 fqComponent,
@@ -151,140 +191,46 @@ export default class Dap implements ConnectorSource {
         });
     }
 
-    public organizationList(): AsyncPage<DapOrganizationListResponse> {
-        const url = new URI(this.urlBuilder.getOrganizationListUrl())
-            .addSearch("all_fields", "true")
-            .addSearch("include_users", "true")
-            .addSearch("include_groups", "true")
-            .addSearch("include_extras", "true")
-            .addSearch("include_tags", "true");
 
-        let startIndex = 0;
-        return AsyncPage.create<DapOrganizationListResponse>(previous => {
-            if (previous) {
-                if (previous.result.length === 0) {
-                    return undefined;
-                }
-                startIndex += previous.result.length;
+    
+    searchDatasetsByTitle(
+        title: string,
+        maxResults: number
+    ): AsyncPage<any[]> {
+        return AsyncPage.single([]);
+    }
+
+
+
+    public getJsonFirstClassOrganizations(): AsyncPage<any[]> {
+        return AsyncPage.single([
+            {
+                blah: "blah"
             }
-
-            return this.requestOrganizationListPage(url, startIndex, previous);
-        });
+        ]);
     }
 
-    public getJsonDatasets(): AsyncPage<any[]> {
-        const packagePages = this.packageSearch({
-            ignoreHarvestSources: this.ignoreHarvestSources,
-            sort: "metadata_created asc"
-        });
-        return packagePages.map(packagePage => packagePage.result.results);
+    getJsonFirstClassOrganization(id: string): Promise<any> {
+        return Promise.resolve();
     }
 
-    public getJsonDataset(id: string): Promise<any> {
-        const url = this.urlBuilder.getPackageShowUrl(id);
-
-        return new Promise<any>((resolve, reject) => {
-            request(url, { json: true }, (error, response, body) => {
-                if (error) {
-                    reject(error);
-                    return;
-                }
-                resolve(body.result);
-            });
-        });
-    }
-
-    public searchDatasetsByTitle(
+    searchFirstClassOrganizationsByTitle(
         title: string,
         maxResults: number
     ): AsyncPage<any[]> {
-        const packagePages = this.packageSearch({
-            ignoreHarvestSources: this.ignoreHarvestSources,
-            title: title,
-            maxResults: maxResults
-        });
-        return packagePages.map(packagePage => packagePage.result.results);
+        return AsyncPage.single([]);
     }
-
-    public getJsonDistributions(dataset: any): AsyncPage<object[]> {
-        return AsyncPage.single<object[]>(dataset.resources || []);
-    }
-
-    public readonly hasFirstClassOrganizations = true;
-
-    public getJsonFirstClassOrganizations(): AsyncPage<object[]> {
-        const organizationPages = this.organizationList();
-        return organizationPages.map(
-            organizationPage => organizationPage.result
-        );
-    }
-
-    public getJsonFirstClassOrganization(id: string): Promise<object> {
-        const url = this.urlBuilder.getOrganizationShowUrl(id);
-
-        return new Promise<any>((resolve, reject) => {
-            request(url, { json: true }, (error, response, body) => {
-                if (error) {
-                    reject(error);
-                    return;
-                }
-                resolve(body.result);
-            });
-        });
-    }
-
-    public searchFirstClassOrganizationsByTitle(
-        title: string,
-        maxResults: number
-    ): AsyncPage<any[]> {
-        // CKAN doesn't have an equivalent of package_search for organizations, so we'll use
-        // organization_autocomplete plus separate requests to look up the complete organization details.
-        const url = new URI(
-            this.urlBuilder.getOrganizationAutocompleteUrl(title)
-        )
-            .addSearch("limit", maxResults)
-            .toString();
-
-        const promise = new Promise<any>((resolve, reject) => {
-            request(url, { json: true }, (error, response, body) => {
-                if (error) {
-                    reject(error);
-                    return;
-                }
-                resolve(body.result);
-            });
-        });
-
-        // CKAN (at least v2.5.2 currently on data.gov.au) doesn't honor the `limit` parameter.  So trim the results here.
-        const trimmedResults = AsyncPage.singlePromise<any[]>(promise).map(
-            organizations => organizations.slice(0, maxResults)
-        );
-
-        const result: any[] = [];
-        return AsyncPage.singlePromise<any[]>(
-            forEachAsync(trimmedResults, 6, (organization: any) => {
-                return this.getJsonFirstClassOrganization(organization.id).then(
-                    organizationDetails => {
-                        result.push(organizationDetails);
-                    }
-                );
-            }).then(() => result)
-        );
-    }
-
+   
     public getJsonDatasetPublisherId(dataset: any): string {
         if (!dataset.organization) {
             return undefined;
         }
         return dataset.organization.id;
     }
-
-    public getJsonDatasetPublisher(dataset: any): Promise<any> {
-        if (!dataset.organization) {
-            return undefined;
-        }
-        return this.getJsonFirstClassOrganization(dataset.organization.id);
+    getJsonDatasetPublisher(dataset: any): Promise<any> {
+        return Promise.resolve();
     }
+
 
     private requestPackageSearchPage(
         url: uri.URI,
@@ -298,8 +244,8 @@ export default class Dap implements ConnectorSource {
                 : this.pageSize;
 
         const pageUrl = url.clone();
-        pageUrl.addSearch("start", startIndex);
-        pageUrl.addSearch("rows", pageSize);
+        pageUrl.addSearch("p", startIndex);
+        pageUrl.addSearch("rpp", pageSize);
 
         const operation = () =>
             new Promise<DapPackageSearchResponse>((resolve, reject) => {
@@ -330,46 +276,21 @@ export default class Dap implements ConnectorSource {
         );
     }
 
-    private requestOrganizationListPage(
+    private requestDistributions(
         url: uri.URI,
-        startIndex: number,
-        previous: DapOrganizationListResponse
-    ): Promise<DapOrganizationListResponse> {
+    ): Promise<DapPackageSearchResponse> {
         const pageUrl = url.clone();
-        pageUrl.addSearch("offset", startIndex);
-        pageUrl.addSearch("limit", this.pageSize);
-
         const operation = () =>
-            new Promise<DapOrganizationListResponse>((resolve, reject) => {
-                console.log("Requesting " + pageUrl.toString());
-                request(
-                    pageUrl.toString(),
-                    { json: true },
-                    (error, response, body) => {
-                        if (error) {
-                            reject(error);
-                            return;
-                        }
-                        console.log("Received@" + startIndex);
-
-                        // Older versions of CKAN ignore the offset and limit parameters and just return all orgs.
-                        // To avoid paging forever in that scenario, we check if this page is identical to the last one
-                        // and ignore the items if so.
-                        if (
-                            previous &&
-                            body &&
-                            previous.result &&
-                            body.result &&
-                            previous.result.length === body.result.length &&
-                            JSON.stringify(previous.result) ===
-                                JSON.stringify(body.result)
-                        ) {
-                            body.result.length = 0;
-                        }
-
-                        resolve(body);
+            new Promise<DapPackageSearchResponse>((resolve, reject) => {
+                const requestUrl = pageUrl.toString();
+                console.log("Requesting " + requestUrl);
+                request(requestUrl, { json: true }, (error, response, body) => {
+                    if (error) {
+                        reject(error);
+                        return;
                     }
-                );
+                    resolve(body);
+                });
             });
 
         return retry(
@@ -386,4 +307,6 @@ export default class Dap implements ConnectorSource {
                 )
         );
     }
+
+
 }
