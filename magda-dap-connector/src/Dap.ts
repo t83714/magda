@@ -85,8 +85,9 @@ export default class Dap implements ConnectorSource {
         const packagePages = this.packageSearch({
             ignoreHarvestSources: this.ignoreHarvestSources,
         });
-        console.log(packagePages)
-        return packagePages.map(packagePage => packagePage.dataCollection);
+        return packagePages.map(packagePage => { 
+            console.log('packagePage:', packagePage)
+            return packagePage.dataCollection});
     }
 
     public getJsonDataset(id: string): Promise<any> {
@@ -104,20 +105,24 @@ export default class Dap implements ConnectorSource {
         });
     }
     public getJsonDistributions(dataset: any): AsyncPage<object[]> {
-        this.requestDistributions(dataset.data).then(res =>{
-            return res.json()
-        }).then(json =>{
-            let distributionArray:any = []
-            for(let index in json.file){
-                let fileObj = json.file[index]
-                fileObj['licence'] = json.file[index].licence
-                fileObj['rights'] = json.file[index].rights
-                fileObj['access'] = json.file[index].access
-                fileObj['self'] = json.file[index].self
-                distributionArray.push(fileObj)
-            }
-            return AsyncPage.single<object[]>(distributionArray || []);
-        }).catch(error => console.log(error))
+        console.log('getJsonDistributions()', dataset)
+        if(dataset.data){
+            this.requestDistributions(dataset.data).then(res =>{
+                return res.json()
+            }).then(json =>{
+                let distributionArray:any = []
+                for(let index in json.file){
+                    let fileObj = json.file[index]
+                    fileObj['licence'] = json.file[index].licence
+                    fileObj['rights'] = json.file[index].rights
+                    fileObj['access'] = json.file[index].access
+                    fileObj['self'] = json.file[index].self
+                    distributionArray.push(fileObj)
+                }
+                return AsyncPage.single<object[]>(distributionArray || []);
+            }).catch(error => console.log(error))
+        }
+        
         return AsyncPage.single<object[]>( []);
     }
 
@@ -162,7 +167,7 @@ export default class Dap implements ConnectorSource {
             url.addSearch("soud", options.soud);
         }
 
-        const startStart = options.p || 1;
+        const startStart = options.p || 2;
         let startIndex = startStart;
 
         return AsyncPage.create<DapPackageSearchResponse>(previous => {
