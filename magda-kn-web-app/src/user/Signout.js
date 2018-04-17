@@ -11,7 +11,7 @@ export default class Signout extends Component {
     }
     componentDidMount(){
         // Use gatway auth/logout api for logout since the magda-authorization-api did not provide a logout api
-        fetch(API.gatwayUrl+"auth/logout", {credentials: "include"}).then(res =>{
+        fetch("/auth/logout", {credentials: "include"}).then(res =>{
             if (res.status === 200){
                 return {'result': 'success'}
             }

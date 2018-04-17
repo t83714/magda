@@ -5,11 +5,10 @@ const registryApiUrl = serverConfig.registryApiBaseUrl || fallbackApiHost + "api
 const authApiUrl = serverConfig.authApiBaseUrl || fallbackApiHost + "api/v0/auth/"
 const API = {
     baseUri     : serverConfig || fallbackApiHost,
-    gatwayUrl   : 'http://localhost:6100/',
-    authApiUrl  : 'http://localhost:6100/api/v0/auth/',
+    authApiUrl  : serverConfig.authApiBaseUrl || fallbackApiHost + "api/v0/auth/",
     datasetCount : registryApiUrl+'records?limit=0&aspect=dcat-dataset-strings',
     organisationsCount: registryApiUrl+'records?limit=0&aspect=organization-details',
-    search       : serverConfig || fallbackApiHost + 'api/v0/search/datasets?query=',
+    search       : serverConfig.searchApiBaseUrl || fallbackApiHost + 'api/v0/search/',
     dataSetDetail: registryApiUrl+'records/',
     dataSetDetail_allAspects: '?aspect=dcat-dataset-strings&optionalAspect=dcat-distribution-strings&optionalAspect=dataset-distributions&optionalAspect=temporal-coverage&dereference=true&optionalAspect=dataset-publisher&optionalAspect=source&optionalAspect=link-status&optionalAspect=dataset-quality-rating&optionalAspect=dataset-linked-data-rating',
     dataSetOrg: registryApiUrl+'records?aspect=organization-details&optionalAspect=source&limit=20000',

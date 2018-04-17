@@ -54,7 +54,7 @@ export default class DataSetListForOrg extends Component {
     getData(query){
         const preparedQuery = this.preparSearchText(query)
         // console.log(query)
-        fetch( API.search  + preparedQuery + '&start=0&limit=2000')
+        fetch( API.search + 'datasets?query=' + preparedQuery + '&start=0&limit=2000')
         .then((response) => {
             if (response.status === 200) {
                 return response.json()

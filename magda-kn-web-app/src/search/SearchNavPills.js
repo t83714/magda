@@ -66,7 +66,7 @@ export default class SearchNavPills extends Component{
     getData(query, start, limit){
         // console.log(query)
         // console.log(API.search)
-        fetch(API.search  + query + '&start='+start + '&limit='+limit)
+        fetch(API.search + 'datasets?query=' + query + '&start='+start + '&limit='+limit)
         .then((response) => {
             if (response.status === 200) {
                 return response.json()

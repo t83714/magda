@@ -33,7 +33,7 @@ export default class AboutOrganization extends Component {
             });
     }
     getDatasetCountByPublisher(publisher){
-        fetch(API.search + '*+by+' + publisher + '&start=0&limit=0')
+        fetch(API.search + 'datasets?query=' + '*+by+' + publisher + '&start=0&limit=0')
                 .then((response) => {
                     if (response.status === 200) {
                         return response.json()
