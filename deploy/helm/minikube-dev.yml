@@ -12,8 +12,9 @@ global:
 gateway:
   auth:
     facebookClientId: "173073926555600"
-    googleClientId: "275237095477-f7ej2gsvbl2alb8bcqcn7r5jk0ur719p.apps.googleusercontent.com"
-    aafClientUri: 'https://rapid.test.aaf.edu.au/jwt/authnrequest/research/IeiWdzrJ47-eSowf3rfLTQ',
+    googleClientId: '1049152486192-csgrnu1jcp9u8qoja90rbn3s5fpot5mh.apps.googleusercontent.com'
+    googleClientSecret: 'BfcVqUZWmD_eUhqiDyVpJ_7w'
+    aafClientUri: 'https://rapid.test.aaf.edu.au/jwt/authnrequest/research/IeiWdzrJ47-eSowf3rfLTQ'
 registry-api:
   skipAuthorization: true
   # Uncomment this if you want to test postgres backups locally - download a private key from
