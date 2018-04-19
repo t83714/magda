@@ -87,7 +87,7 @@ export default class Dap implements ConnectorSource {
         });
         return packagePages.map(packagePage => { 
             console.log('packagePage:', packagePage)
-            return packagePage.dataCollection});
+            if(packagePage) return packagePage.dataCollection});
     }
 
     public getJsonDataset(id: string): Promise<any> {
@@ -105,6 +105,8 @@ export default class Dap implements ConnectorSource {
         });
     }
     public getJsonDistributions(dataset: any): AsyncPage<object[]> {
+        // dataset of dataCollection from DAP /collections api does not contain a 'data' field, which defines the dirstributions 
+        // Herr use an api call (/collections/id) to get the dataset with the field 'data', and then fetch
         if(dataset.data){
             this.requestDistributions(dataset.data).then(res =>{
                 return res.json()
@@ -170,20 +172,17 @@ export default class Dap implements ConnectorSource {
         let startIndex = startStart;
 
         return AsyncPage.create<DapPackageSearchResponse>(previous => {
-            console.log('asyncpage', url, startIndex)
             if (previous ) {
-                
                 if (startIndex*previous.resultsPerPage >= previous.totalResults) {
                     return undefined;
                 }else{
                     startIndex = startIndex + 1;
                 }
             }
-
             const remaining = options.rpp
                 ? startIndex*options.rpp - previous.totalResults
                 : undefined;
-    console.log('packageSearch() asyncPage: ', url, fqComponent, startIndex, remaining)
+    // console.log('packageSearch() asyncPage: ', url, fqComponent, startIndex, remaining)
             return this.requestPackageSearchPage(
                 url,
                 fqComponent,
