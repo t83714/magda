@@ -13,7 +13,7 @@ gateway:
   loadBalancerIP: "35.201.0.106"
   auth:
     facebookClientId: ""
-    googleClientId: "1049152486192-csgrnu1jcp9u8qoja90rbn3s5fpot5mh.apps.googleusercontent.com"
+    googleClientId: "667942079301-49aomsf5l1i8tc5amdot6ck96e1d84c6.apps.googleusercontent.com"
     aafClientUri: "https://rapid.test.aaf.edu.au/jwt/authnrequest/research/IeiWdzrJ47-eSowf3rfLTQ"
   resources:
     requests:
