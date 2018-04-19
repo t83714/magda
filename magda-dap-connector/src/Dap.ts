@@ -105,7 +105,6 @@ export default class Dap implements ConnectorSource {
         });
     }
     public getJsonDistributions(dataset: any): AsyncPage<object[]> {
-        console.log('getJsonDistributions()', dataset)
         if(dataset.data){
             this.requestDistributions(dataset.data).then(res =>{
                 return res.json()
@@ -167,26 +166,24 @@ export default class Dap implements ConnectorSource {
             url.addSearch("soud", options.soud);
         }
 
-        const startStart = options.p || 2;
+        const startStart = options.p || 1;
         let startIndex = startStart;
 
         return AsyncPage.create<DapPackageSearchResponse>(previous => {
             console.log('asyncpage', url, startIndex)
-            if (previous) {
-                startIndex += previous.dataCollection.length;
-                if (
-                    startIndex >= previous.totalResults ||
-                    (options.rpp &&
-                        startIndex - startStart >= options.rpp)
-                ) {
+            if (previous ) {
+                
+                if (startIndex*previous.resultsPerPage >= previous.totalResults) {
                     return undefined;
+                }else{
+                    startIndex = startIndex + 1;
                 }
             }
 
             const remaining = options.rpp
-                ? options.rpp - (startIndex - startStart)
+                ? startIndex*options.rpp - previous.totalResults
                 : undefined;
-    console.log(url, fqComponent, startIndex, remaining)
+    console.log('packageSearch() asyncPage: ', url, fqComponent, startIndex, remaining)
             return this.requestPackageSearchPage(
                 url,
                 fqComponent,
