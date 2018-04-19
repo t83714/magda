@@ -11,6 +11,7 @@ export interface AuthRouterOptions {
     googleClientId: string;
     googleClientSecret: string;
     aafClientUri: string;
+    aafClientSecret: string;
     ckanUrl: string;
     authorizationApi: string;
     externalUrl: string;
