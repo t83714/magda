@@ -95,6 +95,16 @@ const argv = addJwtSecretFromEnvVar(
             type: "string",
             default: process.env.GOOGLE_CLIENT_SECRET
         })
+        .option("aafClientUri", {
+            describe: "The client ID to use for AAF Auth.",
+            type: "string"
+        })
+        .option("aafClientSecret", {
+            describe:
+                "The secret to use for AAF Auth.  This can also be specified with the AAF_CLIENT_SECRET environment variable.",
+            type: "string",
+            default: process.env.AAF_CLIENT_SECRET
+        })
         .options("ckanUrl", {
             describe: "The URL of a CKAN server to use for authentication.",
             type: "string"
@@ -142,6 +152,7 @@ app.use(
         googleClientId: argv.googleClientId || '1049152486192-csgrnu1jcp9u8qoja90rbn3s5fpot5mh.apps.googleusercontent.com',
         googleClientSecret: argv.googleClientSecret || 'BfcVqUZWmD_eUhqiDyVpJ_7w',
         aafClientUri: argv.aafClientUri || 'https://rapid.test.aaf.edu.au/jwt/authnrequest/research/IeiWdzrJ47-eSowf3rfLTQ',
+        aafClientSecret: argv.aafClientSecret || 'BfcVqUZWmD_eUhqiDyVpJ_7w',
         ckanUrl: argv.ckanUrl,
         authorizationApi: argv.authorizationApi,
         externalUrl: argv.externalUrl,

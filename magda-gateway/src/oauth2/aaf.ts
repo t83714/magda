@@ -10,6 +10,7 @@ export interface aafOptions {
     authorizationApi: ApiClient;
     passport: Passport;
     aafClientUri: string;
+    aafClientSecret: string;
     externalUrl: string;
 }
 
@@ -17,6 +18,7 @@ export default function aaf(options: aafOptions) {
     const authorizationApi = options.authorizationApi;
     const passport = options.passport;
     const aafClientUri = options.aafClientUri;
+    const aafClientSecret = options.aafClientSecret;
     const aafSuccessRedirect = `${options.externalUrl}/sign-in-redirect?redirectTo=/`;
     const aafFailRedirect = `${options.externalUrl}/sign-in-redirect?redirectTo=/signin`;
     // const loginBaseUrl = `${externalAuthHome}/login`;
@@ -27,7 +29,7 @@ export default function aaf(options: aafOptions) {
 
     passport.use(new CustomStrategy(
         function(req:any, done:any) {
-            var verified_jwt = jwt.decode(req.body['assertion'], '[([2b&}JLjeq-*4d21"P]s8L^cM4Q-{|')
+            var verified_jwt = jwt.decode(req.body['assertion'], aafClientSecret)
             console.log(verified_jwt)
             var attribute = verified_jwt['https://aaf.edu.au/attributes']
             // Use mail as id because AAF return identites will change for every request though the user is the same
