@@ -7,10 +7,14 @@ global:
     pullPolicy: Always
     tag: "0.0.36"
 gateway:
-  loadBalancerIP: "35.197.191.208"
+  image:
+    repository: "gcr.io/knowledge-network-192205/data61"
+    tag: "latest"
+  loadBalancerIP: "35.201.0.106"
   auth:
-    facebookClientId: "173073926555600"
-    googleClientId: "442398651188-qof8758nahla7tk6pirlls6obdu05vcg.apps.googleusercontent.com"
+    facebookClientId: ""
+    googleClientId: "1049152486192-csgrnu1jcp9u8qoja90rbn3s5fpot5mh.apps.googleusercontent.com"
+    aafClientUri: "https://rapid.test.aaf.edu.au/jwt/authnrequest/research/IeiWdzrJ47-eSowf3rfLTQ"
   resources:
     requests:
       cpu: 50m

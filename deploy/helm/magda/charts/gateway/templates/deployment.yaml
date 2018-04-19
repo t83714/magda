@@ -28,6 +28,9 @@ spec:
 {{- if .Values.auth.googleClientId }}
             "--googleClientId", {{ .Values.auth.googleClientId | quote }},
 {{- end }}
+{{- if .Values.auth.aafClientUri}}
+            "--aafClientUri", {{ .Values.auth.aafClientUri| quote }},
+{{- end }}
             "--proxyRoutesPath", "/etc/routes/routes.json",
             "--web", "http://web",
             "--authorizationApi", "http://authorization-api/v0",
