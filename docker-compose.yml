@@ -1,7 +1,8 @@
 version: "3.2"
 services: 
   kmagda:
-     build: .  
+     #build: .  
+     image: csiroenvinf/magda-builder  
      volumes:
         - type: bind
           source: /var/run/docker.sock
