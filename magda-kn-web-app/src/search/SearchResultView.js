@@ -9,10 +9,12 @@ export default class SearchResultView extends Component{
             return(
                 <div>
                         {this.props.result.dataSets.map((item, key) => {
-                            // console.log(item)
+                            // console.log(item.publisher)
+                            var publisher_identifier = item.publisher? encodeURIComponent(item.publisher.identifier):encodeURIComponent(item.contactPoint.identifier)
                             return (
                                 <div className="search-res-item" key={key}>
-                                    <h3> {key+1}. <Link to={'/dataset/'+item.publisher.identifier + '/'+ item.identifier} > {item.title} </Link></h3>
+                                
+                                    <h3> {key+1}. <Link to={'/dataset/'+ publisher_identifier + '/'+ encodeURIComponent(item.identifier)} > {item.title} </Link></h3>
                                     <div className="search-res-row">
                                         <div><cite>{item.landingPage}</cite></div>
                                         <span className="search-res-text">{item.description.substring(0,200)}</span>

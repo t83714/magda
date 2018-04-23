@@ -1,7 +1,5 @@
 import React, {Component} from 'react'
 import { Redirect } from "react-router-dom";
-
-import API from '../config'
 import './User.css'
 
 export default class Signout extends Component {

@@ -39,7 +39,7 @@ export default class SearchFrom extends Component {
                     <img className="img-responsive img-rounded" src="/img/knowledge_graph1.png" width="200px" alt="" />
                 </Col>
                 <Col md={ 9} >
-                    <form role="search" onSubmit={this.handleSubmit}>
+                    {/* <form role="search" onSubmit={this.handleSubmit}> */}
                         <div className="search-bar input-group">
                             <input type="text" className="search-query form-control" placeholder="Search for data or geospatial features... e.g. Namoi" 
                                 name="q" 
@@ -47,12 +47,12 @@ export default class SearchFrom extends Component {
                                 onChange={this.searchTextChange}
                             />
                             <span className="input-group-btn">
-                            <button className="btn btn-danger" type="submit" >
+                            <button className="btn btn-danger" type="submit" onClick={this.handleSubmit}>
                                 <span className=" glyphicon glyphicon-search"></span>
                             </button>
                             </span>
                         </div>
-                    </form>
+                    {/* </form> */}
                 </Col>
             </Row>
         )

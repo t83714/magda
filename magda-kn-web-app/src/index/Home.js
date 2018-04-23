@@ -13,10 +13,15 @@ export default class Home extends Component {
   render() {
     return (
       <Grid bsClass="home">
+      <br/>
+      <br/>
+      <br/>
         <SearchForm {...this.props} />
         <hr/>
         <Row>
           <Col xs={12}>
+          <br/>
+          <br/>
             <GraphStats />
           </Col>
         </Row>

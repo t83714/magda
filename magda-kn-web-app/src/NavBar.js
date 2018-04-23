@@ -1,5 +1,5 @@
 import React, {Component} from 'react'
-import { Nav, Navbar, NavItem, NavDropdown,Glyphicon, ButtonToolbar, Dropdown, MenuItem, Image } from 'react-bootstrap'
+import { Nav, Navbar, NavItem, NavDropdown, MenuItem, Image } from 'react-bootstrap'
 import { LinkContainer } from 'react-router-bootstrap'
 import API from './config'
 import './NavBar.css'
