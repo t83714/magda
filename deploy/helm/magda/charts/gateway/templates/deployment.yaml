@@ -80,7 +80,7 @@ spec:
               key: google-client-secret
               optional: true
 {{- end }}
-{{- if .Values.auth.aafClientId }}
+{{- if .Values.auth.aafClientUri }}
         - name: AAF_CLIENT_SECRET
           valueFrom:
             secretKeyRef:
