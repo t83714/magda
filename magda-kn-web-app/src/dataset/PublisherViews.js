@@ -100,11 +100,11 @@ export default class PublisherViews extends Component {
         const lineView = display.filter((value, index) => index >=this.state.currentPage*this.perPage && index < this.state.currentPage*this.perPage+10).map((value, key) => {
             return (
                 <div className="media" key={key}  >
-                    <div className="media-left">
+                    {/* <div className="media-left">
                         <img className="small-img" src={value.aspects['organization-details'].imageUrl ? value.aspects['organization-details'].imageUrl: '/img/emptyImg.png' } alt="logo" />
-                    </div>
+                    </div> */}
                     <div className="media-body">
-                        <h4 className="media-heading">{value.name}</h4>
+                        <Link to={'/organisation/'+value.id}><h3 className="media-heading org-name">{value.name}</h3></Link>
                         <p className="card-text">{value.aspects['organization-details'].description}</p>
                         <ButtonToolbar> 
                             <Link to={'/dataset/'+value.id} className="btn alert-info pull-right">View Dataset</Link> &nbsp;  &nbsp;
@@ -118,9 +118,9 @@ export default class PublisherViews extends Component {
             return (
                 <div className="col-xs-3" key={key}>
                 <div className="thumbnail"  >
-                    <img className="" src={value.aspects['organization-details'].imageUrl ? value.aspects['organization-details'].imageUrl: '/img/emptyImg.png' } alt="logo" />
+                    {/* <img className="" src={value.aspects['organization-details'].imageUrl ? value.aspects['organization-details'].imageUrl: '/img/emptyImg.png' } alt="logo" /> */}
                     <div className="caption">
-                        <h4 className="org-name">{value.name}</h4>
+                    <Link to={'/organisation/'+value.id}><h4 className="org-name">{value.name}</h4></Link>
                         {/* <p className="card-text">{value.aspects['organization-details'].description}</p> */}
                         <ButtonToolbar> 
                             <Link to={'/dataset/'+value.id} className="btn alert-info pull-right">View Dataset</Link> &nbsp;  &nbsp;

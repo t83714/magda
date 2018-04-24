@@ -1,32 +1,27 @@
 import React, {Component} from 'react'
+import { Nav, Navbar, NavItem, NavDropdown, MenuItem, Image } from 'react-bootstrap'
 import { Redirect } from "react-router-dom";
 import './User.css'
 
 export default class Signout extends Component {
     constructor(props){
         super(props)
-        this.state = {logout: ''}
     }
-    componentDidMount(){
+    logout(){
         // Use gatway auth/logout api for logout since the magda-authorization-api did not provide a logout api
         fetch("/auth/logout", {credentials: "include"}).then(res =>{
             if (res.status === 200){
-                return {'result': 'success'}
+                this.props.resetUser()
+                return(<Redirect to='/' />)
             }
-        }).then(re => {
-            if(re.result === 'success')
-                this.setState({logout: 'success'})
         }).catch(error => console.log(error))
     }
+
     render(){
-        if(this.state.logout==='success'){
-            // window.location.reload(true)
-            window.localStorage.clear()
-            return (<Redirect to='/' />)
-        }else{
-            return (<p className="padding-top">Logout ...</p>)
-        }
-       
+        return(
+            <MenuItem onClick={() =>this.logout()}>
+            Sign Out
+            </MenuItem>
+        )       
     }
-      
 }
