@@ -2,7 +2,7 @@
     "type": "magda-dap-connector",
     "id": "dap",
     "name": "CSIRO DAP",
-    "sourceUrl": "http://ws.data.csiro.au/",
+    "sourceUrl": "https://data.csiro.au/dap/ws/v2/",
     "pageSize": 100,
     "schedule": "30 3 */3 * *"
 }
