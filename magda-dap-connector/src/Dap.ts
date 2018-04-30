@@ -87,7 +87,9 @@ export default class Dap implements ConnectorSource {
         });
         return packagePages.map(packagePage => { 
             console.log('packagePage:', packagePage)
-            if(packagePage) return packagePage.dataCollection});
+            if(packagePage) 
+				return packagePage.dataCollections
+		});
     }
 
     public getJsonDataset(id: string): Promise<any> {
@@ -156,10 +158,11 @@ export default class Dap implements ConnectorSource {
         }
 
         let fqComponent = "";
-
+        console.log("Here!");
         if (solrQueries.length > 0) {
             fqComponent = "&q=" + solrQueries.join("+");
         }
+        console.log("Here again!");
 
         if (options && options.sb) {
             url.addSearch("sb", options.sb);
