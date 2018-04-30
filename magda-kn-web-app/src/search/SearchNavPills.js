@@ -66,7 +66,7 @@ export default class SearchNavPills extends Component{
     getData(query, start, limit){
         // console.log(query)
         // console.log(API.search)
-        fetch(API.search  + query + '&start='+start + '&limit='+limit)
+        fetch(API.search + 'datasets?query=' + query + '&start='+start + '&limit='+limit)
         .then((response) => {
             if (response.status === 200) {
                 return response.json()
@@ -76,15 +76,15 @@ export default class SearchNavPills extends Component{
             // console.log(json)
             this.setState({searchResult: json})
             // Calculate date range 
-            const year = json.facets[1].options
-            for(let key in year){
-                this.dateRange = this.dateRange.add(year[key].lowerBound)
-                this.dateRange = this.dateRange.add(year[key].upperBound)
-            }
-            this.setState({
-                min: this.dateRange.min(), 
-                max: this.dateRange.max()
-            })
+            // const year = json.facets[1].options
+            // for(let key in year){
+            //     this.dateRange = this.dateRange.add(year[key].lowerBound)
+            //     this.dateRange = this.dateRange.add(year[key].upperBound)
+            // }
+            // this.setState({
+            //     min: this.dateRange.min(), 
+            //     max: this.dateRange.max()
+            // })
         }).catch((error) => {
           console.log('error on .catch', error);
         });
@@ -155,7 +155,65 @@ export default class SearchNavPills extends Component{
 
         return (
             <div className="paddomg-top">
+                
+                <i> { this.state.searchResult.hitCount } datasets found
+                    {this.state.searchResult.query.dateFrom ? ' from date '+this.state.searchResult.query.dateFrom.substring(0,10) : '' }
+                    { this.state.searchResult.query.dateTo ? ' from date '+this.state.searchResult.query.dateTo.substring(0,10) : '' }
+                </i>
                 <hr/>
+            
+                {console.log(this.state.searchResult)}
+                <Grid>
+                    <Row>
+                        <Col md={8}>
+                            <SearchResultView result={this.state.searchResult}/>
+                        </Col>
+                        <Col md={4}>
+                            <div className="right-filter">
+                                <Row>
+                                <h4 className="col-xs-8">Top 10 {this.state.searchResult.facets[0].id} </h4>
+                                <span  className="col-xs-4"><Button bsStyle="info" className="pull-right" onClick={this.filterButtonSubmit}> Refine Result </Button></span>
+                                </Row>
+                                <hr />
+                                <ul className="cust-list">
+                                {this.state.searchResult.facets[0].options.map((value, key) => {
+                                    return (<li className="checkbox"  key={key}> 
+                                            {this.createPublisherCheckbox(value.value, value.hitCount)}
+                                            </li>)
+                                })}
+                                </ul>
+                                <br />
+                                <h4>Top 10 {this.state.searchResult.facets[1].id}</h4>
+                                <hr />
+                                <ul className="cust-list">
+                                {this.state.searchResult.facets[1].options.map((value, key) => {
+                                    return (<li className="checkbox"  key={key}> 
+                                                {this.createFormatCheckbox(value.value, value.hitCount)}
+                                            </li>)
+                                })}
+                                </ul>
+                                <br />
+
+                                {/* <h4>Date Range</h4>
+                                <div className="slider">
+                                <i>The Data Range is retrieved from datasets</i>
+                                    <Range step={1} 
+                                        defaultValue={[this.min, this.max]} 
+                                        min={this.state.min} 
+                                        max={this.state.max}
+                                        onAfterChange={this.onAfterChange}
+                                        dots={false}
+                                        tipFormatter={value => `${value}`}
+                                        allowCross={false}  />
+                                    <i>{this.state.min}</i><i className="pull-right">{this.state.max} </i>
+                                </div> */}
+                                <hr />
+                                <Button bsStyle="info" className="pull-right" onClick={this.filterButtonSubmit}> Refine Result </Button> 
+                            </div>
+                        </Col>
+                    </Row>
+                
+                </Grid>
                 <nav aria-label="Page navigation">
                     <ul className="pagination">
                         {this.state.pageOffset>0 ? 
@@ -187,67 +245,8 @@ export default class SearchNavPills extends Component{
                         }
                     </ul>
                 </nav>
-
-                <i> { this.state.searchResult.hitCount } datasets found
-                    {this.state.searchResult.query.dateFrom ? ' from date '+this.state.searchResult.query.dateFrom.substring(0,10) : '' }
-                    { this.state.searchResult.query.dateTo ? ' from date '+this.state.searchResult.query.dateTo.substring(0,10) : '' }
-                </i>
-                <hr/>
-                {console.log(this.state.searchResult)}
-                <Grid>
-                    <Row>
-                        <Col md={8}>
-                            <SearchResultView result={this.state.searchResult}/>
-                        </Col>
-                        <Col md={4}>
-                            <div className="right-filter">
-                                <Row>
-                                <h4 className="col-xs-8">Top 10 {this.state.searchResult.facets[0].id} </h4>
-                                <span  className="col-xs-4"><Button bsStyle="info" className="pull-right" onClick={this.filterButtonSubmit}> Refine Result </Button></span>
-                                </Row>
-                                <hr />
-                                <ul className="cust-list">
-                                {this.state.searchResult.facets[0].options.map((value, key) => {
-                                    return (<li className="checkbox"  key={key}> 
-                                            {this.createPublisherCheckbox(value.value, value.hitCount)}
-                                            </li>)
-                                })}
-                                </ul>
-                                <br />
-
-                                <h4>Top 10 {this.state.searchResult.facets[2].id}</h4>
-                                <hr />
-                                <ul className="cust-list">
-                                {this.state.searchResult.facets[2].options.map((value, key) => {
-                                    return (<li className="checkbox"  key={key}> 
-                                                {this.createFormatCheckbox(value.value, value.hitCount)}
-                                            </li>)
-                                })}
-                                </ul>
-                                <br />
-
-                                <h4>Date Range</h4>
-                                <div className="slider">
-                                <i>The Data Range is retrieved from datasets</i>
-                                {/* <i>{this.min}</i>range<i className="pull-right">{this.max} </i> */}
-                                    <Range step={1} 
-                                        defaultValue={[this.min, this.max]} 
-                                        min={this.state.min} 
-                                        max={this.state.max}
-                                        onAfterChange={this.onAfterChange}
-                                        dots={false}
-                                        tipFormatter={value => `${value}`}
-                                        allowCross={false}  />
-                                    <i>{this.state.min}</i><i className="pull-right">{this.state.max} </i>
-                                </div>
-                                <hr />
-                                <Button bsStyle="info" className="pull-right" onClick={this.filterButtonSubmit}> Refine Result </Button>
-                            </div>
-                        </Col>
-                    </Row>
-                
-                </Grid>
-
+                <br/>
+                <br/>
             </div>
         )
     }

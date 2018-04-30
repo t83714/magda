@@ -11,6 +11,7 @@ export interface AuthRouterOptions {
     googleClientId: string;
     googleClientSecret: string;
     aafClientUri: string;
+    aafClientSecret: string;
     ckanUrl: string;
     authorizationApi: string;
     externalUrl: string;
@@ -70,6 +71,7 @@ export default function createAuthRouter(options: AuthRouterOptions): Router {
                 authorizationApi: authApi,
                 passport: passport,
                 aafClientUri: options.aafClientUri,
+                aafClientSecret: options.aafClientSecret,
                 externalUrl: options.externalUrl
             })
         }

@@ -40,6 +40,10 @@ li{
     padding: 20px 0px 20px 0px;
     
 }
+.org-name{
+    color:#333;
+    /* font-weight: bold; */
+}
 .label{
     margin-left: 5px;
 }

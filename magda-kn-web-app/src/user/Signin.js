@@ -1,7 +1,5 @@
 import React, {Component} from 'react'
-import {Link} from 'react-router-dom'
 
-import API from '../config'
 import './User.css'
 
 export default class Signin extends Component {
@@ -48,7 +46,7 @@ export default class Signin extends Component {
                             </a>
 
                         </div>
-                        <div className="at-oauth">
+                        {/* <div className="at-oauth">
                             <a href={"/auth/login/facebook?redirect=" + encodeURIComponent(baseRedirectUrl+'/sign-in-redirect?redirectTo=/')}>
                             <button className="btn at-social-btn" id="at-facebook" name="facebook">
                                 <i className="fa fa-facebook"></i>
@@ -56,13 +54,14 @@ export default class Signin extends Component {
                             </button>
                             </a>
 
-                        </div>
-                       
+                        </div> */}
+                        <br/>
                         <div className="at-sep">
+                       
                             <strong>OR</strong>
                         </div>
-
-                        <div className="at-pwd-form">
+<div className="disable">
+                        <div className="at-pwd-form ">
                             <form role="form" id="at-pwd-form" noValidate="" action="#" method="POST">
                                 <fieldset>
 
@@ -114,7 +113,15 @@ export default class Signin extends Component {
                                         <a href="/sign-up" id="at-signUp" className="at-link at-signup">Register</a>
 
                                     </p>
-                                </div>
+                                </div> 
+</div>
+                                <div className="alert alert-info">
+                                    <p>
+                                        Knowledge network local register and sign in will be provided later
+                                        {/* <a href="/sign-up" id="at-signUp" className="at-link at-signup">Register</a> */}
+
+                                    </p>
+                                </div> 
 
                             </div>
 
