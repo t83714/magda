@@ -43,7 +43,7 @@
     "config": {
         "registryUrl": "http://localhost:6101/v0",
         "docker": {
-            "name": "data61/magda-ckan-connector",
+            "name": "data61/magda-dap-connector",
             "include": "node_modules aspect-templates dist Dockerfile"
         },
         "jwtSecret": "squirrel",
