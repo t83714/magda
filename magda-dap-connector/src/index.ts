@@ -83,7 +83,7 @@ const datasetAspectBuilders: AspectBuilder[] = [
         aspectDefinition: {
             id: "dap-dataset",
             name: "DAP Dataset",
-            jsonSchema: require("@magda/registry-aspects/ckan-dataset.schema.json")
+            jsonSchema: require("@magda/registry-aspects/dap-dataset.schema.json")
         },
         builderFunctionString: fs.readFileSync(
             "aspect-templates/dap-dataset.js",
@@ -135,6 +135,17 @@ const distributionAspectBuilders: AspectBuilder[] = [
             id: "ckan-resource",
             name: "CKAN Resource",
             jsonSchema: require("@magda/registry-aspects/ckan-resource.schema.json")
+        },
+        builderFunctionString: fs.readFileSync(
+            "aspect-templates/dap-resource.js",
+            "utf8"
+        )
+    },
+	{
+        aspectDefinition: {
+            id: "dap-resource",
+            name: "CKAN Resource",
+            jsonSchema: require("@magda/registry-aspects/dap-resource.schema.json")
         },
         builderFunctionString: fs.readFileSync(
             "aspect-templates/dap-resource.js",
