@@ -36,6 +36,7 @@ export default class DataSetDetail extends Component {
             } else console.log("Get data error ");
         })
         .then((json) => {
+            // console.log(json)
             this.setState({dataset: json})
 
         }).catch((error) => {
@@ -59,8 +60,8 @@ export default class DataSetDetail extends Component {
                     <Table striped condensed hover>
                         <tbody>
                             <tr>
-                                <td>Organisation:</td>
-                                <td>{this.state.dataset.aspects['dataset-publisher'].publisher.name}</td>
+                                <td>Publisher:</td>
+                                <td>{this.state.dataset.aspects['dataset-publisher'] ? this.state.dataset.aspects['dataset-publisher'].publisher.name : ''}</td>
                             </tr>
 
                             <tr>
@@ -97,7 +98,7 @@ export default class DataSetDetail extends Component {
                                 <td>
                                     {this.state.dataset.aspects['dcat-dataset-strings'].keywords.map((ele, key)=>{
                                        return (
-                                        <OverlayTrigger placement="top" overlay={tooltip}>
+                                        <OverlayTrigger placement="top" overlay={tooltip} key={key}>
                                             <Label bsStyle="primary"><Link to={`/search/${ele}`}> {ele}</Link> </Label>
                                         </OverlayTrigger>
                                        )

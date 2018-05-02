@@ -1,3 +1,7 @@
+.disable{
+	pointer-events:none;
+}
+
 .padding-top{
     padding-top:65px;
 }
