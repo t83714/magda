@@ -17,7 +17,7 @@ return {
         end: dataset.dataEndDate
     },
     themes: dataset.fieldOfResearch || [],
-    keywords: dataset.keywords.splite(';'),
+    keywords: [],
     contactPoint: '',
     landingPage: dataset.landingPage.href
 };
