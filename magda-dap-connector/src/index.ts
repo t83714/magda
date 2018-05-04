@@ -130,21 +130,21 @@ const datasetAspectBuilders: AspectBuilder[] = [
 ];
 
 const distributionAspectBuilders: AspectBuilder[] = [
-    {
-        aspectDefinition: {
-            id: "ckan-resource",
-            name: "CKAN Resource",
-            jsonSchema: require("@magda/registry-aspects/ckan-resource.schema.json")
-        },
-        builderFunctionString: fs.readFileSync(
-            "aspect-templates/dap-resource.js",
-            "utf8"
-        )
-    },
+    // {
+    //     aspectDefinition: {
+    //         id: "ckan-resource",
+    //         name: "CKAN Resource",
+    //         jsonSchema: require("@magda/registry-aspects/ckan-resource.schema.json")
+    //     },
+    //     builderFunctionString: fs.readFileSync(
+    //         "aspect-templates/dap-resource.js",
+    //         "utf8"
+    //     )
+    // },
 	{
         aspectDefinition: {
             id: "dap-resource",
-            name: "CKAN Resource",
+            name: "DAP Resource",
             jsonSchema: require("@magda/registry-aspects/dap-resource.schema.json")
         },
         builderFunctionString: fs.readFileSync(
@@ -201,7 +201,7 @@ const organizationAspectBuilders: AspectBuilder[] = [
     }
 ];
 
-const ckan = new Dap({
+const dap = new Dap({
     baseUrl: argv.sourceUrl,
     id: argv.id,
     name: argv.name,
@@ -230,7 +230,7 @@ const transformerOptions = {
 const transformer = createTransformer(transformerOptions);
 
 const connector = new JsonConnector({
-    source: ckan,
+    source: dap,
     transformer: transformer,
     registry: registry
 });

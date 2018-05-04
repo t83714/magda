@@ -80,16 +80,15 @@ export default class Dap implements ConnectorSource {
         });
     }
 
-    public getJsonDatasets(): AsyncPage<any[]> {
+     public getJsonDatasets(): AsyncPage<any[]> {
         console.log('getJsonDatasets()')
         const packagePages = this.packageSearch({
             ignoreHarvestSources: this.ignoreHarvestSources,
         });
-        return packagePages.map(packagePage => { 
-            console.log('packagePage:', packagePage)
-            if(packagePage) 
-				return packagePage.dataCollections
-		});
+        return packagePages.map((packagePage) => {
+            // console.log(packagePage)
+            return packagePage.dataCollections
+        })
     }
 
     public getJsonDataset(id: string): Promise<any> {
@@ -235,7 +234,6 @@ export default class Dap implements ConnectorSource {
         return Promise.resolve();
     }
 
-
     private requestPackageSearchPage(
         url: uri.URI,
         fqComponent: string,
@@ -261,7 +259,24 @@ export default class Dap implements ConnectorSource {
                         return;
                     }
                     console.log("Received@" + startIndex);
-                    resolve(body);
+                    Promise.all(body.dataCollections.map((simpleData:any) =>{
+                        // console.log('#### simple data: ', simpleData)
+                        const url = this.urlBuilder.getPackageShowUrl(simpleData.id.identifier); 
+                        return new Promise<any>((resolve, reject) => {
+                            request(url, { json: true }, (error, response, detail) => {
+                                if (error) {
+                                    reject(error);
+                                    return;
+                                }
+                                resolve(detail);
+                            });
+                        });
+                    })).then((values) => {
+                        body['dataCollections'] = values
+                        // console.log('>>>> length: ',body.dataCollections.length, body.dataCollections[4])
+                        resolve(body)
+                    })
+                    // resolve(body);
                 });
             });
 
