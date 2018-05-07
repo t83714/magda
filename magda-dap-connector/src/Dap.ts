@@ -30,6 +30,9 @@ export interface DapPackageSearchResult {
     results: DapDataset[];
     [propName: string]: any;
 }
+export interface DapDistribution{
+    distributions: object[]
+}
 
 export interface DapOrganizationListResponse {
     result: DapOrganization[];
@@ -85,9 +88,12 @@ export default class Dap implements ConnectorSource {
         const packagePages = this.packageSearch({
             ignoreHarvestSources: this.ignoreHarvestSources,
         });
-        return packagePages.map((packagePage) => {
-            // console.log(packagePage)
-            return packagePage.dataCollections
+        return packagePages.map(packagePage => {
+            if(packagePage){
+                console.log('packagePage -> detailDataCollections', packagePage.detailDataCollections.length)
+                // return packagePage.dataCollections
+                return packagePage.detailDataCollections
+            }
         })
     }
 
@@ -105,27 +111,13 @@ export default class Dap implements ConnectorSource {
             });
         });
     }
-    public getJsonDistributions(dataset: any): AsyncPage<object[]> {
+    public getJsonDistributions(dataset: any): AsyncPage<DapDistribution[]> {
         // dataset of dataCollection from DAP /collections api does not contain a 'data' field, which defines the dirstributions 
         // Herr use an api call (/collections/id) to get the dataset with the field 'data', and then fetch
         if(dataset.data){
-            this.requestDistributions(dataset.data).then(res =>{
-                return res.json()
-            }).then(json =>{
-                let distributionArray:any = []
-                for(let index in json.file){
-                    let fileObj = json.file[index]
-                    fileObj['licence'] = json.file[index].licence
-                    fileObj['rights'] = json.file[index].rights
-                    fileObj['access'] = json.file[index].access
-                    fileObj['self'] = json.file[index].self
-                    distributionArray.push(fileObj)
-                }
-                return AsyncPage.single<object[]>(distributionArray || []);
-            }).catch(error => console.log(error))
+            return AsyncPage.singlePromise<DapDistribution[]>(this.requestDistributions(dataset.data))
         }
-        
-        return AsyncPage.single<object[]>( []);
+        return AsyncPage.single<DapDistribution[]>( []);
     }
 
     public packageSearch(options?: {
@@ -184,7 +176,6 @@ export default class Dap implements ConnectorSource {
             const remaining = options.rpp
                 ? startIndex*options.rpp - previous.totalResults
                 : undefined;
-    // console.log('packageSearch() asyncPage: ', url, fqComponent, startIndex, remaining)
             return this.requestPackageSearchPage(
                 url,
                 fqComponent,
@@ -193,8 +184,6 @@ export default class Dap implements ConnectorSource {
             );
         });
     }
-
-
     
     searchDatasetsByTitle(
         title: string,
@@ -202,8 +191,6 @@ export default class Dap implements ConnectorSource {
     ): AsyncPage<any[]> {
         return AsyncPage.single([]);
     }
-
-
 
     public getJsonFirstClassOrganizations(): AsyncPage<any[]> {
         return AsyncPage.single([
@@ -253,33 +240,31 @@ export default class Dap implements ConnectorSource {
             new Promise<DapPackageSearchResponse>((resolve, reject) => {
                 const requestUrl = pageUrl.toString() + fqComponent;
                 console.log("Requesting " + requestUrl);
-                request(requestUrl, { json: true }, (error, response, body) => {
+                request(requestUrl, { json: true }, async (error, response, body) => {
                     if (error) {
                         reject(error);
                         return;
                     }
                     console.log("Received@" + startIndex);
-                    Promise.all(body.dataCollections.map((simpleData:any) =>{
-                        // console.log('#### simple data: ', simpleData)
+                    await Promise.all(body.dataCollections.map((simpleData:any) =>{
                         const url = this.urlBuilder.getPackageShowUrl(simpleData.id.identifier); 
-                        return new Promise<any>((resolve, reject) => {
+                        return new Promise<any>((resolve2, reject2) => {
                             request(url, { json: true }, (error, response, detail) => {
                                 if (error) {
-                                    reject(error);
+                                    reject2(error);
                                     return;
                                 }
-                                resolve(detail);
+                                resolve2(detail);
                             });
                         });
                     })).then((values) => {
-                        body['dataCollections'] = values
-                        // console.log('>>>> length: ',body.dataCollections.length, body.dataCollections[4])
-                        resolve(body)
-                    })
-                    // resolve(body);
-                });
-            });
-
+                        body['detailDataCollections'] = values
+                    }).catch(error => console.log(error))
+                    console.log('>> resolve ')
+                    await resolve(body)
+                })
+            })
+        
         return retry(
             operation,
             this.secondsBetweenRetries,
@@ -296,23 +281,32 @@ export default class Dap implements ConnectorSource {
     }
 
     private requestDistributions(
-        url: uri.URI,
-    ): Promise<DapPackageSearchResponse> {
-        const pageUrl = url.clone();
-        const operation = () =>
-            new Promise<DapPackageSearchResponse>((resolve, reject) => {
-                const requestUrl = pageUrl.toString();
-                console.log("Requesting " + requestUrl);
+        url: string,
+    ): Promise<DapDistribution[]> {
+        const pageUrl = url
+        const operation =  () =>
+            new  Promise<DapDistribution[]>( async (resolve, reject) => {
+                const requestUrl = pageUrl
                 request(requestUrl, { json: true }, (error, response, body) => {
                     if (error) {
                         reject(error);
                         return;
                     }
-                    resolve(body);
+                    let distributionArray:any = []
+                    for(let index in body.file){
+                        let fileObj = body.file[index]
+                        fileObj['licence'] = body.licence
+                        fileObj['rights'] = body.rights
+                        fileObj['access'] = body.access
+                        fileObj['self'] = body.self
+                        distributionArray.push(fileObj)
+                    }
+                
+                    resolve(distributionArray);
                 });
             });
 
-        return retry(
+        return  retry(
             operation,
             this.secondsBetweenRetries,
             this.maxRetries,
