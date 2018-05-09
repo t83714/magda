@@ -149,11 +149,9 @@ export default class Dap implements ConnectorSource {
         }
 
         let fqComponent = "";
-        console.log("Here!");
         if (solrQueries.length > 0) {
             fqComponent = "&q=" + solrQueries.join("+");
         }
-        console.log("Here again!");
 
         if (options && options.sb) {
             url.addSearch("sb", options.sb);
@@ -239,7 +237,7 @@ export default class Dap implements ConnectorSource {
         const operation = () =>
             new Promise<DapPackageSearchResponse>((resolve, reject) => {
                 const requestUrl = pageUrl.toString() + fqComponent;
-                console.log("Requesting " + requestUrl);
+                // console.log("Requesting " + requestUrl);
                 request(requestUrl, { json: true }, async (error, response, body) => {
                     if (error) {
                         reject(error);
@@ -260,7 +258,6 @@ export default class Dap implements ConnectorSource {
                     })).then((values) => {
                         body['detailDataCollections'] = values
                     }).catch(error => console.log(error))
-                    console.log('>> resolve ')
                     await resolve(body)
                 })
             })

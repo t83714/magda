@@ -1,3 +1,82 @@
+# Dap Connector
+>How to implement this Dap connector using the magda components
+
+
+## How the connector works
+Because the Dap Dataset supports json data view, magda provides a json data format based connector and there are a few of connectors were implemented using the `JsonConnector` (such as ckan connector), using the magda `JsonConnector` to create the Dap connector is an practical solution. 
+
+How Dap connector works
+	
+1. The	`index.ts` in magda-dap-connector creates a `JsonConnector` and run it. 
+1. `new JsonConnector` requires three combined options: source: dap, transformer, and registry. 
+    
+   - Source `Dap.ts` defines data retrieve and response rule, such as return the dataset part or distribution parts. 
+   - Transformer `DapTransformer.ts` defines the way of returning the key attributes. For Dap connector, because the organisation information is fixed, only the id and name of dataset and distribution are required.  
+     > Example: getIdFromJsonOrganization() returns a ConnectorRecordId created with the first param as jsonOrganization.id.identifier, which follows the data structure in Dap dataset. 
+    	
+        Besides modifying `DapTransformer.ts`, creating transformer also requires quite a lot of options defined as `transformerOptions`. `datasetAspectBuilders`, `distributionAspectBuilders`, and `organizationAspectBuilders` use files in `aspect-templates` to specifie the transform rules between Dap data structure to dcat. 
+    
+    - Registry defines registry url, userid and jwtSecret for Registry connection purpose. 
+1. The `run()` will call the `async run()` in `JsonConnector.ts`, which will call its internal pre-defined methods to do the jobs of creating dataset, distributions and organization aspects, and combining the results. 
+
+
+
+## Implement Dap.ts
+1. `class Dap implements ConnectorSource ( the interface located at magda-typescript-common/src/JsonConnector.ts)`, nine functions should be implemented. But because the publisher and organization of CSIRO Dap were fixed, a few of six functions could just leave it as it in Ckan.ts. 
+
+    1. `getJsonDatasets(): AsyncPage<any[]>;` - Get all of the datasets as pages of objects 
+    1. ` getJsonDistributions(dataset: any): AsyncPage<any[]>; ` - Gets the distributions of a given dataset.
+    1. ` getJsonDatasetPublisherId(dataset: any): string;` - Gets the ID of the publisher of this dataset. 
+     * is false because non-first-class organizations do not have IDs.dataset given its ID.  ~~
+    Following functions are no needed to implement for Dap connector.
+    1. ~~`getJsonDataset(id: string): Promise<any>;`~~ 
+    1. ~~`searchDatasetsByTitle(...)`~~
+    1. ~~`getJsonFirstClassOrganizations()`~~
+    1. ~~`getJsonFirstClassOrganization(id: string)`~~
+    1. ~~`searchFirstClassOrganizationsByTitle(...)`~~
+    1. ~~`getJsonDatasetPublisher(...)`~~
+1. `getJsonDatasets(): AsyncPage<any[]>` function returns an AsyncPage, which carries all datasets collected recursivly from a given dataset such as `https://data.csiro.au/dap/ws/v2/collections.json`. It uses the `packageSearch(...) ` function to create a AsyncPage object as an entry point. 
+    
+1. `getJsonDatasets()` will call `packageSearch()`, and `packageSearch()` will return a AsyncPage with `requestPackageSearchPage()` as its requestNextPage function, which performs specific data retrieving job. 
+1. For Ckan data, `requestPackageSearchPage()` could return datasets including all attributes such as distribution. However, for Dap, this function could only return datasets with only some key information, but miss some important attributes which will used to collect distributions later. 
+	- In order to solve this issue, some async/wait code is added at `request()` callback function, which will use the returned datasets' identifiers to query detailed dataset again. 
+	- This sub-process uses `async/await` keywords and `Promise.all()` method to ensure the `request() resove()` method invoked only after all sub-processes completed.  
+	- At the `Promise.all().then()` callback, these detailed datasets are combined together and attached to the datasets with a new attribute name 'detailDataCollections'. 
+1. Different with Ckan, the search result of Dap doesn't include the data distributions. The `getJsonDistributions()` and `requestDistributions()` are also been rewritten to retrieve distributions using the uri specified in dataset.data attribute.
+1. Because of the constrain of interface, `getJsonDistributions()` will use a returned Promise of distribution dataset array from  `requestDistributions()` to create a AsyncPage and return it. 
+1. At the callback function of `requestDistributions()`, a few new attributes are added to the returned distribution object, the new object is pushed to an array, and a distribution array for a given dataset is resolved/returned. 
+
+## Modify index.ts
+- Modify [dataset|distribution|organization]AspectBuilders, and add required schema at magda-registry-aspiects directory.
+- Modify the source from Ckan to Dap.
+
+## Modify Scripts in aspect-templates
+the returned dataset objects and distribution objects from Dap.ts can be accessed directly within these files.
+
+1. Dataset Aspects:
+  - `dap-dataset.js` copies the Dap dataset as its aspect of dap-dataset
+  - `dcat-dataset-string.js` defines the transfer from Dap dataset to dcat. 
+  - `dataset-source.js` defines the transfer from Dap object / Dap dataset to the source aspect. 
+
+1. Distribution Aspects:
+  - `dap-resource.js` returns a distribution object.
+  - `dcat-distribution-string.js` defines the transfer from Dap distribution to dcat. 
+  - `distribution-source.js defines the transfer from Dap object / Dap distribution object to the source aspect. 
+
+## Modify DapUrlBuilder.ts
+Different with ckan (which uses an api rules like http://docs.ckan.org/en/latest/api/), Dap used the uri defination at 
+https://confluence.csiro.au/display/daphelp/Web+Services+Interface. `DapUrlBuilder.ts` should be changed to adapt the difference. 
+
+- `getPackageSearchUrl()` in Dap connector is the base url such as defined in magda/deploy/connector-config/csiro-dap.json: `"sourceUrl": "https://data.csiro.au/dap/ws/v2/",`
+- `getPackageShowUrl(id: string)` returns the uri of specific dataset given its id. In Dap, the uri is `baseurl/id`, eg. `https://data.csiro.au/dap/ws/v2/csiro:12345`
+- `getResourceShowUrl(id: string)` return the uri of distributions of a given dataset's id. eg. `https://data.csiro.au/dap/ws/v2/csiro:12345/data`
+
+
+## Modify DapTransformer
+Because the matadata between ckan and Dap is different, some key information should be transformed, such as ID and name of dataset, organization, and distribution. 
+`DapTransformer.ts` extends JsonTransformer, and the ID&name specification defined here can rewritten the default one in JsonTransformer. 
+Following the metadata of Dap, the `getIdFromJsonDataset()`, `getIdFromJsonDistribution()`, `getNameFromJsonDataset(0)`, and `getNameFromJsonDistribution()` should be modified. 
+
 ## Building
 Requires SBT to be installed to generated the swagger files from the registry.
 
