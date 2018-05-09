@@ -54,7 +54,7 @@ export default class DataSetListForOrg extends Component {
     getData(query){
         const preparedQuery = this.preparSearchText(query)
         // console.log(query)
-        fetch( API.search + 'datasets?query=' + preparedQuery + '&start=0&limit=2000')
+        fetch( API.search + 'datasets?query=' + preparedQuery + '&start=0&limit=2000&facetSize=99999')
         .then((response) => {
             if (response.status === 200) {
                 return response.json()
@@ -157,7 +157,7 @@ export default class DataSetListForOrg extends Component {
                     <Col md={4}>
                     <div className="right-filter">
                         <Row>
-                            <h4 className="col-xs-8">Top 10 {this.state.result.facets[1].id} </h4>
+                            <h4 className="col-xs-8"> {this.state.result.facets[1].id} </h4>
                             <span  className="col-xs-4"><Button bsStyle="info" className="pull-right" onClick={this.filterButtonSubmit}> Refine Result </Button></span>
                         </Row>
                         <hr />

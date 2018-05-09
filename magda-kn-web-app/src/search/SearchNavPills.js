@@ -21,7 +21,17 @@ export default class SearchNavPills extends Component{
         this.perPage = 10
         this.min = 0
         this.max = 40000
-        this.state = {searchText:'', searchResult:'', pageOffset: 0, currentPage: 0, defaultSearchText:'+from+'+pastYear, min: this.min, max: this.max};
+        this.state = {
+                        searchText:'', 
+                        searchResult:'', 
+                        pageOffset: 0, 
+                        currentPage: 0, 
+                        defaultSearchText:'+from+'+pastYear, 
+                        min: this.min, 
+                        max: this.max,
+                        facetPublisherCollapse: false,
+                        facetFormatCollapse: false,
+                    };
         this.handlePageOffsetBack = this.handlePageOffsetBack.bind(this)
         this.handlePageOffsetForward = this.handlePageOffsetForward.bind(this)
     }
@@ -66,7 +76,7 @@ export default class SearchNavPills extends Component{
     getData(query, start, limit){
         // console.log(query)
         // console.log(API.search)
-        fetch(API.search + 'datasets?query=' + query + '&start='+start + '&limit='+limit)
+        fetch(API.search + 'datasets?query=' + query + '&start='+start + '&limit='+limit+'&facetSize=99999')
         .then((response) => {
             if (response.status === 200) {
                 return response.json()
@@ -106,6 +116,14 @@ export default class SearchNavPills extends Component{
         }
         console.log(this.selectedFormatCheckboxes)
       }
+    togglePublisherCollapse = (e) =>{
+        e.preventDefault()
+        this.setState({facetPublisherCollapse: !this.state.facetPublisherCollapse})
+    }
+    toggleFormatCollapse = (e) =>{
+        e.preventDefault()
+        this.setState({facetFormatCollapse: !this.state.facetFormatCollapse})
+    }
     createPublisherCheckbox(label, hitCount) {
         return (
         <Checkbox
@@ -171,26 +189,62 @@ export default class SearchNavPills extends Component{
                         <Col md={4}>
                             <div className="right-filter">
                                 <Row>
-                                <h4 className="col-xs-8">Top 10 {this.state.searchResult.facets[0].id} </h4>
-                                <span  className="col-xs-4"><Button bsStyle="info" className="pull-right" onClick={this.filterButtonSubmit}> Refine Result </Button></span>
+                                <h3 className="col-xs-8">
+                                    <a href='#' onClick={this.togglePublisherCollapse} >
+                                    {this.state.searchResult.facets[0].id} 
+                                    &nbsp;
+                                    {
+                                        this.state.facetPublisherCollapse ? <i className="fas fa-angle-double-up"></i> : <i className="fas fa-angle-double-down"></i>
+                                    }
+                                    </a>
+                                </h3>
+                                <span  className="col-xs-4 pull-right"><Button bsStyle="info" onClick={this.filterButtonSubmit}> Refine Result </Button></span>
                                 </Row>
                                 <hr />
                                 <ul className="cust-list">
-                                {this.state.searchResult.facets[0].options.map((value, key) => {
+                                {
+                                    this.state.facetPublisherCollapse ? 
+                                    this.state.searchResult.facets[0].options.map((value, key) => {
+                                        return (<li className="checkbox"  key={key}> 
+                                                {this.createPublisherCheckbox(value.value, value.hitCount)}
+                                                </li>)
+                                    })
+                                    :
+                                    this.state.searchResult.facets[0].options.slice(0,15).map((value, key) => {
                                     return (<li className="checkbox"  key={key}> 
                                             {this.createPublisherCheckbox(value.value, value.hitCount)}
                                             </li>)
-                                })}
+                                    })}
+                                
                                 </ul>
                                 <br />
-                                <h4>Top 10 {this.state.searchResult.facets[1].id}</h4>
-                                <hr />
+                                <Row>
+                                <h3 className="col-xs-8">
+                                    <a href='#' onClick={this.toggleFormatCollapse} >
+                                    {this.state.searchResult.facets[1].id} 
+                                    &nbsp;
+                                    {
+                                        this.state.facetFormatCollapse ? <i className="fas fa-angle-double-up"></i> : <i className="fas fa-angle-double-down"></i>
+                                    }
+                                    </a>
+                                </h3>
+                                </Row>
+                                <hr/>
+
                                 <ul className="cust-list">
-                                {this.state.searchResult.facets[1].options.map((value, key) => {
+                                {
+                                    this.state.facetFormatCollapse ? 
+                                    this.state.searchResult.facets[1].options.map((value, key) => {
+                                        return (<li className="checkbox"  key={key}> 
+                                                {this.createPublisherCheckbox(value.value, value.hitCount)}
+                                                </li>)
+                                    })
+                                    :
+                                    this.state.searchResult.facets[1].options.slice(0,15).map((value, key) => {
                                     return (<li className="checkbox"  key={key}> 
-                                                {this.createFormatCheckbox(value.value, value.hitCount)}
+                                            {this.createPublisherCheckbox(value.value, value.hitCount)}
                                             </li>)
-                                })}
+                                    })}
                                 </ul>
                                 <br />
 
