@@ -1,23 +1,36 @@
 # Dap Connector
->How to implement this Dap connector using the magda components
+>How to implement Dap connector using existing magda components
 
 
 ## How the connector works
-Because the Dap Dataset supports json data view, magda provides a json data format based connector and there are a few of connectors were implemented using the `JsonConnector` (such as ckan connector), using the magda `JsonConnector` to create the Dap connector is an practical solution. 
+I choose the existing ckan connector as a template to start the dap connector develop in following two reasons: 
+* The Dap Dataset supports json data view
+* The Magda common data transfering and aspects building functions were built based on JSON format
+* Ckan connector was well implemented by Magda team
+* The API of ckan and DAP was similar
 
-How Dap connector works
-	
-1. The	`index.ts` in magda-dap-connector creates a `JsonConnector` and run it. 
+### How Dap connector works
+A connector can be run in two ways:
+
+* Development: `npm run dev -- --config ../deploy/connector-config/csiro-dap.json --userId="00000000-0000-4000-8000-000000000000" --jwtSecret="squirrel"`
+* Product on K8S: 
+  * `cd deploy && npm run generate-connector-jobs-local`
+  * `kubectl create -f deploy/kubernetes/generated/local/connnctor-csiro-dap-cron.json`
+
+1. As specified in package.json: `"dev": "run-typescript-in-nodemon src/index.ts",`, the `npm run dev` command will start the connector by call `index.ts`.
+1. The	`index.ts` in magda-dap-connector creates a `JsonConnector` and runs it. 
 1. `new JsonConnector` requires three combined options: source: dap, transformer, and registry. 
     
-   - Source `Dap.ts` defines data retrieve and response rule, such as return the dataset part or distribution parts. 
-   - Transformer `DapTransformer.ts` defines the way of returning the key attributes. For Dap connector, because the organisation information is fixed, only the id and name of dataset and distribution are required.  
-     > Example: getIdFromJsonOrganization() returns a ConnectorRecordId created with the first param as jsonOrganization.id.identifier, which follows the data structure in Dap dataset. 
+   - Source `Dap.ts` defines data retrieve and response rules, such as returnning the datasets, distributions, and organizations by calling functions `getJsonDatasets()`, `getJsonDistributions(dataset: any)` and  `getJsonFirstClassOrganizations()`. 
+   - Transformer `DapTransformer.ts` defines the rules of how the key attributes were specified from a json dataset.   
+     > Example: getIdFromJsonOrganization() returns a ConnectorRecordId object with organization identifier (name here), Type, and Source identifier . 
     	
-        Besides modifying `DapTransformer.ts`, creating transformer also requires quite a lot of options defined as `transformerOptions`. `datasetAspectBuilders`, `distributionAspectBuilders`, and `organizationAspectBuilders` use files in `aspect-templates` to specifie the transform rules between Dap data structure to dcat. 
+        `DapTransformer.ts` only defines some very basic rule of get IDs and Names from. `index.ts` also uses the transform rules defined in `aspect-templates` director to map the key-values from a dataset to target object. In order to organize these transformer options, `transformerOptions`. `datasetAspectBuilders`, `distributionAspectBuilders`, and `organizationAspectBuilders` were used in `index.ts` to clearify the transforming rules. 
     
-    - Registry defines registry url, userid and jwtSecret for Registry connection purpose. 
-1. The `run()` will call the `async run()` in `JsonConnector.ts`, which will call its internal pre-defined methods to do the jobs of creating dataset, distributions and organization aspects, and combining the results. 
+    - Registry defines registry url, userid and jwtSecret for Registry connection. 
+
+1. The `run()` will call the `async run()` in `JsonConnector.ts`, which will use its internal pre-defined methods to create dataset, distributions and organization aspects, and to combine the results. 
+1. Different with the datasets and distributions transforming, which will be launched by default, the organization could be turn on/off by configing the `hasFirstClassOrganizations` to true or false. 
 
 
 
@@ -35,7 +48,7 @@ How Dap connector works
     1. ~~`getJsonFirstClassOrganization(id: string)`~~
     1. ~~`searchFirstClassOrganizationsByTitle(...)`~~
     1. ~~`getJsonDatasetPublisher(...)`~~
-1. `getJsonDatasets(): AsyncPage<any[]>` function returns an AsyncPage, which carries all datasets collected recursivly from a given dataset such as `https://data.csiro.au/dap/ws/v2/collections.json`. It uses the `packageSearch(...) ` function to create a AsyncPage object as an entry point. 
+1. `getJsonDatasets(): AsyncPage<any[]>` function returns an AsyncPage, which carries datasets collected recursivly page by page from a given url such as `https://data.csiro.au/dap/ws/v2/collections.json` ? (still unclear how the recursive call works). It uses the `packageSearch(...) ` function to create a AsyncPage object as an entry point. 
     
 1. `getJsonDatasets()` will call `packageSearch()`, and `packageSearch()` will return a AsyncPage with `requestPackageSearchPage()` as its requestNextPage function, which performs specific data retrieving job. 
 1. For Ckan data, `requestPackageSearchPage()` could return datasets including all attributes such as distribution. However, for Dap, this function could only return datasets with only some key information, but miss some important attributes which will used to collect distributions later. 
@@ -45,6 +58,7 @@ How Dap connector works
 1. Different with Ckan, the search result of Dap doesn't include the data distributions. The `getJsonDistributions()` and `requestDistributions()` are also been rewritten to retrieve distributions using the uri specified in dataset.data attribute.
 1. Because of the constrain of interface, `getJsonDistributions()` will use a returned Promise of distribution dataset array from  `requestDistributions()` to create a AsyncPage and return it. 
 1. At the callback function of `requestDistributions()`, a few new attributes are added to the returned distribution object, the new object is pushed to an array, and a distribution array for a given dataset is resolved/returned. 
+1. Becuase the organization for DAP was fixed, modify `getJsonFirstClassOrganizations()` function and set its return content as fixed CSIRO DAP information.
 
 ## Modify index.ts
 - Modify [dataset|distribution|organization]AspectBuilders, and add required schema at magda-registry-aspiects directory.
@@ -74,8 +88,9 @@ https://confluence.csiro.au/display/daphelp/Web+Services+Interface. `DapUrlBuild
 
 ## Modify DapTransformer
 Because the matadata between ckan and Dap is different, some key information should be transformed, such as ID and name of dataset, organization, and distribution. 
-`DapTransformer.ts` extends JsonTransformer, and the ID&name specification defined here can rewritten the default one in JsonTransformer. 
+`DapTransformer.ts` extends JsonTransformer, and the ID&name specification defined here can rewritten the default behavior in JsonTransformer. 
 Following the metadata of Dap, the `getIdFromJsonDataset()`, `getIdFromJsonDistribution()`, `getNameFromJsonDataset(0)`, and `getNameFromJsonDistribution()` should be modified. 
+If configed `hasFirstClassOrganizations=true`, `getIdFromJsonOrganization()` and `getNameFromJsonOrganization()` should be implemented.
 
 ## Building
 Requires SBT to be installed to generated the swagger files from the registry.
