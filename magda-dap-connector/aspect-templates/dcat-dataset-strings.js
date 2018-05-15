@@ -9,7 +9,7 @@ return {
         : undefined,
     modified:  undefined,
     languages: ['English'],
-    publisher: 'CSIRO (Australia)',
+    publisher: 'CSIRO',
     accrualPeriodicity: '',
     spatial: '',
     temporal: {

@@ -84,13 +84,11 @@ export default class Dap implements ConnectorSource {
     }
 
      public getJsonDatasets(): AsyncPage<any[]> {
-        console.log('getJsonDatasets()')
         const packagePages = this.packageSearch({
             ignoreHarvestSources: this.ignoreHarvestSources,
         });
         return packagePages.map(packagePage => {
             if(packagePage){
-                console.log('packagePage -> detailDataCollections', packagePage.detailDataCollections.length)
                 // return packagePage.dataCollections
                 return packagePage.detailDataCollections
             }
@@ -98,9 +96,7 @@ export default class Dap implements ConnectorSource {
     }
 
     public getJsonDataset(id: string): Promise<any> {
-
         const url = this.urlBuilder.getPackageShowUrl(id);
-        console.log('getJsonDataset()')
         return new Promise<any>((resolve, reject) => {
             request(url, { json: true }, (error, response, body) => {
                 if (error) {
@@ -193,9 +189,9 @@ export default class Dap implements ConnectorSource {
     public getJsonFirstClassOrganizations(): AsyncPage<any[]> {
         return AsyncPage.single([
             {
-                name: 'csiro-data-access-portal',
-                identifier: 'csiro-data-access-portal',
-                title: 'CSIRO Data Access Portal',
+                name: 'CSIRO',
+                identifier: 'CSIRO',
+                title: 'CSIRO (Australia)',
                 description: `The Commonwealth Scientific and Industrial Research Organisation (CSIRO) is Australia's national science agency and one of the largest and most diverse research agencies in the world. The CSIRO Data Access Portal provides access to research data, software and other digital assets published by CSIRO across a range of disciplines. The portal is maintained by CSIRO Information Management & Technology to facilitate sharing and reuse.`,
                 imageUrl: 'https://data.csiro.au/dap/resources-2.6.6/images/csiro_logo.png'
             }
@@ -203,7 +199,15 @@ export default class Dap implements ConnectorSource {
     }
 
     getJsonFirstClassOrganization(id: string): Promise<any> {
-        return Promise.resolve();
+        return Promise.resolve(
+            {
+                name: 'CSIRO',
+                identifier: 'CSIRO',
+                title: 'CSIRO (Australia)',
+                description: `The Commonwealth Scientific and Industrial Research Organisation (CSIRO) is Australia's national science agency and one of the largest and most diverse research agencies in the world. The CSIRO Data Access Portal provides access to research data, software and other digital assets published by CSIRO across a range of disciplines. The portal is maintained by CSIRO Information Management & Technology to facilitate sharing and reuse.`,
+                imageUrl: 'https://data.csiro.au/dap/resources-2.6.6/images/csiro_logo.png'
+            }
+        )
     }
 
     searchFirstClassOrganizationsByTitle(
@@ -214,13 +218,18 @@ export default class Dap implements ConnectorSource {
     }
    
     public getJsonDatasetPublisherId(dataset: any): string {
-        if (!dataset.organization) {
-            return undefined;
-        }
-        return dataset.organization.id;
+        return 'CSIRO'
     }
     getJsonDatasetPublisher(dataset: any): Promise<any> {
-        return Promise.resolve();
+        return Promise.resolve(
+            {
+                name: 'CSIRO',
+                identifier: 'CSIRO',
+                title: 'CSIRO (Australia)',
+                description: `The Commonwealth Scientific and Industrial Research Organisation (CSIRO) is Australia's national science agency and one of the largest and most diverse research agencies in the world. The CSIRO Data Access Portal provides access to research data, software and other digital assets published by CSIRO across a range of disciplines. The portal is maintained by CSIRO Information Management & Technology to facilitate sharing and reuse.`,
+                imageUrl: 'https://data.csiro.au/dap/resources-2.6.6/images/csiro_logo.png'
+            }
+        )
     }
 
     private requestPackageSearchPage(

@@ -40,8 +40,8 @@ export default class DapTransformer extends JsonTransformer {
 
     getNameFromJsonOrganization(jsonOrganization: any): string {
         return (
-            jsonOrganization.title ||
-            jsonOrganization.name
+            jsonOrganization.name ||
+            jsonOrganization.title
         );
     }
 
