@@ -109,7 +109,7 @@ export default class DataSetDetail extends Component {
                     </Table>
                     <h4>RESOURCES</h4>
                     <ul>
-                         {this.state.dataset.aspects['dataset-distributions'].distributions.map((ele, key)=>{ 
+                         {this.state.dataset.aspects['dataset-distributions'] ? this.state.dataset.aspects['dataset-distributions'].distributions.map((ele, key)=>{ 
                             return(
                                 <li key={key}><span className="glyphicon glyphicon-link"></span>
                                 {console.log(ele.aspects['dcat-distribution-strings'].license)}
@@ -118,7 +118,7 @@ export default class DataSetDetail extends Component {
                                     &nbsp; &copy; <i> {ele.aspects['dcat-distribution-strings'].license} </i>
                                 </li>
                             )
-                        })}
+                        }) : 'None'}
                     </ul>
                  </Col>
                  <Col md={2} >
