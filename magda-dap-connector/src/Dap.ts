@@ -257,8 +257,8 @@ export default class Dap implements ConnectorSource {
                         return;
                     }
                     console.log("Received@" + startIndex);
-                    if(response.statusCode !== 200){
-                        console.log("Response with code=" + response.statusCode + ", data retrieve will exist at page "+ startIndex );
+                    if(response.statusCode !== 200 || body.dataCollections === undefined){
+                        reject("Response with code=" + response.statusCode + ", data retrieve will exist at page "+ startIndex);
                         return;
                     }
                     await Promise.all(body.dataCollections.map((simpleData:any) =>{
