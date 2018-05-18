@@ -1,0 +1,153 @@
+global:
+  useCombinedDb: true
+  externalUrl: http://k8s-dev.oznome.csiro.au
+  rollingUpdate:
+    maxUnavailable: 1
+  image:
+    pullPolicy: Always
+    tag: "0.0.36"
+tags:
+    all: false
+    authorization-api: true
+    authorization-db: true
+    combined-db: true
+    elasticsearch: true
+    gateway: true
+    indexer: true
+    registry-api: true
+    registry-db: true
+    search-api: true
+    session-db: true
+    web-server: true
+
+gateway:
+  image:
+    repository: "gcr.io/knowledge-network-192205/data61"
+    tag: "latest"
+  loadBalancerIP: "35.201.0.106"
+  auth:
+    facebookClientId: ""
+    googleClientId: "667942079301-49aomsf5l1i8tc5amdot6ck96e1d84c6.apps.googleusercontent.com"
+    aafClientUri: "https://rapid.test.aaf.edu.au/jwt/authnrequest/research/IeiWdzrJ47-eSowf3rfLTQ"
+  resources:
+    requests:
+      cpu: 50m
+      memory: 100Mi
+    limits:
+      cpu: 200m
+      memory: 250Mi
+combined-db:
+  resources:
+    requests:
+      cpu: 900m
+      memory: 2000Mi
+    limits:
+      cpu: 2000m
+      memory: 3000Mi
+elasticsearch:
+  data:
+    storageClass: "standard"
+    heapSize: 500m
+    resources:
+      requests:
+        cpu: 400m
+        memory: 1000Mi
+      limits:
+        cpu: 1000m
+        memory: 1500Mi
+indexer:
+  resources:
+    requests:
+      cpu: 0
+      memory: 0
+    limits:
+      cpu: 200m
+      memory: 1000Mi
+preview-map:
+  resources:
+    requests:
+      cpu: 0
+      memory: 0
+    limits:
+      cpu: 200m
+      memory: 150Mi
+registry-datastore:
+    data:
+        storageClass: "standard"
+registry-api:
+  resources:
+    requests:
+      cpu: 0
+      memory: 0
+    limits:
+      cpu: 1000m
+      memory: 2000Mi
+search-api:
+  resources:
+    requests:
+      cpu: 0
+      memory: 0
+    limits:
+      cpu: 200m
+      memory: 1000Mi
+web-server:
+  image:
+    repository: "gcr.io/knowledge-network-192205/data61"
+    tag: "latest"
+  resources:
+    requests:
+      cpu: 0
+      memory: 0
+    limits:
+      cpu: 200m
+      memory: 150Mi
+sleuther-linked-data-rating:
+  resources:
+    requests:
+      cpu: 0
+      memory: 0
+    limits:
+      cpu: 200m
+      memory: 150Mi
+sleuther-broken-link:
+  resources:
+    requests:
+      cpu: 0
+      memory: 0
+    limits:
+      cpu: 200m
+      memory: 150Mi
+sleuther-visualization:
+  resources:
+    requests:
+      cpu: 0
+      memory: 0
+    limits:
+      cpu: 200m
+      memory: 300Mi
+admin-api:
+  resources:
+    requests:
+      cpu: 0
+      memory: 0
+    limits:
+      cpu: 200m
+      memory: 150Mi
+authorization-api:
+  data:
+    storageClass: "standard"
+  resources:
+    requests:
+      cpu: 0
+      memory: 0
+    limits:
+      cpu: 200m
+      memory: 150Mi
+discussions-api:
+  resources:
+    requests:
+      cpu: 0
+      memory: 0
+    limits:
+      cpu: 200m
+      memory: 150Mi
