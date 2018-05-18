@@ -14,15 +14,25 @@ object DockerSetup {
       case Some("true") => true
       case _            => false
     }
-    
-    val nameSpacePrefix = if (dockerHub) "" else "localhost:5000/"
+
+    val repoNameSpacePrefix = Option(System.getProperty("repository")) match {
+      case Some(repository) => repository + "/"
+      case _            => "localhost:5000/"
+    }
+
+    val tag = Option(System.getProperty("version")) match {
+      case Some(version) => version
+      case _            => "latest"
+    }
+
+    val nameSpacePrefix = if (dockerHub) "" else repoNameSpacePrefix
 
     Seq(
       imageNames in docker := Seq(
         ImageName(
           namespace = Some(s"${nameSpacePrefix}data61"),
           repository = name.value,
-          tag = Some(if (dockerHub) version.value else "latest")
+          tag = Some(tag)
         )
       ),
 
