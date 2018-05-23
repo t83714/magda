@@ -106,9 +106,9 @@ class RegistryCrawler(interface: RegistryExternalInterface, indexer: SearchIndex
   }
 
   private def streamForInterface(): Source[DataSet, NotUsed] = {
-    val firstPageFuture = () => interface.getDataSetsReturnToken(0, 50)
+    val firstPageFuture = () => interface.getDataSetsReturnToken(0, 10)
 
-    val crawlSource = tokenCrawl(firstPageFuture, 100)
+    val crawlSource = tokenCrawl(firstPageFuture, 10)
       .map(dataSet => dataSet.copy(publisher =
         dataSet.publisher))
       .alsoTo(Sink.fold(0) {

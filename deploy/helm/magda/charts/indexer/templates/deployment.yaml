@@ -3,7 +3,7 @@ kind: Deployment
 metadata:
   name: indexer
 spec:
-  replicas: 1
+  replicas: {{ .Values.replicas | default 1 }}
   strategy:
     rollingUpdate:
       maxUnavailable: {{ .Values.global.rollingUpdate.maxUnavailable | default 0 }}
@@ -47,7 +47,7 @@ spec:
             "-Dregistry.baseUrl=http://registry-api",
             "-Dindexer.readSnapshots=true",
             "-Dindexer.makeSnapshots=true",
-            "-Dakka.loglevel={{ .Values.global.logLevel }}",
+            "-Dakka.loglevel={{ .Values.logLevel | default .Values.global.logLevel }}",
             "-DelasticSearch.serverUrl=elasticsearch://elasticsearch:9300",
 {{- if .Values.elasticsearch.useGcsSnapshots }}
             "-DelasticSearch.snapshotRepo.type=gcs",

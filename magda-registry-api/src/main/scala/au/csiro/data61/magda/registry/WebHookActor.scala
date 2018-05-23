@@ -110,7 +110,7 @@ object WebHookActor {
   private class SingleWebHookActor(val id: String, val registryApiBaseUrl: String)(implicit val config: Config) extends Actor with ActorLogging {
     import context.dispatcher
 
-    val MAX_EVENTS = 100
+    val MAX_EVENTS = 10
 
     private val processor = new WebHookProcessor(context.system, registryApiBaseUrl, context.dispatcher)
     implicit val materializer = ActorMaterializer()
