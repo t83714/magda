@@ -1,5 +1,5 @@
 global:
-  useCombinedDb: true
+  useCombinedDb: false
   externalUrl: http://k8s-dev.oznome.csiro.au
   rollingUpdate:
     maxUnavailable: 1
@@ -10,7 +10,6 @@ tags:
     all: false
     authorization-api: true
     authorization-db: true
-    combined-db: true
     elasticsearch: true
     gateway: true
     indexer: true
@@ -36,33 +35,31 @@ gateway:
     limits:
       cpu: 200m
       memory: 250Mi
-combined-db:
-  resources:
-    requests:
-      cpu: 900m
-      memory: 2000Mi
-    limits:
-      cpu: 2000m
-      memory: 3000Mi
 elasticsearch:
-  data:
-    storageClass: "standard"
-    heapSize: 500m
-    resources:
-      requests:
-        cpu: 400m
-        memory: 1000Mi
-      limits:
-        cpu: 1000m
-        memory: 1500Mi
+    client:
+        replicas: 2
+        heapSize: 900m
+        resources:
+            requests:
+                cpu: 200m
+                memory: 1500Mi
+    data:
+        heapSize: 3000m
+        resources:
+            requests:
+                cpu: 800m
+                memory: 5000Mi
+
 indexer:
-  resources:
-    requests:
-      cpu: 0
-      memory: 0
-    limits:
-      cpu: 200m
-      memory: 1000Mi
+    image:
+      repository: "gcr.io/knowledge-network-192205/data61"
+      tag: "latest"
+    logLevel: INFO
+    replicas: 1
+    resources:
+        requests:
+            cpu: 200m
+            memory: 5000Mi
 preview-map:
   resources:
     requests:
@@ -75,21 +72,26 @@ registry-datastore:
     data:
         storageClass: "standard"
 registry-api:
-  resources:
+    image:
+      repository: "gcr.io/knowledge-network-192205/data61"
+      tag: "latest"
+    logLevel: INFO
     requests:
-      cpu: 0
-      memory: 0
-    limits:
-      cpu: 1000m
-      memory: 2000Mi
+        cpu: 500m
+        memory: 3000Mi
+registry-db:
+    resources:
+        requests:
+            cpu: 900m
+            memory: 4000Mi
 search-api:
-  resources:
+    replicas: 2
     requests:
-      cpu: 0
-      memory: 0
+        cpu: 250m
+        memory: 200Mi
     limits:
-      cpu: 200m
-      memory: 1000Mi
+        cpu: 1000m
+        memory: 1000m
 web-server:
   image:
     repository: "gcr.io/knowledge-network-192205/data61"
@@ -133,6 +135,11 @@ admin-api:
     limits:
       cpu: 200m
       memory: 150Mi
+authorization-db:
+    resources:
+        requests:
+            cpu: 250m
+            memory: 500Mi
 authorization-api:
   data:
     storageClass: "standard"
@@ -151,3 +158,11 @@ discussions-api:
     limits:
       cpu: 200m
       memory: 150Mi
+session-db:
+    data:
+        storageClass: "standard"
+    resources:
+        requests:
+            cpu: 250m
+            memory: 500Mi
+            
