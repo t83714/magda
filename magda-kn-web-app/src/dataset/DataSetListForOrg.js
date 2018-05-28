@@ -5,6 +5,7 @@ import Slider from 'rc-slider'
 
 import SearchResultView from '../search/SearchResultView'
 import Checkbox from '../search/Checkbox'
+import Pagination from '../dataset/Pagination'
 import './DataSet.css'
 import API from '../config'
 
@@ -19,23 +20,33 @@ export default class DataSetListForOrg extends Component {
         super(props)
         this.min = 0
         this.max = 40000
-        this.state = {result:'', publisher:this.props.location.params ? this.props.location.params.org_name: '',min: this.min, max: this.max}
+        this.state = {result:'', 
+                        total: 0,
+                        perPage:10, 
+                        currentPage: 0, 
+                        publisher:this.props.location.params ? this.props.location.params.org_name: '',
+                        min: this.min, 
+                        max: this.max}
     }
 
     componentWillMount(){
         this.selectedFormatCheckboxes = new Set();
         this.dateRange = new OrderedSet();
     }
+    updateCurrentPage = (page) =>{
+        this.setState({currentPage: page})
+        this.getData(this.state.publisher, page*this.state.perPage, 10)
+    }
     componentDidMount(){
         // console.log(this.state.publisher)
         if(this.state.publisher === ''){
-            this.getPublisherById(this.props.match.params.pub_id)
+            this.getPublisherById(this.props.match.params.pub_id, 0, 10)
         }
         else
-        this.getData(this.state.publisher)
+        this.getData(this.state.publisher, 0, 10)
     }
 
-    getPublisherById(id){
+    getPublisherById(id, start, limit){
         fetch(API.dataSetOrgInfo+id)
                 .then((response) => {
                     if (response.status === 200) {
@@ -45,24 +56,24 @@ export default class DataSetListForOrg extends Component {
                 .then((json) => {
                     console.log(json)
                     this.setState({publisher: json.name})
-                    this.getData(json.name)
+                    this.getData(json.name, start, limit )
                 }).catch((error) => {
                     console.log('error on .catch', error);
                 });
     }
 
-    getData(query){
+    getData(query, start, limit){
         const preparedQuery = this.preparSearchText(query)
         // console.log(query)
-        fetch( API.search + 'datasets?query=' + preparedQuery + '&start=0&limit=2000&facetSize=99999')
+        fetch( API.search + 'datasets?query=' + preparedQuery + '&start='+ start +'&limit='+ limit +'&facetSize=99999')
         .then((response) => {
             if (response.status === 200) {
                 return response.json()
             } else console.log("Get data error ");
         })
         .then((json) => { 
-            // console.log(json)
-            this.setState({result: json})
+            console.log(json)
+            this.setState({result: json, total: json.hitCount})
             // Calculate date range 
             // const year = json.facets[1].options
             // for(let key in year){
@@ -153,6 +164,12 @@ export default class DataSetListForOrg extends Component {
                 <Row>
                     <Col md={8}>
                         <SearchResultView result={this.state.result} />
+                        <Pagination 
+                            perPage={this.state.perPage} 
+                            total={this.state.total} 
+                            updateCurrentPage={this.updateCurrentPage} />
+                            <br />
+                            <br />
                     </Col>
                     <Col md={4}>
                     <div className="right-filter">

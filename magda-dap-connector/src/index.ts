@@ -7,6 +7,7 @@ import Registry from "@magda/typescript-common/dist/registry/AuthorizedRegistryC
 import * as fs from "fs";
 import * as yargs from "yargs";
 //npm run dev -- --config ../deploy/connector-config/csiro-dap.json --userId="00000000-0000-4000-8000-000000000000" --jwtSecret="squirrel"
+//npm run dev -- --config ../deploy/connector-config/csiro-dap.json --userId="00000000-0000-4000-8000-000000000000" --jwtSecret="squirrel" --registryUrl="http://192.168.137.143:30860/v0"
 const argv = addJwtSecretFromEnvVar(
     yargs
         .config()
@@ -24,15 +25,21 @@ const argv = addJwtSecretFromEnvVar(
             demandOption: true
         })
         .option("sourceUrl", {
-            describe: "The base URL of the CKAN server, without /api/...",
+            describe: "The base URL of the CSIRO DAP server, without /api/...",
             type: "string",
             demandOption: true
         })
         .option("pageSize", {
             describe:
-                "The number of datasets per page to request from the CKAN server.",
+                "The number of datasets per page to request from the CSIRO Dap server.",
             type: "number",
             default: 1000
+        })
+        .option("distributionSize",{
+            describe:
+                "The number of distributions harvested.",
+            type: "number",
+            default: 24
         })
         .option("ignoreHarvestSources", {
             describe:
@@ -206,6 +213,7 @@ const dap = new Dap({
     id: argv.id,
     name: argv.name,
     pageSize: argv.pageSize,
+    distributionSize: argv.distributionSize,
     ignoreHarvestSources: argv.ignoreHarvestSources
 });
 

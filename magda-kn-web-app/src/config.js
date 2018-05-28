@@ -1,6 +1,7 @@
 
-const fallbackApiHost = "https://kn-v2-dev.oznome.csiro.au/";
+// const fallbackApiHost = "https://kn-v2-dev.oznome.csiro.au/";
 // const fallbackApiHost = 'http://adb009eba34b.k8s-dev.oznome.csiro.au/'
+const fallbackApiHost = "http://192.168.137.228:30100/"
 const serverConfig = window.magda_server_config || '';
 const registryApiUrl = serverConfig.registryApiBaseUrl || fallbackApiHost + "api/v0/registry/";
 const authApiUrl = serverConfig.authApiBaseUrl || fallbackApiHost + "api/v0/auth/"

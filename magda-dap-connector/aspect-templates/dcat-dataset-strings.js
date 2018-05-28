@@ -9,7 +9,7 @@ return {
         : undefined,
     modified:  undefined,
     languages: ['English'],
-    publisher: 'CSIRO',
+    publisher: 'The Commonwealth Scientific and Industrial Research Organisation',
     accrualPeriodicity: '',
     spatial: '',
     temporal: {
@@ -17,7 +17,7 @@ return {
         end: dataset.dataEndDate
     },
     themes: dataset.fieldOfResearch || [],
-    keywords: dataset.keywords?dataset.keywords.split(";"):[],
+    keywords: dataset.keywords?dataset.keywords.split(/[ ,]+/):[],
     contactPoint: dataset.attributionStatement,
     landingPage: dataset.landingPage.href
 };
