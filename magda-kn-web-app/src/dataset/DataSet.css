@@ -68,3 +68,25 @@ li{
 pre{
     white-space:pre-wrap;
 }
+
+/* table 
+{
+    table-layout: fixed;
+    
+} */
+.label-wrap{
+    margin: 5px;
+}
+.cust-label{
+    background-color: #5bc0de;
+    float: left;
+    border-radius: 3px;
+    padding:  3px 0px 0px 3px ;
+    margin: 5px 5px 5px 5px;
+    font-size: 12px;
+}
+.cust-label a{
+    color: white;
+}
+
+

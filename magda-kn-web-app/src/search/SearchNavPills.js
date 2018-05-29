@@ -4,6 +4,7 @@ import Slider from 'rc-slider'
 import {OrderedSet} from 'immutable'
 import SearchResultView from './SearchResultView'
 import Checkbox from './Checkbox'
+import Pagination from '../dataset/Pagination'
 import API from '../config'
 
 import 'rc-slider/assets/index.css';
@@ -18,13 +19,13 @@ export default class SearchNavPills extends Component{
         super(props)
         let d = new Date()
         const pastYear = d.getFullYear() -1
-        this.perPage = 10
         this.min = 0
         this.max = 40000
         this.state = {
                         searchText:'', 
                         searchResult:'', 
-                        pageOffset: 0, 
+                        total: 0,
+                        perPage:10, 
                         currentPage: 0, 
                         defaultSearchText:'+from+'+pastYear, 
                         min: this.min, 
@@ -32,8 +33,6 @@ export default class SearchNavPills extends Component{
                         facetPublisherCollapse: false,
                         facetFormatCollapse: false,
                     };
-        this.handlePageOffsetBack = this.handlePageOffsetBack.bind(this)
-        this.handlePageOffsetForward = this.handlePageOffsetForward.bind(this)
     }
 
     componentWillMount(){
@@ -49,33 +48,19 @@ export default class SearchNavPills extends Component{
         }
     }
     componentDidMount(){
-        this.getData(this.state.searchText, 0, this.perPage)
+        this.getData(this.state.searchText, 0, this.state.perPage)
     }
 
     updateSearchText = (text) =>{
         this.setState({searchText:text})
         this.getData(text, 0,10)
     }
-    //Backward slide navigation buttons
-    handlePageOffsetBack(){
-        var temp = this.state.pageOffset - this.perPage*10
-        this.setState({pageOffset: temp})
-    }
-    //Forward slide navigation buttons
-    handlePageOffsetForward(){
-        var temp = this.state.pageOffset + this.perPage*10
-        this.setState({pageOffset: temp})
-    }
-
-    //Navigation buttion click and retrieve new data 
-    handlePageNavClick (datasetIndex) {
-        this.setState({currentPage:datasetIndex/this.perPage})
-        this.getData(this.preparSearchText(), datasetIndex, this.perPage)
+    updateCurrentPage = (page) =>{
+        this.setState({currentPage: page})
+        this.getData(this.state.searchText, page*this.state.perPage, 10)
     }
 
     getData(query, start, limit){
-        // console.log(query)
-        // console.log(API.search)
         fetch(API.search + 'datasets?query=' + query + '&start='+start + '&limit='+limit+'&facetSize=99999')
         .then((response) => {
             if (response.status === 200) {
@@ -84,7 +69,7 @@ export default class SearchNavPills extends Component{
         })
         .then((json) => { 
             // console.log(json)
-            this.setState({searchResult: json})
+            this.setState({searchResult: json, total: json.hitCount})
             // Calculate date range 
             // const year = json.facets[1].options
             // for(let key in year){
@@ -145,6 +130,7 @@ export default class SearchNavPills extends Component{
         )
     }
     filterButtonSubmit = () => {
+        console.log(this.preparSearchText())
         this.getData(this.preparSearchText(), 0, 10)
       }
     preparSearchText(){
@@ -236,13 +222,13 @@ export default class SearchNavPills extends Component{
                                     this.state.facetFormatCollapse ? 
                                     this.state.searchResult.facets[1].options.map((value, key) => {
                                         return (<li className="checkbox"  key={key}> 
-                                                {this.createPublisherCheckbox(value.value, value.hitCount)}
+                                                {this.createFormatCheckbox(value.value, value.hitCount)}
                                                 </li>)
                                     })
                                     :
                                     this.state.searchResult.facets[1].options.slice(0,15).map((value, key) => {
                                     return (<li className="checkbox"  key={key}> 
-                                            {this.createPublisherCheckbox(value.value, value.hitCount)}
+                                            {this.createFormatCheckbox(value.value, value.hitCount)}
                                             </li>)
                                     })}
                                 </ul>
@@ -268,38 +254,10 @@ export default class SearchNavPills extends Component{
                     </Row>
                 
                 </Grid>
-                <nav aria-label="Page navigation">
-                    <ul className="pagination">
-                        {this.state.pageOffset>0 ? 
-                            <li  onClick={this.handlePageOffsetBack}>
-                                <a><span aria-hidden="true">&laquo;</span></a>
-                            </li>
-                            : 
-                            <li className="disabled">
-                                <a aria-label="Previous" >
-                                <span aria-hidden="true">&laquo;</span>
-                                </a>
-                            </li>
-                        }
-                        {Array(this.state.searchResult.hitCount).fill().map( (_, i) => { 
-                            // Display two button for navigation by default
-                            if( i>=this.state.pageOffset && i<=this.state.pageOffset+this.perPage*10 && i%this.perPage === 0) {
-                                if( i/this.perPage === this.state.currentPage) return (<li className="active" key={i}> <a>{i/this.perPage + 1} </a></li>)
-                                else return (<li onClick={() => this.handlePageNavClick(i)} key={i}> <a>{i/this.perPage +1} </a></li>)
-                            }else return ("")
-                            })}
-                        {this.state.pageOffset + this.perPage*10 < this.state.searchResult.hitCount ?
-                            <li onClick={this.handlePageOffsetForward}>
-                                <a><span aria-hidden="true">&raquo;</span></a>
-                            </li>
-                            :
-                            <li className="disabled">
-                            <a><span aria-hidden="true">&raquo;</span></a>
-                            </li>
-                        }
-                    </ul>
-                </nav>
-                <br/>
+                <Pagination 
+                        perPage={this.state.perPage} 
+                        total={this.state.total} 
+                        updateCurrentPage={this.updateCurrentPage} />
                 <br/>
             </div>
         )

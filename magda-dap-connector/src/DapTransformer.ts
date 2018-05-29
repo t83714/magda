@@ -13,7 +13,7 @@ export default class DapTransformer extends JsonTransformer {
         sourceId: string
     ): ConnectorRecordId {
         return new ConnectorRecordId(
-            jsonOrganization.name,
+            jsonOrganization.identifier,
             "Organization",
             sourceId
         );
@@ -32,7 +32,7 @@ export default class DapTransformer extends JsonTransformer {
         sourceId: string
     ): ConnectorRecordId {
         return new ConnectorRecordId(
-            jsonDistribution.id,
+            jsonDistribution.id||jsonDistribution.name,
             "Distribution",
             sourceId
         );
@@ -53,6 +53,6 @@ export default class DapTransformer extends JsonTransformer {
         jsonDistribution: any,
         jsonDataset: any
     ): string {
-        return jsonDistribution.filename || jsonDistribution.id;
+        return jsonDistribution.name || jsonDistribution.id;
     }
 }

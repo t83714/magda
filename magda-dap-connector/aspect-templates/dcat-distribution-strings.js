@@ -1,14 +1,14 @@
 var moment = libraries.moment;
 return {
-    title: distribution.filename || distribution.id,
+    title: distribution.name || distribution.id,
+    license: distribution.licence || undefined,
+    accessURL: distribution.accessURL || undefined,
+    downloadURL: distribution.downloadURL || undefined,
+    mediaType: distribution.mediaType || undefined,
+    format: distribution.format || undefined,
     description: distribution.description || undefined,
     issued: '',
     modified: distribution.lastUpdated
     ? moment.unix(distribution.lastUpdated).utc().format()
     : undefined,
-    license: distribution.licence || undefined,
-    accessURL: distribution.self || undefined,
-    downloadURL: distribution.link.href || undefined,
-    mediaType: distribution.link.mediaType || undefined,
-    format: distribution.link.mediaType || undefined
 };

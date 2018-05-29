@@ -1,6 +1,7 @@
 import React, {Component} from 'react'
 import {Grid, Row, Col, Panel, Label, Table, OverlayTrigger, Tooltip} from 'react-bootstrap'
 import {Link } from 'react-router-dom'
+import Pagination from './Pagination'
 
 import './DataSet.css'
 import API from '../config'
@@ -15,7 +16,7 @@ const tooltip = (
 export default class DataSetDetail extends Component {
     constructor(props){
         super(props)
-        this.state = { id:'',dataset: '', pub_id:''}
+        this.state = { id:'',dataset: '', pub_id:'', perPage:20, currentPage: 0 }
       }
     
     componentWillMount(props){
@@ -26,6 +27,9 @@ export default class DataSetDetail extends Component {
         this.getData()
     }
 
+    updateCurrentPage = (page) =>{
+        this.setState({currentPage: page})
+    }
 
     getData(){
         fetch(API.dataSetDetail + this.state.id + API.dataSetDetail_allAspects)
@@ -95,11 +99,12 @@ export default class DataSetDetail extends Component {
 
                             <tr>
                                 <td>Tags/Keywords:</td>
-                                <td>
+                                <td className='cw-table-list'>
                                     {this.state.dataset.aspects['dcat-dataset-strings'].keywords.map((ele, key)=>{
                                        return (
-                                        <OverlayTrigger placement="top" overlay={tooltip} key={key}>
-                                            <Label bsStyle="primary"><Link to={`/search/${ele}`}> {ele}</Link> </Label>
+                                          
+                                        <OverlayTrigger bsClass="label-wrap" placement="top" overlay={tooltip} key={key}>
+                                            <div className="cust-label"><Link to={`/search/${ele}`}> {ele}</Link> &nbsp; </div> 
                                         </OverlayTrigger>
                                        )
                                     })}
@@ -109,17 +114,22 @@ export default class DataSetDetail extends Component {
                     </Table>
                     <h4>RESOURCES</h4>
                     <ul>
-                         {this.state.dataset.aspects['dataset-distributions'] ? this.state.dataset.aspects['dataset-distributions'].distributions.map((ele, key)=>{ 
+                         {this.state.dataset.aspects['dataset-distributions'] ? this.state.dataset.aspects['dataset-distributions'].distributions.filter((value, index) => index >=this.state.currentPage*this.state.perPage && index < this.state.currentPage*this.state.perPage+this.state.perPage).map((ele, key)=>{ 
                             return(
                                 <li key={key}><span className="glyphicon glyphicon-link"></span>
-                                {console.log(ele.aspects['dcat-distribution-strings'].license)}
                                     <a href={ele.aspects['dcat-distribution-strings'].downloadURL}>{ele.name} </a>
-                                    ({ele.aspects['dcat-distribution-strings'].format})
-                                    &nbsp; &copy; <i> {ele.aspects['dcat-distribution-strings'].license} </i>
+                                    {ele.aspects['dcat-distribution-strings'].format ? '(' + ele.aspects['dcat-distribution-strings'].format + ')': ''}
+                                    {ele.aspects['dcat-distribution-strings'].license ?  <i>&nbsp; &copy; {ele.aspects['dcat-distribution-strings'].license} </i>: ''} 
                                 </li>
                             )
                         }) : 'None'}
+                         {this.state.dataset.catalog==='CSIRO DAP'? <a href={this.state.dataset.landingPage}> More resources (orginal datasource site) </a>: ''}
                     </ul>
+                   
+                    <Pagination 
+                        perPage={this.state.perPage} 
+                        total={this.state.dataset.aspects['dataset-distributions']?this.state.dataset.aspects['dataset-distributions'].distributions.length : 0} 
+                        updateCurrentPage={this.updateCurrentPage} />
                  </Col>
                  <Col md={2} >
                  <div className='kn-stats'>
