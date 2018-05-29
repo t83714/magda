@@ -16,7 +16,7 @@ const tooltip = (
 export default class DataSetDetail extends Component {
     constructor(props){
         super(props)
-        this.state = { id:'',dataset: '', pub_id:'', perPage:20, currentPage: 0 }
+        this.state = { id:'',dataset: '', pub_id:'', perPage:30, currentPage: 0 }
       }
     
     componentWillMount(props){
@@ -123,7 +123,13 @@ export default class DataSetDetail extends Component {
                                 </li>
                             )
                         }) : 'None'}
-                         {this.state.dataset.catalog==='CSIRO DAP'? <a href={this.state.dataset.landingPage}> More resources (orginal datasource site) </a>: ''}
+                        {console.log(this.state.dataset, this.state.dataset.catalog)}
+                        <br/>
+                        {this.state.dataset.aspects['dataset-distributions'] 
+                            && this.state.dataset.aspects['dataset-distributions'].distributions.length>=24 
+                            && this.state.dataset.aspects['source'].id==='dap'? 
+                            <a href={this.state.dataset.aspects['dcat-dataset-strings'].landingPage}> ... More resources (orginal datasource site) ...</a>
+                            : ''}
                     </ul>
                    
                     <Pagination 

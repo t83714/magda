@@ -17,7 +17,7 @@ return {
         end: dataset.dataEndDate
     },
     themes: dataset.fieldOfResearch || [],
-    keywords: dataset.keywords?dataset.keywords.split(/[ ,]+/):[],
+    keywords: dataset.keywords?dataset.keywords.split(/[;,]+/):[],
     contactPoint: dataset.attributionStatement,
     landingPage: dataset.landingPage.href
 };
