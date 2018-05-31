@@ -7,7 +7,7 @@ import Registry from "@magda/typescript-common/dist/registry/AuthorizedRegistryC
 import * as fs from "fs";
 import * as yargs from "yargs";
 //npm run dev -- --config ../deploy/connector-config/csiro-dap.json --userId="00000000-0000-4000-8000-000000000000" --jwtSecret="squirrel"
-//npm run dev -- --config ../deploy/connector-config/csiro-dap.json --userId="00000000-0000-4000-8000-000000000000" --jwtSecret="squirrel" --registryUrl="http://192.168.137.143:30860/v0"
+//npm run dev -- --config ../deploy/connector-config/csiro-dap.json --userId="00000000-0000-4000-8000-000000000000" --jwtSecret="squirrel" --registryUrl="http://192.168.137.107:30860/v0"
 const argv = addJwtSecretFromEnvVar(
     yargs
         .config()

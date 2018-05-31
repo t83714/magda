@@ -61,6 +61,7 @@ export default class SearchNavPills extends Component{
     }
 
     getData(query, start, limit){
+        console.log(API.search + 'datasets?query=' + query + '&start='+start + '&limit='+limit+'&facetSize=99999')
         fetch(API.search + 'datasets?query=' + query + '&start='+start + '&limit='+limit+'&facetSize=99999')
         .then((response) => {
             if (response.status === 200) {

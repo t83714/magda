@@ -289,10 +289,10 @@ export default class Dap implements ConnectorSource {
                                     temp.push(distributionObj)
                                     distributionMap.set(mediaType, temp)
                                 }
-                                let avgDistSize = Math.ceil(this.distributionSize/distributionMap.size)
+                                // let avgDistSize = Math.ceil(this.distributionSize/distributionMap.size)
                                 let returnDistribution:any = []
                                 for(let [_, dist] of distributionMap){
-                                    returnDistribution = returnDistribution.concat(dist.slice(0, avgDistSize))
+                                    returnDistribution = returnDistribution.concat(dist.slice(0, Math.ceil(dist.length * this.distributionSize/detail.file.length)))
                                 }
                                 // if(detail.file.length > this.distributionSize){
                                 //     let distributionObj:any = {}
