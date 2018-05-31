@@ -23,7 +23,7 @@ gateway:
   image:
     repository: "gcr.io/knowledge-network-192205/data61"
     tag: "latest"
-  loadBalancerIP: "35.201.0.106"
+  loadBalancerIP: "35.201.6.121"
   auth:
     facebookClientId: ""
     googleClientId: "667942079301-49aomsf5l1i8tc5amdot6ck96e1d84c6.apps.googleusercontent.com"

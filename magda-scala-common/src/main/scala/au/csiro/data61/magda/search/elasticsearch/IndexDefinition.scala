@@ -87,9 +87,11 @@ object IndexDefinition extends DefaultJsonProtocol {
               geoshapeField("geoJson")),
             magdaTextField("title"),
             magdaTextField("description"),
-            magdaTextField("keywords",
-                keywordField("keyword")
-               ),
+            //nestedField("keywords"),
+            textField("keywords").fields(
+              keywordField("raw")
+            //    keywordField("keyword")
+            ),
             magdaTextField("themes"),
             doubleField("quality"),
             keywordField("catalog"),
