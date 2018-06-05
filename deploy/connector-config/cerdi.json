@@ -1,0 +1,9 @@
+{
+    "type": "magda-ckan-connector",
+    "id": "cerdi",
+    "name": "Federation University Research Data Catalogue",
+    "sourceUrl": "http://data2.cerdi.edu.au/",
+    "pageSize": 1000,
+    "schedule": "0 4 */3 * *",
+    "ignoreHarvestSources": ["*"]
+}
