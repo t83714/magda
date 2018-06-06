@@ -2,8 +2,8 @@
     "extends": "./tsconfig-build.json",
     "compilerOptions": {
         "declaration": false,
-        "target": "es5",
+        "target": "es6",
         "baseUrl": ".",
-        "lib": ["dom", "es5", "scripthost", "es2015.promise"]
+        "lib": ["dom", "es5", "es6", "scripthost", "es2015.promise"]
     }
 }
