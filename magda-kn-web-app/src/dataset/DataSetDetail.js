@@ -139,14 +139,14 @@ export default class DataSetDetail extends Component {
                  </Col>
                  <Col md={2} >
                  <div className='kn-stats'>
-                    <h5>KN STATS</h5>
+                    {/* <h5>KN STATS</h5>
                         <ul>
                             <li><span className="glyphicon glyphicon-search"></span> 0 </li>
                             <li><span className="glyphicon glyphicon-heart-empty"></span> 0 </li>
                             <li><span className="glyphicon glyphicon-list"></span> 0 </li>
                             <li><span className="glyphicon glyphicon-comment"></span> 0 </li>
                             <li><span className="glyphicon glyphicon-bookmark"></span> 0 </li>
-                        </ul>
+                        </ul> */}
                     </div>
                  </Col>
             </Row>

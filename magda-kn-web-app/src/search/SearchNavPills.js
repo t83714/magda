@@ -61,7 +61,7 @@ export default class SearchNavPills extends Component{
     }
 
     getData(query, start, limit){
-        console.log(API.search + 'datasets?query=' + query + '&start='+start + '&limit='+limit+'&facetSize=99999')
+        // console.log(API.search + 'datasets?query=' + query + '&start='+start + '&limit='+limit+'&facetSize=99999')
         fetch(API.search + 'datasets?query=' + query + '&start='+start + '&limit='+limit+'&facetSize=99999')
         .then((response) => {
             if (response.status === 200) {
@@ -71,6 +71,20 @@ export default class SearchNavPills extends Component{
         .then((json) => { 
             // console.log(json)
             this.setState({searchResult: json, total: json.hitCount})
+            let newFormats = new Set()
+            for(let ele of json.facets[1].options){
+                if(this.selectedFormatCheckboxes.has(ele.value)){
+                    newFormats.add(ele.value)
+                }
+            }
+            this.selectedFormatCheckboxes = new Set([...newFormats.keys()])
+            let newPublishers = new Set()
+            for(let ele of json.facets[0].options){
+                if(this.selectedPublisherCheckboxes.has(ele.value)){
+                    newPublishers.add(ele.value)
+                }
+            }
+            this.selectedPublisherCheckboxes = new Set([...newPublishers.keys()])
             // Calculate date range 
             // const year = json.facets[1].options
             // for(let key in year){
@@ -116,6 +130,7 @@ export default class SearchNavPills extends Component{
                 label={label}
                 handleCheckboxChange={this.togglePublisherCheckbox}
                 key={label}
+                initChecked={this.selectedPublisherCheckboxes}
                 hitCount = {hitCount}
             />
         )
@@ -126,6 +141,7 @@ export default class SearchNavPills extends Component{
                 label={label}
                 handleCheckboxChange={this.toggleFormatCheckbox}
                 key={label}
+                initChecked={this.selectedFormatCheckboxes}
                 hitCount = {hitCount}
             />
         )
@@ -211,7 +227,7 @@ export default class SearchNavPills extends Component{
                                     {this.state.searchResult.facets[1].id} 
                                     &nbsp;
                                     {
-                                        this.state.facetFormatCollapse ? <i className="fas fa-angle-double-up"></i> : <i className="fas fa-angle-double-down"></i>
+                                        this.state.facetFormatCollapse ? <i className="fa fa-angle-double-up"></i> : <i className="fa fa-angle-double-down"></i>
                                     }
                                     </a>
                                 </h3>

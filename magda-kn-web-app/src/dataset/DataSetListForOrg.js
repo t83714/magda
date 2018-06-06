@@ -4,6 +4,7 @@ import {OrderedSet} from 'immutable'
 import Slider from 'rc-slider'
 
 import SearchResultView from '../search/SearchResultView'
+import SearchForm from '../search/SearchForm'
 import Checkbox from '../search/Checkbox'
 import Pagination from '../dataset/Pagination'
 import './DataSet.css'
@@ -25,8 +26,12 @@ export default class DataSetListForOrg extends Component {
                         perPage:10, 
                         currentPage: 0, 
                         publisher:this.props.location.params ? this.props.location.params.org_name: '',
+                        facetFormatCollapse: false,
+                        searchText: '',
                         min: this.min, 
                         max: this.max}
+        this.searchTextChange = this.searchTextChange.bind(this)
+        this.handleSubmit = this.handleSubmit.bind(this)
     }
 
     componentWillMount(){
@@ -36,6 +41,10 @@ export default class DataSetListForOrg extends Component {
     updateCurrentPage = (page) =>{
         this.setState({currentPage: page})
         this.getData(this.state.publisher, page*this.state.perPage, 10)
+    }
+    toggleFormatCollapse = (e) =>{
+        e.preventDefault()
+        this.setState({facetFormatCollapse: !this.state.facetFormatCollapse})
     }
     componentDidMount(){
         // console.log(this.state.publisher)
@@ -61,12 +70,16 @@ export default class DataSetListForOrg extends Component {
                     console.log('error on .catch', error);
                 });
     }
-
     getData(query, start, limit){
         const preparedQuery = this.preparSearchText(query)
-        // console.log(query)
-        fetch( API.search + 'datasets?query=' + preparedQuery + '&start='+ start +'&limit='+ limit +'&facetSize=99999')
+        this.searchData('*', preparedQuery, start, limit)
+    }
+
+    searchData(freeText, query, start, limit){
+        //+ '&start='+ start +'&limit='+ limit +'&facetSize=99999'
+        fetch( API.search + 'datasets?query='+freeText + query + '&start='+ start +'&limit='+ limit +'&facetSize=99999' )
         .then((response) => {
+            console.log(response)
             if (response.status === 200) {
                 return response.json()
             } else console.log("Get data error ");
@@ -74,6 +87,14 @@ export default class DataSetListForOrg extends Component {
         .then((json) => { 
             console.log(json)
             this.setState({result: json, total: json.hitCount})
+            let newFormats = new Set()
+            for(let ele of json.facets[1].options){
+                if(this.selectedFormatCheckboxes.has(ele.value)){
+                    newFormats.add(ele.value)
+                }
+            }
+            this.selectedFormatCheckboxes = new Set([...newFormats.keys()])
+            // console.log(this.selectedFormatCheckboxes)
             // Calculate date range 
             // const year = json.facets[1].options
             // for(let key in year){
@@ -89,14 +110,6 @@ export default class DataSetListForOrg extends Component {
         });
       }
 
-    togglePublisherCheckbox = label => {
-        if (this.selectedPublisherCheckboxes.has(label)) {
-          this.selectedPublisherCheckboxes.delete(label);
-        } else {
-          this.selectedPublisherCheckboxes.add(label);
-        }
-        console.log(this.selectedPublisherCheckboxes)
-      }
     toggleFormatCheckbox = label => {
         if (this.selectedFormatCheckboxes.has(label)) {
           this.selectedFormatCheckboxes.delete(label);
@@ -105,31 +118,25 @@ export default class DataSetListForOrg extends Component {
         }
         console.log(this.selectedFormatCheckboxes)
       }
-    createPublisherCheckbox(label, hitCount) {
-        return (
-        <Checkbox
-                label={label}
-                handleCheckboxChange={this.togglePublisherCheckbox}
-                key={label}
-                hitCount = {hitCount}
-            />
-        )
-    }
+
     createFormatCheckbox(label, hitCount) {
         return (
         <Checkbox
                 label={label}
                 handleCheckboxChange={this.toggleFormatCheckbox}
                 key={label}
+                initChecked={this.selectedFormatCheckboxes}
                 hitCount = {hitCount}
             />
         )
     }
     filterButtonSubmit = () => {
-        this.getData(this.state.publisher)
+        let preparedText = this.preparSearchText(this.state.publisher)
+        this.searchData(this.state.searchText===''? '*' : this.state.searchText ,preparedText, 0, 10)
+
       }
     preparSearchText(publisher){
-        let byPublisher = '*+by+'+encodeURIComponent(publisher)
+        let byPublisher = '+by+'+encodeURIComponent(publisher)
         let byFormat = ''
         let fromto = ''
         for (const checkbox of this.selectedFormatCheckboxes) {
@@ -147,6 +154,17 @@ export default class DataSetListForOrg extends Component {
         this.max = value[1]
     }
 
+    searchTextChange(e){
+        this.setState({searchText: e.target.value})
+    }
+
+    handleSubmit(e){
+        e.preventDefault()
+        // let preparedText = this.preparSearchText(this.state.publisher)
+        let preparedText = '+by+'+this.state.publisher
+        this.searchData(this.state.searchText, preparedText, 0,10)
+    }
+
 
     render(){
         console.log(this.state.result)
@@ -155,8 +173,32 @@ export default class DataSetListForOrg extends Component {
             <div className="padding-top">
             <Grid>
                 <Row>
-                    <h3>Dataset list for {this.state.publisher} </h3>
+                    <h3>Search datasets of <i>{this.state.publisher}</i> </h3>
                     <br />
+                </Row>
+                <Row>
+                    <Col md={ 3}>
+                        <img className="img-responsive img-rounded" src="/img/knowledge_graph1.png" width="200px" alt="" />
+                    </Col>
+                    <Col md={ 9} >
+                        {/* <form role="search" onSubmit={this.handleSubmit}> */}
+                            <div className="search-bar input-group">
+                                <input type="text" className="search-query form-control" placeholder={'Search datasets of' + this.state.publisher}
+                                    name="q" 
+                                    value = {this.state.searchText}
+                                    onChange={this.searchTextChange}
+                                />
+                                <span className="input-group-btn">
+                                <button className="btn btn-danger" type="submit" onClick={this.handleSubmit}>
+                                    <span className=" glyphicon glyphicon-search"></span>
+                                </button>
+                                </span>
+                            </div>
+                        {/* </form> */}
+                    </Col>
+                </Row>
+                <Row>
+                   <br/>
                     <i> {this.state.result.hitCount} datasets found
                     </i>
                     <hr />
@@ -174,16 +216,38 @@ export default class DataSetListForOrg extends Component {
                     <Col md={4}>
                     <div className="right-filter">
                         <Row>
-                            <h4 className="col-xs-8"> {this.state.result.facets[1].id} </h4>
+                            <h4 className="col-xs-8"> 
+                            <a href='#' onClick={this.toggleFormatCollapse} >
+                            {this.state.result.facets[1].id}
+                                &nbsp;&nbsp;
+                                {
+                                    this.state.facetFormatCollapse ? <i className="fa fa-angle-double-down"></i> : <i className="fa fa-angle-double-up"></i>
+                                }
+                            </a>
+                            </h4>
                             <span  className="col-xs-4"><Button bsStyle="info" className="pull-right" onClick={this.filterButtonSubmit}> Refine Result </Button></span>
                         </Row>
                         <hr />
                         <ul className="cust-list">
-                            {this.state.result.facets[1].options.map((value, key) => {
+                        {
+                            this.state.facetFormatCollapse ? 
+                            this.state.result.facets[1].options.map((value, key) => {
+                                return (<li className="checkbox"  key={key}> 
+                                        {this.createFormatCheckbox(value.value, value.hitCount)}
+                                        </li>)
+                            })
+                            :
+                            this.state.result.facets[1].options.slice(0,15).map((value, key) => {
+                            return (<li className="checkbox"  key={key}> 
+                                    {this.createFormatCheckbox(value.value, value.hitCount)}
+                                    </li>)
+                        })}
+
+                            {/* {this.state.result.facets[1].options.map((value, key) => {
                                 return (<li className="checkbox"  key={key}> 
                                             {this.createFormatCheckbox(value.value, value.hitCount)}
                                         </li>)
-                            })}
+                            })} */}
                         </ul>
                         <br />
 

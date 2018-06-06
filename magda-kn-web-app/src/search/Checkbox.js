@@ -19,11 +19,17 @@ class Checkbox extends Component {
   
       handleCheckboxChange(label);
     }
+    componentDidMount(){
+      const { label, initChecked } = this.props;
+      if(initChecked.has(label)){
+        this.setState({isChecked: true })
+      }
+     
+    }
   
     render() {
       const { label, hitCount } = this.props;
-      const { isChecked } = this.state;
-  
+      let isChecked = this.state.isChecked
       return (
           <label>
             <input
