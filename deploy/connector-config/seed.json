@@ -1,0 +1,9 @@
+{
+    "type": "magda-ckan-connector",
+    "id": "seed",
+    "name": "NSW SEED",
+    "sourceUrl": "https://www.seed.nsw.gov.au/",
+    "pageSize": 1000,
+    "schedule": "0 4 */3 * *",
+    "ignoreHarvestSources": ["*"]
+}

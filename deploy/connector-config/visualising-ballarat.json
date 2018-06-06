@@ -1,0 +1,9 @@
+{
+    "type": "magda-ckan-connector",
+    "id": "visballarat",
+    "name": "Visualising Ballarat",
+    "sourceUrl": "http://data.visualisingballarat.org.au/",
+    "pageSize": 1000,
+    "schedule": "0 4 */3 * *",
+    "ignoreHarvestSources": ["*"]
+}

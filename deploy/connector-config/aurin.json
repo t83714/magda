@@ -1,0 +1,9 @@
+{
+    "type": "magda-ckan-connector",
+    "id": "aurin",
+    "name": "Australian Urban Research Infrastructure Network",
+    "sourceUrl": "http://data.aurin.org.au/",
+    "pageSize": 1000,
+    "schedule": "0 4 */3 * *",
+    "ignoreHarvestSources": ["*"]
+}
