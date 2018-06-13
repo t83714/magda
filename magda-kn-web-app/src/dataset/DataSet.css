@@ -1,72 +1,69 @@
-.org-name{
-    height: 40px;
+.org-name {
+    padding-bottom: 10px;
 }
-.thumbnail>img{
+.thumbnail > img {
     height: 160px;
 }
 
-.padding-top{
+.padding-top {
     padding-top: 85px;
 }
 
-.kn-stats{
+.kn-stats {
     padding-left: 20px;
 }
-ul{
+ul {
     padding-left: 5px;
 }
-li{
+li {
     list-style: none;
     text-decoration-style: none;
-    
 }
 
-.label a{
+.label a {
     text-decoration: none;
     text-decoration-line: none;
     text-decoration-color: none;
-    color: white
+    color: white;
 }
 
-.label a:link{
+.label a:link {
     text-decoration: none;
     text-decoration-line: none;
     text-decoration-color: none;
-    color: white
+    color: white;
 }
 
-.img{
-
+.img {
     padding: 20px 0px 20px 0px;
-    
 }
-.org-name{
-    color:#333;
+.org-name {
+    color: #333;
     /* font-weight: bold; */
 }
-.label{
+.label {
     margin-left: 5px;
 }
-.small-img{
+.small-img {
     height: 150px;
     padding: 10px;
 }
-.media{
+.media {
     border-bottom: gray 1px solid;
 }
-.media-body{
+.media-body {
     padding: 10px 5px 5px 10px;
 }
-.display-padding{
-    padding: 20px 10px 10px 20px
+.display-padding {
+    padding: 20px 10px 10px 20px;
 }
 .btn-custome {
-    border: 1px solid #42DCA3;
-    color: #42DCA3;
+    border: 1px solid #42dca3;
+    color: #42dca3;
     background-color: transparent;
 }
-pre{
-    white-space:pre-wrap;
+pre {
+    white-space: pre-wrap;
 }
 
 /* table 
@@ -74,19 +71,21 @@ pre{
     table-layout: fixed;
     
 } */
-.label-wrap{
+.label-wrap {
     margin: 5px;
 }
-.cust-label{
+.cust-label {
     background-color: #5bc0de;
     float: left;
     border-radius: 3px;
-    padding:  3px 0px 0px 3px ;
+    padding: 3px 0px 0px 3px;
     margin: 5px 5px 5px 5px;
     font-size: 12px;
 }
-.cust-label a{
+.cust-label a {
     color: white;
 }
 
-
+h3.org-name {
+    font-size: 20px;
+}
