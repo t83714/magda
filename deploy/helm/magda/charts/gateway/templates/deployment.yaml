@@ -40,6 +40,7 @@ spec:
         volumeMounts:
           - name: routes
             mountPath: /etc/routes
+{{- if .Values.global.enableLivenessProbes }}
         livenessProbe:
           httpGet:
             path: /auth
@@ -47,6 +48,7 @@ spec:
           initialDelaySeconds: 10
           periodSeconds: 10
           timeoutSeconds: 10
+{{- end }}
         resources:
 {{ toYaml .Values.resources | indent 10 }}
         env:

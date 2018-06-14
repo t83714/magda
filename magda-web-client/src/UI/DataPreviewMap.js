@@ -3,21 +3,32 @@ import PropTypes from "prop-types";
 import "./DataPreviewMap.css";
 import DataPreviewMapOpenInNationalMapButton from "./DataPreviewMapOpenInNationalMapButton";
 import { config } from "../config";
-import {Medium, Small} from './Responsive';
+import { Medium, Small } from "./Responsive";
+import Spinner from "../Components/Spinner";
 
 export const defaultDataSourcePreference = [
     "WMS",
+    "ESRI REST",
     "GeoJSON",
     "WFS",
     "csv-geo-au",
     "KML"
 ];
 
+export const isSupportedFormat = function(format) {
+    return (
+        defaultDataSourcePreference
+            .map(item => item.toLowerCase())
+            .filter(item => format.trim() === item).length !== 0
+    );
+};
+
 class DataPreviewMap extends Component {
     constructor(props) {
         super(props);
         this.state = {
             isInitLoading: true,
+            isMapLoading: false,
             isMapPreviewAvailable: false,
             selectedDistribution: null
         };
@@ -28,10 +39,10 @@ class DataPreviewMap extends Component {
     createStateFromProps(props) {
         this.iframeRef = null;
 
-        const { identifier } = props.dataset;
-        if (identifier === "") {
+        if (!props.distributions || !props.distributions.length) {
             this.setState({
                 isInitLoading: true,
+                isMapLoading: false,
                 isMapPreviewAvailable: false,
                 selectedDistribution: null
             });
@@ -46,8 +57,13 @@ class DataPreviewMap extends Component {
             });
             return;
         } else {
+            if (console && console.log) {
+                console.log("map preview distribution selection: ");
+                console.log(selectedDistribution);
+            }
             this.setState({
                 isInitLoading: false,
+                isMapLoading: true,
                 isMapPreviewAvailable: true,
                 selectedDistribution: selectedDistribution
             });
@@ -78,22 +94,28 @@ class DataPreviewMap extends Component {
                         {
                             name: this.state.selectedDistribution.title,
                             type: "magda-item",
-                            url: "/",
+                            url: config.baseUrl,
                             distributionId: this.state.selectedDistribution
                                 .identifier,
                             isEnabled: true,
                             zoomOnEnable: true
                         }
                     ],
-                    baseMapName: "Positron (Light)"
+                    baseMapName: "Positron (Light)",
+                    homeCamera: {
+                        north: -8,
+                        east: 158,
+                        south: -45,
+                        west: 109
+                    }
                 }
             ]
         };
     }
 
     determineDistribution(props) {
-        const distributions = props.dataset.distributions;
-        let dataSourcePreference = props.dataset.dataSourcePreference;
+        const distributions = props.distributions;
+        let dataSourcePreference = props.dataSourcePreference;
         if (!dataSourcePreference || !dataSourcePreference.length)
             dataSourcePreference = defaultDataSourcePreference;
         dataSourcePreference = dataSourcePreference.map(item =>
@@ -140,6 +162,9 @@ class DataPreviewMap extends Component {
                 this.createCatalogItemFromDistribution(),
                 "*"
             );
+            this.setState({
+                isMapLoading: true
+            });
             if (this.props.onLoadingStart) {
                 try {
                     this.props.onLoadingStart();
@@ -149,6 +174,9 @@ class DataPreviewMap extends Component {
             }
             return;
         } else if (e.data === "loading complete") {
+            this.setState({
+                isMapLoading: false
+            });
             if (this.props.onLoadingEnd) {
                 try {
                     this.props.onLoadingEnd();
@@ -161,62 +189,95 @@ class DataPreviewMap extends Component {
     }
 
     render() {
-        if (this.state.isInitLoading)
-            return (
-                <div className="data-preview-map">
-                    <h3>Map Preview</h3>
-                    Loading....
-                </div>
-            );
+        if (!this.state.isInitLoading && !this.state.isMapPreviewAvailable)
+            return null; //-- requested by Tash: hide the section if no data available
 
-        if (!this.state.isMapPreviewAvailable) return null; //-- requested by Tash: hide the section if no data available
+        // 3 states:
+        // - loading component (isInitLoading === true) -> Show spinner
+        // - loading terria (isMapLoading === true) -> Continue showing spinner and start loading map hidden
+        // - everything loaded (neither true) -> No spinner, show map
 
-        return (
-            <div className="data-preview-map">
-                <h3>Map Preview</h3>
+        let iframe = null;
+        if (!this.state.isInitLoading) {
+            iframe = (
                 <div style={{ position: "relative" }}>
                     <DataPreviewMapOpenInNationalMapButton
                         distribution={this.state.selectedDistribution}
                         style={{
                             position: "absolute",
                             right: "10px",
-                            top: "10px"
+                            top: "10px",
+                            visibility: this.state.isMapLoading
+                                ? "hidden"
+                                : "visible"
                         }}
                     />
                     <Medium>
-                      <iframe
-                          title={this.state.selectedDistribution.title}
-                          width="100%"
-                          height="420px"
-                          frameBorder="0"
-                          src={
-                              config.previewMapUrl +
-                              "#mode=preview&hideExplorerPanel=1&clean"
-                          }
-                          ref={f => (this.iframeRef = f)}
-                      />
+                        <iframe
+                            title={this.state.selectedDistribution.title}
+                            width="100%"
+                            height="420px"
+                            frameBorder="0"
+                            src={
+                                config.previewMapUrl +
+                                "#mode=preview&hideExplorerPanel=1"
+                            }
+                            ref={f => (this.iframeRef = f)}
+                            style={
+                                this.state.isMapLoading
+                                    ? {
+                                          visibility: "hidden",
+                                          position: "absolute"
+                                      }
+                                    : {}
+                            }
+                        />
                     </Medium>
                     <Small>
-                      <iframe
-                          title={this.state.selectedDistribution.title}
-                          width="100%"
-                          height="200px"
-                          frameBorder="0"
-                          src={
-                              config.previewMapUrl +
-                              "#mode=preview&hideExplorerPanel=1&clean"
-                          }
-                          ref={f => (this.iframeRef = f)}
-                      />
+                        <iframe
+                            title={this.state.selectedDistribution.title}
+                            width="100%"
+                            height="200px"
+                            frameBorder="0"
+                            src={
+                                config.previewMapUrl +
+                                "#mode=preview&hideExplorerPanel=1&clean"
+                            }
+                            ref={f => (this.iframeRef = f)}
+                            style={
+                                this.state.isMapLoading
+                                    ? {
+                                          visibility: "hidden",
+                                          position: "absolute"
+                                      }
+                                    : {}
+                            }
+                        />
                     </Small>
                 </div>
+            );
+        }
+        return (
+            <div className="data-preview-map">
+                <h3>Map Preview</h3>
+                {(this.state.isInitLoading || this.state.isMapLoading) && (
+                    <div>
+                        <Medium>
+                            <Spinner width="100%" height="420px" />
+                        </Medium>
+                        <Small>
+                            <Spinner width="100%" height="200px" />
+                        </Small>
+                    </div>
+                )}
+                {iframe}
             </div>
         );
     }
 }
 
 DataPreviewMap.propTypes = {
-    dataset: PropTypes.object,
+    distributions: PropTypes.arrayOf(PropTypes.object),
     dataSourcePreference: PropTypes.arrayOf(PropTypes.string),
     onLoadingStart: PropTypes.func,
     onLoadingEnd: PropTypes.func

@@ -1,6 +1,8 @@
 // @flow
 import getDateString from "./getDateString";
+import { isSupportedFormat as isSupportedMapPreviewFormat } from "../UI/DataPreviewMap";
 import type { FetchError } from "../types";
+import weightedMean from "weighted-mean";
 // dataset query:
 //aspect=dcat-dataset-strings&optionalAspect=dcat-distribution-strings&optionalAspect=dataset-distributions&optionalAspect=temporal-coverage&dereference=true&optionalAspect=dataset-publisher&optionalAspect=source
 
@@ -55,6 +57,17 @@ export type DatasetPublisher = {
     publisher: Publisher
 };
 
+type CompatiblePreviews = {
+    map?: boolean,
+    chart?: boolean,
+    table?: boolean,
+    json?: boolean,
+    html?: boolean,
+    text?: boolean,
+    rss?: boolean,
+    google?: boolean
+};
+
 //aspect=dcat-distribution-strings
 export type RawDistribution = {
     id: string,
@@ -68,7 +81,8 @@ export type RawDistribution = {
             fields: Object,
             format: string,
             timeseries: boolean,
-            wellFormed: boolean
+            wellFormed: boolean,
+            compatiblePreviews: CompatiblePreviews
         }
     }
 };
@@ -99,12 +113,13 @@ export type ParsedDistribution = {
     format: string,
     downloadURL: ?string,
     accessURL: ?string,
-    updatedDate: string,
+    updatedDate: ?string,
     license: string,
     linkActive: boolean,
     linkStatusAvailable: boolean,
     isTimeSeries: boolean,
-    chartFields?: ?Object
+    chartFields?: ?Object,
+    compatiblePreviews: CompatiblePreviews
 };
 
 // all aspects become required and must have value
@@ -136,7 +151,7 @@ export const defaultPublisher: Publisher = {
             name: "",
             title: "",
             imageUrl: "",
-            description: "No Description available for this publisher"
+            description: "No Description available for this organisation"
         }
     }
 };
@@ -179,9 +194,82 @@ const defaultDistributionAspect = {
         fields: {},
         format: null,
         timeseries: false,
-        wellFormed: false
+        wellFormed: false,
+        compatiblePreviews: null
+        // Decisions to be made here on what the default should be
+        // For now the default has to be null so that it can be overriden by the
+        //  guessCompatiblePreviews output
+        // {
+        //     map: false,
+        //     chart: false,
+        //     table: false,
+        //     json: false,
+        //     html: false,
+        //     text: false,
+        //     rss: false,
+        //     google: false
+        // }
     }
 };
+
+function getFormatString(aspects) {
+    const defaultString = "Unknown format";
+    if (!aspects || typeof aspects !== "object") return defaultString;
+    const dcatAspect = aspects["dcat-distribution-strings"];
+    const formatAspect = aspects["dataset-format"];
+    if (formatAspect && formatAspect["format"]) return formatAspect["format"];
+    if (dcatAspect && dcatAspect["format"]) return dcatAspect["format"];
+    return defaultString;
+}
+
+function guessCompatiblePreviews(format, isTimeSeries): CompatiblePreviews {
+    // Make a guess of compatible previews from the format
+    // Should be temporary before it's properly implemented
+    //  in the "visualization sleuther"
+    const compatiblePreviews = {
+        map: false,
+        chart: false,
+        table: false,
+        json: false,
+        html: false,
+        text: false,
+        rss: false,
+        google: false
+    };
+    const fmt = format.toLowerCase();
+
+    if (fmt.indexOf("csv") !== -1) {
+        compatiblePreviews.table = true;
+        compatiblePreviews.google = true;
+        compatiblePreviews.chart = true;
+    }
+    switch (fmt) {
+        case "xls":
+        case "xlsx":
+        case "doc":
+        case "docx":
+        case "pdf":
+            compatiblePreviews.google = true;
+            break;
+        case "rss":
+            compatiblePreviews.rss = true;
+            break;
+        case "json":
+            compatiblePreviews.json = true;
+            break;
+        case "text":
+        case "txt":
+            compatiblePreviews.text = true;
+            break;
+        case "htm":
+        case "html":
+            compatiblePreviews.html = true;
+            break;
+        default:
+            if (isSupportedMapPreviewFormat(fmt)) compatiblePreviews.map = true;
+    }
+    return compatiblePreviews;
+}
 
 export function parseDistribution(
     record?: RawDistribution
@@ -195,18 +283,19 @@ export function parseDistribution(
 
     const info = aspects["dcat-distribution-strings"];
 
-    const format = info.format || "Unknown format";
+    const format = getFormatString(aspects);
     const downloadURL = info.downloadURL || null;
     const accessURL = info.accessURL || null;
-    const updatedDate = info.modified
-        ? getDateString(info.modified)
-        : "unknown date";
+    const updatedDate = info.modified ? getDateString(info.modified) : null;
     const license = info.license || "License restrictions unknown";
     const description = info.description || "No description provided";
     const linkStatus = aspects["source-link-status"];
     const linkStatusAvailable = Boolean(linkStatus.status); // Link status is available if status is non-empty string
     const linkActive = linkStatus.status === "active";
     const isTimeSeries = aspects["visualization-info"]["timeseries"];
+    const compatiblePreviews =
+        aspects["visualization-info"].compatiblePreviews ||
+        guessCompatiblePreviews(format, isTimeSeries);
     let chartFields = null;
 
     if (isTimeSeries) {
@@ -234,7 +323,11 @@ export function parseDistribution(
         linkStatusAvailable,
         linkActive,
         isTimeSeries,
-        chartFields
+        chartFields,
+        visualizationInfo: aspects["visualization-info"]
+            ? aspects["visualization-info"]
+            : null,
+        compatiblePreviews
     };
 }
 
@@ -258,7 +351,7 @@ export function parseDataset(dataset?: RawDataset): ParsedDataset {
         getDateString(datasetInfo.issued) || "Unknown issued date";
     const updatedDate = datasetInfo.modified
         ? getDateString(datasetInfo.modified)
-        : "unknown date";
+        : null;
     const publisher = aspects["dataset-publisher"]
         ? aspects["dataset-publisher"]["publisher"]
         : defaultPublisher;
@@ -267,8 +360,15 @@ export function parseDataset(dataset?: RawDataset): ParsedDataset {
         ? aspects["source"]["name"]
         : defaultDatasetAspects["source"]["name"];
 
-    const linkedDataRating: number = aspects["dataset-linked-data-rating"]
-        ? aspects["dataset-linked-data-rating"]["stars"]
+    function calcQuality(qualityAspect) {
+        const ratings = Object.keys(qualityAspect)
+            .map(key => qualityAspect[key])
+            .map(aspectRating => [aspectRating.score, aspectRating.weighting]);
+        return weightedMean(ratings);
+    }
+
+    const linkedDataRating: number = aspects["dataset-quality-rating"]
+        ? calcQuality(aspects["dataset-quality-rating"])
         : 0;
 
     const distributions = distribution["distributions"].map(d => {
@@ -297,12 +397,16 @@ export function parseDataset(dataset?: RawDataset): ParsedDataset {
                 numeric: numericFields
             };
         }
+        const format = getFormatString(distributionAspects);
+        const compatiblePreviews =
+            distributionAspects["visualization-info"].compatiblePreviews ||
+            guessCompatiblePreviews(format, isTimeSeries);
         return {
             identifier: d["id"],
             title: d["name"],
             downloadURL: info.downloadURL || null,
             accessURL: info.accessURL || null,
-            format: info.format || "Unknown format",
+            format,
             license:
                 !info.license || info.license === "notspecified"
                     ? "License restrictions unknown"
@@ -310,11 +414,11 @@ export function parseDataset(dataset?: RawDataset): ParsedDataset {
             description: info.description || "No description provided",
             linkStatusAvailable: Boolean(linkStatus.status), // Link status is available if status is non-empty string
             linkActive: linkStatus.status === "active",
-            updatedDate: info.modified
-                ? getDateString(info.modified)
-                : "unknown date",
+            updatedDate: info.modified ? getDateString(info.modified) : null,
             isTimeSeries: visualizationInfo["timeseries"],
-            chartFields
+            chartFields,
+            compatiblePreviews,
+            visualizationInfo: visualizationInfo ? visualizationInfo : null
         };
     });
     return {

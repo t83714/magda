@@ -36,8 +36,9 @@ import au.csiro.data61.magda.search.SearchQueryer
 import au.csiro.data61.magda.indexer.search.SearchIndexer
 import akka.stream.scaladsl.Source
 import scala.concurrent.Await
+import au.csiro.data61.magda.model.Registry.RegistryConverters
 
-class WebhookSpec extends BaseApiSpec with RegistryProtocols with ModelProtocols with ApiProtocols {
+class WebhookSpec extends BaseApiSpec with RegistryConverters with ModelProtocols with ApiProtocols {
   override def buildConfig = ConfigFactory.parseString("indexer.requestThrottleMs=1").withFallback(super.buildConfig)
   val cachedListCache: scala.collection.mutable.Map[String, List[_]] = scala.collection.mutable.HashMap.empty
 
@@ -52,6 +53,7 @@ class WebhookSpec extends BaseApiSpec with RegistryProtocols with ModelProtocols
             Agent(
               identifier = publisher.identifier,
               name = publisher.name,
+              acronym = getAcronymFromPublisherName(publisher.name),
               imageUrl = publisher.imageUrl)),
 
           quality = 0,
@@ -119,9 +121,9 @@ class WebhookSpec extends BaseApiSpec with RegistryProtocols with ModelProtocols
       forAll(gen) {
         case (dataSets, dataSetsToDelete) =>
           val builtIndex = buildIndex()
-          Await.result(builtIndex.indexer.index(Source.fromIterator(() => dataSets.iterator)), 10 seconds)
+          Await.result(builtIndex.indexer.index(Source.fromIterator(() => dataSets.iterator)), 30 seconds)
 
-          Await.result(builtIndex.indexer.ready, 10 seconds)
+          Await.result(builtIndex.indexer.ready, 30 seconds)
           refresh(builtIndex.indexId)
           blockUntilExactCount(dataSets.size, builtIndex.indexId, builtIndex.indices.getType(Indices.DataSetsIndexType))
 
@@ -173,7 +175,7 @@ class WebhookSpec extends BaseApiSpec with RegistryProtocols with ModelProtocols
       forAll(gen) {
         case (dataSetsToDelete, deletedDataSetsToSave) =>
           val builtIndex = buildIndex()
-          Await.result(builtIndex.indexer.ready, 10 seconds)
+          Await.result(builtIndex.indexer.ready, 30 seconds)
           refresh(builtIndex.indexId)
 
           val events = dataSetsToDelete.map(dataSet =>

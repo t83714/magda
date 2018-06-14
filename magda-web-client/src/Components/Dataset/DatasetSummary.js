@@ -6,6 +6,8 @@ import QualityIndicator from "../../UI/QualityIndicator";
 import "./DatasetSummary.css";
 import { Link } from "react-router-dom";
 import uniq from "lodash.uniq";
+import fileIcon from "../../assets/format-passive-dark.svg";
+import Divider from "../../UI/Divider";
 
 export default class DatasetSummary extends Component {
     constructor(props) {
@@ -14,9 +16,14 @@ export default class DatasetSummary extends Component {
     }
 
     renderDownloads(dataset) {
-        const formats = uniq(dataset.distributions.map(dis => dis.format));
+        const formats = uniq(
+            dataset.distributions
+                .filter(dis => defined(dis.format))
+                .map(dis => dis.format)
+        );
         return (
             <div className="dataset-summary-downloads">
+                <img src={fileIcon} alt="File icon" />{" "}
                 {formats.map((f, i) => <span key={i}>{f}</span>)}
             </div>
         );
@@ -25,20 +32,29 @@ export default class DatasetSummary extends Component {
     render() {
         const dataset = this.props.dataset;
         const publisher = dataset.publisher && dataset.publisher.name;
+        const publisherIdent =
+            dataset.publisher && dataset.publisher.identifier;
+        const searchText = defined(this.props.searchText)
+            ? this.props.searchText
+            : "";
         return (
             <div className="dataset-summary">
-                <h3>
+                <h2 className="dataset-summary-title">
                     <Link
-                        className="dataset-summary-title"
                         to={`/dataset/${encodeURIComponent(
                             dataset.identifier
-                        )}`}
+                        )}?q=${searchText}`}
                     >
                         {dataset.title}
                     </Link>
-                </h3>
+                </h2>
                 {publisher && (
-                    <div className="dataset-summary-publisher">{publisher}</div>
+                    <Link
+                        className="dataset-summary-publisher"
+                        to={`/organisations/${publisherIdent}`}
+                    >
+                        {publisher}
+                    </Link>
                 )}
 
                 <div className="dataset-summary-description">
@@ -50,15 +66,15 @@ export default class DatasetSummary extends Component {
                 <div className="dataset-summary-meta">
                     {defined(dataset.modified) && (
                         <span className="dataset-summary-updated">
-                            {" "}
                             Dataset Updated {getDateString(dataset.modified)}
+                            <Divider />
                         </span>
                     )}
                     {defined(dataset.quality) && (
-                        <span className="dataset-summary-quality">
-                            {" "}
+                        <div className="dataset-summary-quality">
                             <QualityIndicator quality={dataset.quality} />
-                        </span>
+                            <Divider />
+                        </div>
                     )}
                     {defined(
                         dataset.distributions &&

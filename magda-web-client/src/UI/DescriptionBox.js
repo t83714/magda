@@ -26,6 +26,7 @@ class DescriptionBox extends Component {
             : false;
         return (
             <div
+                itemProp="description"
                 className={`description-box white-box overview-box ${
                     this.state.isExpanded ? "is-expanded" : ""
                 }`}
@@ -61,7 +62,7 @@ class DescriptionBox extends Component {
     }
 }
 
-DescriptionBox.PropTypes = {
+DescriptionBox.propTypes = {
     isAutoTruncate: PropTypes.bool,
     truncateLength: PropTypes.number,
     content: PropTypes.string

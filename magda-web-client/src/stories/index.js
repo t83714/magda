@@ -2,7 +2,6 @@ import React from "react";
 
 import { storiesOf } from "@storybook/react";
 import { action } from "@storybook/addon-actions";
-import { linkTo } from "@storybook/addon-links";
 import { MemoryRouter } from "react-router-dom";
 
 import CustomIcons, { iconTypes } from "../UI/CustomIcons";
@@ -11,9 +10,7 @@ import DataPreviewJson from "../UI/DataPreviewJson";
 import DataPreviewTable from "../UI/DataPreviewTable";
 import DataPreviewTextBox from "../UI/DataPreviewTextBox";
 import DataPreviewChart from "../UI/DataPreviewChart";
-import DropDown from "../UI/DropDown";
 import MarkdownViewer from "../UI/MarkdownViewer";
-import News from "../UI/News";
 import Notification from "../UI/Notification";
 import OverviewBox from "../UI/OverviewBox";
 import Pagination from "../UI/Pagination";
@@ -22,7 +19,6 @@ import QualityIndicator from "../UI/QualityIndicator";
 import TemporalAspectViewer from "../UI/TemporalAspectViewer";
 import ToggleList from "../UI/ToggleList";
 import Tabs from "../UI/Tabs";
-import ContactForm from "../UI/ContactForm";
 import MonthPicker from "../UI/MonthPicker";
 // doc
 import ApiViewer from "./ApiViewer";
@@ -58,26 +54,9 @@ animum inponere quietem? Vinctae et mando vivere sustineam resilit militiam
 tacitos ille pondus clipeoque **vomit**. Qui arcem. Cum diu, misit deficeret
 texit ad quos, ferar aratro praecipue.`;
 
-const exampleNews = [
-    { link: "", title: "news 1", contentSnippet: "aaa" },
-    { link: "", title: "news 2", contentSnippet: "bbb" },
-    { link: "", title: "news 3", contentSnippet: "ccc" }
-];
-
 storiesOf("Shared UI", module)
     .addDecorator(story => (
         <MemoryRouter initialEntries={["/"]}>{story()}</MemoryRouter>
-    ))
-    .add("DropDown", () => (
-        <DropDown
-            options={[
-                { id: 0, value: "a" },
-                { id: 1, value: "b" },
-                { id: 2, value: "c" }
-            ]}
-            select={action()}
-            activeOption={"default option"}
-        />
     ))
     .add("ToggleList", () => (
         <ToggleList
@@ -113,13 +92,28 @@ storiesOf("Quality Indicator", module)
 
 storiesOf("Pagination", module)
     .add("page 1", () => (
-        <Pagination currentPage={1} maxPage={100} totalItems ={100} onPageChange={action()} />
+        <Pagination
+            currentPage={1}
+            maxPage={100}
+            totalItems={100}
+            onPageChange={action()}
+        />
     ))
     .add("page 3", () => (
-        <Pagination currentPage={3} maxPage={100} totalItems ={100} onPageChange={action()} />
+        <Pagination
+            currentPage={3}
+            maxPage={100}
+            totalItems={100}
+            onPageChange={action()}
+        />
     ))
     .add("last page", () => (
-        <Pagination currentPage={100} maxPage={100} totalItems ={100} onPageChange={action()} />
+        <Pagination
+            currentPage={100}
+            maxPage={100}
+            totalItems={100}
+            onPageChange={action()}
+        />
     ));
 
 storiesOf("Notification", module)
@@ -138,13 +132,6 @@ storiesOf("Notification", module)
         />
     ));
 
-storiesOf("News", module)
-    .add("News loading", () => <News isFetching={true} />)
-    .add("News loading failed", () => (
-        <News error={{ title: "404", detail: "cannot load" }} />
-    ))
-    .add("News loaded", () => <News newsItems={exampleNews} />);
-
 storiesOf("OverviewBox", module)
     .add("Long overview", () => <OverviewBox content={exampleMarkdown} />)
     .add("Short overview", () => <OverviewBox content={"exampleMarkdown"} />);
@@ -153,10 +140,6 @@ storiesOf("Aspect Viewer", module).add("Temporal Aspect Viewer", () => (
     <TemporalAspectViewer
         data={{ intervals: [{ start: "2017-12-25", end: "2017-12-25" }] }}
     />
-));
-
-storiesOf("Contact Form", module).add("Generic contact from", () => (
-    <ContactForm />
 ));
 
 iconTypes.map(iconname =>
@@ -192,7 +175,7 @@ storiesOf("API viewer", module)
             type="table"
         />
     ))
-    .add("publishers viewer", () => (
+    .add("organisations viewer", () => (
         <ApiViewer
             url="http://search.data.gov.au/api/v0/search/facets/publisher/options?generalQuery=*&facetQuery=*&limit=562&orderedBy=hitCount%22"
             type="table"

@@ -1,68 +1,147 @@
 @import "../../variables";
-.search-facets {
-    @media (min-width: 768px) {
-        display: flex;
-        justify-content: flex-start;
-        margin-bottom: 40px;
-    }
-
+.search-facets-desktop {
+    display: flex;
+    justify-content: flex-start;
+    margin-bottom: 32px;
+    flex-direction: row;
+    flex-wrap: wrap;
     .search-facet {
         margin-right: 8px;
         position: relative;
+        width: 45%;
+        @media (min-width: $medium) {
+            width: auto;
+        }
     }
-    .mui-form {
-        margin-bottom: 0;
+    .sub-heading {
+        width: 100%;
     }
-    .mui-btn + .mui-btn {
+    .au-btn + .au-btn {
         margin-left: 0;
-    }
-    .mui-textfield {
-        margin-bottom: 0;
-    }
-    .mui-list--unstyled {
-        margin-bottom: 0;
     }
 }
 
+.mobile-facet-background {
+    position: fixed;
+    height: 100vh;
+    width: 100vw;
+    left: 0;
+    top: 0;
+    background: rgba(0, 0, 0, 0.5);
+    z-index: 9;
+}
+
+.au-btn.filter-toggle-button {
+    position: relative;
+    color: $AU-color-foreground-action;
+    border: 0;
+    box-shadow: inset 0 -1px 0 0 rgba(73, 73, 73, 0.15);
+    width: 100%;
+    text-align: left;
+    font-weight: 500;
+    line-height: 17px;
+    padding: 0 15px;
+    height: 50px;
+    margin: 0;
+    background-color: $AU-color-background;
+    text-transform: uppercase;
+    img {
+        position: absolute;
+        display: block;
+        right: 8px;
+        top: 13px;
+    }
+    &:hover,
+    &:focus {
+        background-color: #f7f8fa;
+        color: $AU-color-foreground-action;
+    }
+}
+.search-facets-mobile {
+    .facet-header .au-btn {
+        text-align: left;
+        padding: 5px 8px;
+        margin: 0;
+        height: 45px;
+    }
+}
+.react-autosuggest__suggestions-container::-webkit-scrollbar {
+    -webkit-appearance: none;
+    width: 8px;
+}
 .facet-body {
-    width: 460px;
     margin-top: 8px;
     box-shadow: 0 3px 6px 0 rgba(0, 0, 0, 0.23), 0 3px 6px 0 rgba(0, 0, 0, 0.16);
     background: #fff;
     border-radius: 2px;
-    position: absolute;
     z-index: 1;
     padding: 0 16px;
-    @media (min-width: 768px) {
-        &.facet-format {
-            right: 0;
-        }
+
+    @media (max-width: $medium) {
+        position: fixed;
+        left: 5px;
+        right: 5px;
+        top: 50px;
+        z-index: 10;
+    }
+
+    @media (min-width: $medium+1) {
+        width: 460px;
+        max-width: 100vw;
+        position: absolute;
+        &.facet-publisher,
         &.facet-temporal {
-            right: 0;
+            left: 0px;
+        }
+        &.facet-format,
+        &.facet-region {
+            right: -40px;
+        }
+        &.facet-region {
+            left: 0;
         }
     }
 }
 
+.facet-body-buttons {
+    max-height: calc(100vh - 200px);
+    overflow-y: auto;
+    @media (min-width: $medium) {
+        max-height: calc(180px);
+        overflow-y: auto;
+    }
+}
+
+.facet-option__list {
+    margin: 0;
+}
+
 .btn-facet-option {
+    position: relative;
     width: 100%;
     overflow: hidden;
     margin: 0 0 1px 0;
-    padding: 0;
     text-align: left;
-    background: transparent;
     height: auto;
+    border: 0;
+    box-shadow: none;
+    margin: 0;
+    padding: 0;
+    margin-bottom: 5px;
+    padding: 0 8px;
+    cursor: pointer;
     &.is-active,
     &:hover,
     &:focus {
-        background-color: rgba(245, 88, 96, 0.1);
-        box-shadow: inset 0 -1px 0 0 rgba(73, 73, 73, 0.1);
+        background-color: $AU-color-foreground-action;
+        color: $AU-color-background;
     }
 }
 
 .btn-facet-option__volume-indicator {
     display: block;
     position: absolute;
-    left: 0;
+    left: 8px;
     bottom: 0px;
     z-index: 10;
 }
@@ -71,7 +150,7 @@
     font-size: 14px;
     line-height: 20px;
     display: block;
-    padding: 16px 0;
+    padding: 8px 0;
     font-weight: 400;
 }
 
@@ -80,14 +159,8 @@
     justify-content: space-between;
     font-size: 16px;
     line-height: 20px;
-    margin: 1px -16px;
+    padding: 15px 0;
     button {
-        text-transform: none;
-        font-weight: 400;
         padding: 0 16px;
-        font-size: 16px;
-        &:last-child {
-            color: #cc3139;
-        }
     }
 }

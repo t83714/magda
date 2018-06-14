@@ -16,12 +16,18 @@ spec:
       - name: search-api
         image: {{ template "dockerimage" . }}
         imagePullPolicy: {{ .Values.image.pullPolicy | default .Values.global.image.pullPolicy }}
-        command: [
-            "/app/bin/magda-search-api",
-            "-Dhttp.port=80",
-            "-Dakka.loglevel={{ .Values.global.logLevel }}",
-            "-DelasticSearch.serverUrl=elasticsearch://elasticsearch:9300"
-        ]
+        command:
+          - "/app/bin/magda-search-api"
+          - "-Dhttp.port=80"
+          - "-Dakka.loglevel={{ .Values.global.logLevel }}"
+          - "-DelasticSearch.serverUrl=elasticsearch://elasticsearch:9300"
+{{- if .Values.datasetsIndexVersion }}
+          - "-DelasticSearch.indices.datasets.version={{ .Values.datasetsIndexVersion }}"
+{{- end }}
+{{- if .Values.regionsIndexVersion }}
+          - "-DelasticSearch.indices.datasets.version={{ .Values.regionsIndexVersion }}""
+{{- end }}
+{{- if .Values.global.enableLivenessProbes }}
         livenessProbe:
           httpGet:
             path: "/v0/datasets"
@@ -29,14 +35,7 @@ spec:
           initialDelaySeconds: 60
           periodSeconds: 10
           timeoutSeconds: 10
-        {{- if not .Values.global.noDbAuth }}
-        env:
-        - name: ELASTIC_SEARCH_PASSWORD
-          valueFrom:
-            secretKeyRef:
-              name: db-passwords
-              key: elasticsearch
-        {{- end }}
+{{- end }}
         ports:
         - containerPort: 80
         resources:

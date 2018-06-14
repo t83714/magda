@@ -9,6 +9,9 @@ global:
   noDbAuth: true
   useCloudSql: false
   useCombinedDb: true
+
+web-server:
+  cspReportUri: https://sdga.report-uri.com/r/d/csp/enforce
 gateway:
   auth:
     facebookClientId: "173073926555600"
@@ -19,11 +22,6 @@ elasticsearch:
     heapSize: 500m
 
 indexer:
-  resources:
-    requests:
-      cpu: 0
-      memory: 0
-
   resources:
     requests:
       cpu: 0
@@ -46,3 +44,24 @@ registry-api:
   #   googleApplicationCreds:
   #     secretName: storage-account-credentials
   #     fileName: <fileName>
+
+sleuther-linked-data-rating:
+  resources:
+    limits:
+      cpu: 0.1
+sleuther-broken-link:
+  resources:
+    limits:
+      cpu: 0.1
+sleuther-visualization:
+  resources:
+    limits:
+      cpu: 0.1
+sleuther-format:
+  resources:
+    limits:
+      cpu: 0.1
+correspondence-api:
+  smtpPort: 2525
+  defaultRecipient: "alex.gilleran+magda@csiro.it"
+  smtpHostname: "smtp.mailgun.org"

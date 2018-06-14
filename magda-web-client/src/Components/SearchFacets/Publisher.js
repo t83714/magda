@@ -22,7 +22,7 @@ class Publisher extends Component {
     onTogglePublisherOption(publishers) {
         const queryOptions = publishers.map(p => p.value);
         this.props.updateQuery({
-            publisher: queryOptions
+            organisation: queryOptions
         });
         this.props.dispatch(updatePublishers(publishers));
         this.props.closeFacet();
@@ -31,7 +31,7 @@ class Publisher extends Component {
     onResetPublisherFacet() {
         // update url
         this.props.updateQuery({
-            publisher: [],
+            organisation: [],
             page: undefined
         });
         // update redux
@@ -45,7 +45,7 @@ class Publisher extends Component {
     onSearchPublisherFacet() {
         this.props.dispatch(
             fetchPublisherSearchResults(
-                queryString.parse(this.props.location.search).q
+                queryString.parse(this.props.location.search).q || "*"
             )
         );
     }
@@ -53,7 +53,7 @@ class Publisher extends Component {
     render() {
         return (
             <FacetBasic
-                title="publisher"
+                title="organisation"
                 id="publisher"
                 hasQuery={Boolean(this.props.activePublishers.length)}
                 options={this.props.publisherOptions}

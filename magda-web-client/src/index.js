@@ -1,6 +1,7 @@
 // eslint-disable-next-line
 import "es6-shim";
-import createLogger from "redux-logger";
+import "raf/polyfill";
+import logger from "redux-logger";
 import "./index.css";
 import { BrowserRouter, Route } from "react-router-dom";
 
@@ -12,15 +13,17 @@ import reducer from "./reducers/reducer";
 import { createStore, applyMiddleware } from "redux";
 import AppContainer from "./AppContainer";
 import PropTypes from "prop-types";
-
-// eslint-disable-next-line
-const loggerMiddleware = createLogger();
+import ScrollToTop from "./helpers/ScrollToTop";
+import ga from "./analytics/googleAnalytics";
+import { composeWithDevTools } from "redux-devtools-extension/developmentOnly";
 
 const store = createStore(
     reducer,
-    applyMiddleware(
-        thunkMiddleware, // lets us dispatch() functions
-        loggerMiddleware // neat middleware that logs actions
+    composeWithDevTools(
+        applyMiddleware(
+            thunkMiddleware, // lets us dispatch() functions
+            logger // neat middleware that logs actions
+        )
     )
 );
 
@@ -35,10 +38,8 @@ class GAListener extends React.Component {
     }
 
     sendPageView(location) {
-        if (window.ga) {
-            window.ga("set", "location", location.pathname);
-            window.ga("send", "pageview");
-        }
+        ga("set", "location", location.pathname);
+        ga("send", "pageview");
     }
 
     render() {
@@ -50,7 +51,9 @@ ReactDOM.render(
     <Provider store={store}>
         <BrowserRouter>
             <GAListener>
-                <Route path="/" component={AppContainer} />
+                <ScrollToTop>
+                    <Route path="/" component={AppContainer} />
+                </ScrollToTop>
             </GAListener>
         </BrowserRouter>
     </Provider>,

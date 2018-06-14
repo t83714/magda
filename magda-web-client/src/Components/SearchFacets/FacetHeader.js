@@ -1,6 +1,5 @@
 import React, { Component } from "react";
 import "./FacetHeader.css";
-import Button from "muicss/lib/react/button";
 import publisher_passive from "../../assets/publisher-passive.svg";
 import format_passive from "../../assets/format-passive.svg";
 import temporal_passive from "../../assets/temporal-passive.svg";
@@ -10,6 +9,7 @@ import format_active from "../../assets/format-active.svg";
 import temporal_active from "../../assets/temporal-active.svg";
 import region_active from "../../assets/region-active.svg";
 import remove_light from "../../assets/remove-light.svg";
+import { config } from "../../config";
 
 const IconList = {
     publisher_passive,
@@ -31,18 +31,20 @@ class FacetHeader extends Component {
     }
 
     componentWillReceiveProps(nextProps) {
-        if (nextProps.isOpen !== this.state.buttonActive) {
+        // if it has filter and the button is not active
+        // then set it to active
+        if (this.hasFilter() !== this.state.buttonActive) {
             this.setState({
-                buttonActive: nextProps.isOpen || this.hasFilter()
+                buttonActive: this.hasFilter()
             });
         }
     }
 
     displayMonth(date) {
         return (
-            new Date(date).getUTCFullYear() +
-            "/" +
-            (+new Date(date).getUTCMonth() + 1)
+            config.months[new Date(date).getUTCMonth()] +
+            " " +
+            new Date(date).getUTCFullYear()
         );
     }
     calculateTitle() {
@@ -73,9 +75,8 @@ class FacetHeader extends Component {
             return (
                 <span>
                     {" "}
-                    from {this.displayMonth(
-                        this.props.activeOptions[0]
-                    )} to {this.displayMonth(this.props.activeOptions[1])}{" "}
+                    from {this.displayMonth(this.props.activeOptions[0])} -{" "}
+                    {this.displayMonth(this.props.activeOptions[1])}{" "}
                 </span>
             );
         } else {
@@ -129,14 +130,10 @@ class FacetHeader extends Component {
                     this.hasFilter() ? "not-empty" : ""
                 }`}
             >
-                <Button
-                    className={`${this.props.isOpen ? "is-open" : ""}`}
-                    onMouseOver={() => this.setState({ buttonActive: true })}
-                    onMouseOut={() => {
-                        if (!this.props.isOpen && !this.hasFilter()) {
-                            this.setState({ buttonActive: false });
-                        }
-                    }}
+                <button
+                    className={`au-btn au-btn--secondary btn-facet ${
+                        this.props.isOpen ? "is-open" : ""
+                    }`}
                     onClick={this.props.onClick}
                 >
                     <img
@@ -149,14 +146,14 @@ class FacetHeader extends Component {
                         alt={this.props.title}
                     />
                     {this.calculateTitle()}
-                </Button>
+                </button>
                 {this.props.hasQuery && (
-                    <Button
+                    <button
                         onClick={this.props.onResetFacet}
-                        className="btn-remove"
+                        className="btn-remove au-btn"
                     >
                         <img alt="remove" src={remove_light} />
-                    </Button>
+                    </button>
                 )}
             </div>
         );
