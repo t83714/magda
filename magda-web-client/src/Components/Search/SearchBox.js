@@ -7,14 +7,13 @@ import debounce from "lodash.debounce";
 import defined from "../../helpers/defined";
 import React, { Component } from "react";
 import { fetchRegionMapping } from "../../actions/regionMappingActions";
-import Form from "muicss/lib/react/form";
-import Input from "muicss/lib/react/input";
-import search from "../../assets/search-white.svg";
-import searchDark from "../../assets/search-dark.svg";
+import searchLight from "../../assets/search-grey.svg";
+import searchDark from "../../assets/search-purple.svg";
 // eslint-disable-next-line
 import PropTypes from "prop-types";
 import queryString from "query-string";
-// import Particles from '../../UI/Particles';
+import SearchSuggestionBox from "./SearchSuggestionBox";
+import { Small, Medium } from "../../UI/Responsive";
 
 class SearchBox extends Component {
     constructor(props) {
@@ -34,8 +33,10 @@ class SearchBox extends Component {
         this.state = {
             searchText: undefined,
             width: 0,
-            height: 0
+            height: 0,
+            isFocus: false
         };
+        this.searchInputFieldRef = null;
     }
 
     debounceUpdateSearchQuery = debounce(this.updateSearchText, 3000);
@@ -62,14 +63,11 @@ class SearchBox extends Component {
      * update only the search text, remove all facets
      */
     updateSearchText(text) {
+        if (text === "") text = "*";
+        // dismiss keyboard on mobile when new search initiates
+        if (this.searchInputFieldRef) this.searchInputFieldRef.blur();
         this.updateQuery({
             q: text,
-            publisher: [],
-            regionId: undefined,
-            regionType: undefined,
-            dateFrom: undefined,
-            dateTo: undefined,
-            format: [],
             page: undefined
         });
     }
@@ -78,6 +76,7 @@ class SearchBox extends Component {
         // when user hit enter, no need to submit the form
         if (event.charCode === 13) {
             event.preventDefault();
+            this.debounceUpdateSearchQuery(this.getSearchBoxValue());
             this.debounceUpdateSearchQuery.flush();
         }
     }
@@ -86,6 +85,7 @@ class SearchBox extends Component {
      * If the search button is clicked, we do the search immediately
      */
     onClickSearch() {
+        this.debounceUpdateSearchQuery(this.getSearchBoxValue());
         this.debounceUpdateSearchQuery.flush();
     }
 
@@ -132,35 +132,64 @@ class SearchBox extends Component {
     }
 
     render() {
+        const input = (
+            <input
+                type="text"
+                name="search"
+                id="search"
+                placeholder="Search for open data"
+                value={this.getSearchBoxValue()}
+                onChange={this.onSearchTextChange}
+                onKeyPress={this.handleSearchFieldEnterKeyPress}
+                autoComplete="off"
+                ref={el => (this.searchInputFieldRef = el)}
+                onFocus={() => this.setState({ isFocus: true })}
+                onBlur={() =>
+                    this.setState({
+                        isFocus: false
+                    })
+                }
+            />
+        );
+
+        const suggestionBox = (
+            <SearchSuggestionBox
+                searchText={this.getSearchBoxValue()}
+                isSearchInputFocus={this.state.isFocus}
+                inputRef={this.searchInputFieldRef}
+            />
+        );
+
+        const icon =
+            this.props.isHome || this.props.isMobile ? searchDark : searchLight;
         return (
-            <Form className="searchBox">
-                    <label htmlFor="search">
-                        <span className="sr-only">
-                            {"Search " + config.appName}
-                        </span>
-                        <Input
-                            type="text"
-                            name="search"
-                            id="search"
-                            placeholder="Search for open data"
-                            value={this.getSearchBoxValue()}
-                            onChange={this.onSearchTextChange}
-                            onKeyPress={
-                                this.handleSearchFieldEnterKeyPress
-                            }
-                            autoComplete="off"
-                        />
-                    </label>
+            <div className="searchBox">
+                <label htmlFor="search">
+                    <span className="sr-only">
+                        {"Search " + config.appName}
+                    </span>
+                    <Medium>
+                        <div style={{ position: "relative" }}>
+                            {input}
+                            {suggestionBox}
+                        </div>
+                    </Medium>
+                    <Small>{input}</Small>
+                    <span className="search-input__highlight">
+                        {this.getSearchBoxValue()}
+                    </span>
                     <button
                         onClick={this.onClickSearch}
                         className="search-btn"
-                        type="button">
-                        <img src={this.props.theme === 'light' ? search : searchDark} alt="search button" />
-                        <span className="sr-only">
-                            submit search
-                        </span>
+                        type="button"
+                    >
+                        <img src={icon} alt="search button" />
+                        <span className="sr-only">submit search</span>
                     </button>
-            </Form>
+                </label>
+
+                <Small>{suggestionBox}</Small>
+            </div>
         );
     }
 }
@@ -184,4 +213,7 @@ const mapDispatchToProps = dispatch =>
         dispatch
     );
 
-export default connect(mapStateToProps, mapDispatchToProps)(SearchBox);
+export default connect(
+    mapStateToProps,
+    mapDispatchToProps
+)(SearchBox);

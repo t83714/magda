@@ -142,26 +142,19 @@ class Search extends Component {
                 <div>
                     {this.props.isFetching && <ProgressBar />}
                     <div className="search">
-                        <div className="search__search-body container">
-                            {searchText.length > 0 && (
-                                <div className="sub-heading"> Filters </div>
-                            )}
-                            {searchText.length > 0 && (
-                                <SearchFacets
-                                    updateQuery={this.updateQuery}
-                                    location={this.props.location}
-                                />
-                            )}
-                            {searchText.length > 0 &&
-                                !this.props.isFetching &&
+                        <div className="search__search-body">
+                            <SearchFacets
+                                updateQuery={this.updateQuery}
+                                location={this.props.location}
+                            />
+                            {!this.props.isFetching &&
                                 !this.props.error && (
                                     <div className="sub-heading">
                                         {" "}
                                         results ( {this.props.hitCount} )
                                     </div>
                                 )}
-                            {searchText.length > 0 &&
-                                !this.props.isFetching &&
+                            {!this.props.isFetching &&
                                 !this.props.error && (
                                     <div>
                                         {!this.searchBoxEmpty() && (
@@ -183,6 +176,7 @@ class Search extends Component {
                                                     this.props.location.search
                                                 ).open
                                             }
+                                            searchText={searchText}
                                         />
                                         {this.props.hitCount >
                                             config.resultsPerPage && (
@@ -198,7 +192,7 @@ class Search extends Component {
                                                         config.resultsPerPage
                                                 )}
                                                 onPageChange={this.onPageChange}
-                                                totalItems = {this.props.hitCount}
+                                                totalItems={this.props.hitCount}
                                             />
                                         )}
                                     </div>
@@ -236,7 +230,6 @@ function mapStateToProps(state, ownProps) {
     let { datasetSearch } = state;
     return {
         datasets: datasetSearch.datasets,
-        publisherOptions: datasetSearch.publisherOptions.slice(0, 5),
         hitCount: datasetSearch.hitCount,
         isFetching: datasetSearch.isFetching,
         progress: datasetSearch.progress,
@@ -246,4 +239,7 @@ function mapStateToProps(state, ownProps) {
     };
 }
 
-export default connect(mapStateToProps, mapDispatchToProps)(Search);
+export default connect(
+    mapStateToProps,
+    mapDispatchToProps
+)(Search);

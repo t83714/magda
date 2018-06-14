@@ -74,33 +74,44 @@ dependencies:
     tags:
       - all
       - session-db
-  - name: sleuther-format
-    version: 0.1.0
-    tags:
-      - all
-      - sleuther-format
-  - name: sleuther-broken-link
-    version: 0.1.0
-    tags:
-      - all
-      - sleuther-broken-link
-  - name: sleuther-visualization
-    version: 0.1.0
-    tags:
-      - all
-      - sleuther-visualization
-  - name: sleuther-linked-data-rating
-    version: 0.1.0
-    tags:
-      - all
-      - sleuther-linked-data-rating
   - name: web-server
     version: 0.1.0
     tags:
       - all
       - web-server
+  - name: correspondence-api
+    version: 0.1.0
+    tags:
+      - all
+      - correspondence-api
+
+# Sleuthers
+  - name: sleuther-format
+    version: 0.1.0
+    tags:
+      - sleuther-format
+  - name: sleuther-broken-link
+    version: 0.1.0
+    tags:
+      - sleuther-broken-link
+  - name: sleuther-visualization
+    version: 0.1.0
+    tags:
+      - sleuther-visualization
+  - name: sleuther-linked-data-rating
+    version: 0.1.0
+    tags:
+      - sleuther-linked-data-rating
+
+# One-namespace-per-PR dev ingress setup
+  - name: dev-ingress
+    version: 0.1.0
+    tags:
+      - dev-ingress
   - name: kn-web-app
     version: 0.1.0
     tags:
       - all
       - kn-web-app
+
+

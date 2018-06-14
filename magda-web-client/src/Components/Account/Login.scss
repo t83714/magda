@@ -1,3 +1,4 @@
+@import "../../variables";
 .login {
     &__providers {
         list-style: none;
@@ -20,7 +21,17 @@
     }
 
     &__email-icon {
-        color: #c0392b;
-        font-size: 1.7em;
+        color: $AU-color-foreground-action;
+        @include AU-fontgrid(lg);
     }
+    &__input-group {
+        margin-bottom: 10px;
+    }
+    &__form {
+        padding-top: 15px;
+    }
+}
+
+.au-cta-link {
+    font-size: 1rem !important;
 }

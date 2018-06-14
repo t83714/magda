@@ -3,7 +3,6 @@ import find from "lodash.find";
 import maxBy from "lodash.maxby";
 import defined from "../../helpers/defined";
 import FacetSearchBox from "./FacetSearchBox";
-import Button from "muicss/lib/react/button";
 
 // extends Facet class
 class FacetBasicBody extends Component {
@@ -69,17 +68,17 @@ class FacetBasicBody extends Component {
             return null;
         }
         let maxWidth = defined(optionMax)
-            ? +option.hitCount / optionMax.hitCount * 200
+            ? (+option.hitCount / optionMax.hitCount) * 200
             : 0;
         let divStyle = {
             width: maxWidth + "px",
             height: "3px",
-            background: "#F55860"
+            background: "#4C2A85"
         };
         let isActive = this.checkActiveOption(option);
 
         return (
-            <Button
+            <button
                 key={option.value}
                 type="button"
                 className={`${isActive ? "is-active" : ""} btn-facet-option`}
@@ -93,7 +92,7 @@ class FacetBasicBody extends Component {
                 <span className="btn-facet-option__name">
                     {option.value} ({option.hitCount})
                 </span>
-            </Button>
+            </button>
         );
     }
 
@@ -128,29 +127,31 @@ class FacetBasicBody extends Component {
                 </div>
                 {this.state.showOptions && (
                     <div>
-                        <ul className="mui-list--unstyled">
-                            {that.state._activeOptions
-                                .sort((a, b) => b.hitCount - a.hitCount)
-                                .map(o => (
-                                    <li key={`${o.value}-${o.hitCount}`}>
-                                        {that.renderOption(
-                                            o,
-                                            maxOptionOptionList
-                                        )}
+                        <div className="facet-body-buttons">
+                            <ul className="list--unstyled facet-option__list">
+                                {that.state._activeOptions
+                                    .sort((a, b) => b.hitCount - a.hitCount)
+                                    .map(o => (
+                                        <li key={`${o.value}-${o.hitCount}`}>
+                                            {that.renderOption(
+                                                o,
+                                                maxOptionOptionList
+                                            )}
+                                        </li>
+                                    ))}
+                                {this.props.options.length === 0 && (
+                                    <li className="no-data">
+                                        No {this.props.title} available
                                     </li>
-                                ))}
-                            {this.props.options.length === 0 && (
-                                <li className="no-data">
-                                    No {this.props.title} available
-                                </li>
+                                )}
+                            </ul>
+                            {inactiveOptions.map(o =>
+                                this.renderOption(o, maxOptionOptionList)
                             )}
-                        </ul>
-                        {inactiveOptions.map(o =>
-                            this.renderOption(o, maxOptionOptionList)
-                        )}
+                        </div>
                         <div className="facet-footer">
-                            <Button
-                                variant="flat"
+                            <button
+                                className="au-btn au-btn--secondary"
                                 disabled={
                                     this.state._activeOptions.length === 0
                                 }
@@ -158,9 +159,9 @@ class FacetBasicBody extends Component {
                             >
                                 {" "}
                                 Clear{" "}
-                            </Button>
-                            <Button
-                                variant="flat"
+                            </button>
+                            <button
+                                className="au-btn au-btn--primary"
                                 disabled={
                                     this.state._activeOptions.length === 0
                                 }
@@ -168,7 +169,7 @@ class FacetBasicBody extends Component {
                             >
                                 {" "}
                                 Apply{" "}
-                            </Button>
+                            </button>
                         </div>
                     </div>
                 )}

@@ -3,12 +3,14 @@ import TemporalAspectViewer from "../../UI/TemporalAspectViewer";
 import DatasetPreview from "./DatasetPreview";
 import DescriptionBox from "../../UI/DescriptionBox";
 import MarkdownViewer from "../../UI/MarkdownViewer";
-import StarRating from "../../UI/StarRating";
+import QualityIndicator from "../../UI/QualityIndicator";
 import TagsBox from "../../UI/TagsBox";
 import { connect } from "react-redux";
 import DistributionRow from "../DistributionRow";
+import queryString from "query-string";
 import "./RecordDetails.css";
 import "./DatasetDetails.css";
+import { Small, Medium } from "../../UI/Responsive";
 
 class DatasetDetails extends Component {
     state = {
@@ -17,48 +19,60 @@ class DatasetDetails extends Component {
     render() {
         const dataset = this.props.dataset;
         const datasetId = this.props.match.params.datasetId;
-
+        const searchText =
+            queryString.parse(this.props.location.search).q || "";
         const source = `This dataset was originally found on [${
             this.props.dataset.source
         }](${dataset.landingPage})`;
+
         return (
-            <div className="dataset-details container">
-                <div className="mui-row">
-                    <div className="mui-col-sm-9">
-                        <div className="dataset-details-overview">
-                            <DescriptionBox content={dataset.description} />
-                        </div>
-                        <div className="quality-rating-box">
-                            <span>Data Quality: &nbsp;&nbsp;</span>
-                            <StarRating stars={dataset.linkedDataRating} />
-                        </div>
-                        <TagsBox tags={dataset.tags} />
-                        <div className="dataset-preview">
-                            <DatasetPreview dataset={dataset} />
-                        </div>
-                    </div>
+            <div className="dataset-details">
+                <div className="dataset-details-overview">
+                    <Small>
+                        <DescriptionBox
+                            content={dataset.description}
+                            truncateLength={200}
+                        />
+                    </Small>
+                    <Medium>
+                        <DescriptionBox
+                            content={dataset.description}
+                            truncateLength={500}
+                        />
+                    </Medium>
+                </div>
+                <div className="quality-rating-box">
+                    <QualityIndicator quality={dataset.linkedDataRating} />
+                </div>
+                <TagsBox tags={dataset.tags} />
+                <div className="dataset-preview">
+                    <DatasetPreview
+                        location={this.props.location}
+                        dataset={dataset}
+                    />
                 </div>
 
-                <div className="mui-row">
-                    <div className="mui-col-sm-12">
+                <div className="row">
+                    <div className="col-sm-12">
                         <div className="dataset-details-files-apis">
-                            <h3 className="clearfix">
+                            <h2 className="clearfix">
                                 <span className="section-heading">
                                     Files and APIs
                                 </span>
-                            </h3>
+                            </h2>
                             <div className="clearfix">
                                 {dataset.distributions.map(s => (
                                     <DistributionRow
                                         key={s.identifier}
                                         distribution={s}
                                         datasetId={datasetId}
+                                        searchText={searchText}
                                     />
                                 ))}
                             </div>
                         </div>
                         <div className="dataset-details-source">
-                            <h3 className="section-heading">Data Source</h3>
+                            <h2 className="section-heading">Data Source</h2>
                             <MarkdownViewer
                                 markdown={source}
                                 truncate={false}
@@ -74,9 +88,9 @@ class DatasetDetails extends Component {
                             className="dataset-details-temporal-coverage"
                             style={{ display: "none" }}
                         >
-                            <h3 className="section-heading">
+                            <h2 className="section-heading">
                                 Temporal coverage
-                            </h3>
+                            </h2>
                             <TemporalAspectViewer
                                 data={dataset.temporalCoverage}
                             />

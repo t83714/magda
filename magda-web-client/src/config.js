@@ -4,35 +4,51 @@ import Format from "./Components/SearchFacets/Format";
 import Region from "./Components/SearchFacets/Region";
 import Temporal from "./Components/SearchFacets/Temporal";
 
-const fallbackApiHost = "http://magda-dev.terria.io/";
+const fallbackApiHost = "https://magda-dev.terria.io/";
+
+const homePageConfig: {
+    baseUrl: string,
+    backgroundImageUrls: Array<string>
+} =
+    window.magda_client_homepage_config || {};
 
 const serverConfig: {
     authApiBaseUrl?: string,
     baseUrl?: string,
+    baseExternalUrl?: string,
     discussionsApiBaseUrl?: string,
     previewMapBaseUrl?: string,
     registryApiBaseUrl?: string,
     searchApiBaseUrl?: string,
-    feedbackApiBaseUrl?: string
+    feedbackApiBaseUrl?: string,
+    correspondenceApiBaseUrl?: string
 } =
     window.magda_server_config || {};
+//this below const enables suggest/request/report dataset forms when enabled
+export const enableSuggestDatasetPage = true;
 
 const registryApiUrl =
     serverConfig.registryApiBaseUrl || fallbackApiHost + "api/v0/registry/";
 const previewMapUrl =
     serverConfig.previewMapBaseUrl || fallbackApiHost + "preview-map/";
 const proxyUrl = previewMapUrl + "proxy/";
+
 export const config = {
+    homePageConfig: homePageConfig,
     appName: "data.gov.au",
     about:
-        "<p><span style='color:#F55860;'>Data.gov.au</span> provides an easy way to find, access and reuse public data.</p><p> Our team works across governments to publish data and continue to improve functionality based on user feedback.</p>",
+        "<p><span style='color:#4C2A85;'>Data.gov.au</span> provides an easy way to find, access and reuse public data.</p><p> Our team works across governments to publish data and continue to improve functionality based on user feedback.</p>",
     baseUrl: serverConfig.baseUrl || fallbackApiHost,
+    baseExternalUrl: serverConfig.baseExternalUrl || fallbackApiHost,
     searchApiUrl:
         serverConfig.searchApiBaseUrl || fallbackApiHost + "api/v0/search/",
     registryApiUrl: registryApiUrl,
     adminApiUrl:
         serverConfig.adminApiBaseUrl || fallbackApiHost + "api/v0/admin/",
     authApiUrl: serverConfig.authApiBaseUrl || fallbackApiHost + "api/v0/auth/",
+    correspondenceApiUrl:
+        serverConfig.correspondenceApiBaseUrl ||
+        fallbackApiHost + "api/v0/correspondence/",
     discussionsApiUrl:
         serverConfig.discussionsApiBaseUrl ||
         fallbackApiHost + "api/v0/discussions/",
@@ -42,10 +58,7 @@ export const config = {
     previewMapUrl: previewMapUrl,
     proxyUrl: proxyUrl,
     rssUrl: proxyUrl + "_0d/https://blog.data.gov.au/blogs/rss.xml",
-    facetListSize: 5,
     resultsPerPage: 10,
-    descriptionLength: 50,
-    downloadLinksSize: 3,
     disableAuthenticationFeatures:
         serverConfig.disableAuthenticationFeatures || false,
     breakpoints: {
@@ -54,24 +67,6 @@ export const config = {
         large: 1200
     },
     appTitle: "Australian open data search",
-    featuredDatasets: [
-        "ds-dga-19432f89-dc3a-4ef3-b943-5326ef1dbecc",
-        "ds-dga-bdcf5b09-89bc-47ec-9281-6b8e9ee147aa"
-    ],
-    exampleSearch: [
-        "Business names as CSV",
-        "Geocoded National Address File",
-        "By Australian Charities and Not-for-profits Commission",
-        "Statistics from 2013 by Australian Taxation Office",
-        "Trees in SA2:201011002",
-        "Budget from 2016 to 2017 by Department of Finance",
-        "Planning as WMS"
-    ],
-    suggestion: [
-        "Business names as CSV",
-        "Statistics  by Australian Taxation Office from 2013",
-        "Trees in SA2:201011002"
-    ],
     facets: [
         { id: "publisher", component: Publisher },
         { id: "region", component: Region },
@@ -79,39 +74,77 @@ export const config = {
         { id: "format", component: Format }
     ],
     headerNavigation: [
+        ["Datasets", "search"],
         ["About", "page/about"],
-        ["Publishers", "publishers"],
-        ...(serverConfig.disableAuthenticationFeatures
-            ? []
-            : [["Projects", "projects"]])
+        ["Organisations", "organisations"],
+        ...(serverConfig.disableAuthenticationFeatures ? [] : [])
     ],
-    footerNavigation: [
-        {
-            category: "Search",
-            links: [["Data sources", "page/data-sources"]]
-        },
-        {
-            category: "Publishers",
-            links: [
-                ["Publisher index", "publishers"],
-                ["Open data toolkit", "https://toolkit.data.gov.au/"]
-            ]
-        },
-        {
-            category: "Developers",
-            links: [
-                [
-                    "API Docs",
-                    "http://search.data.gov.au/api/v0/registry/swagger/index.html"
+    footerNavigation: {
+        // small media query (mobile)
+        small: [
+            {
+                category: "Data.gov.au",
+                links: [
+                    ["About", "page/about"],
+                    [
+                        "Suggest a dataset",
+                        !enableSuggestDatasetPage
+                            ? "mailto:data@digital.gov.au"
+                            : "suggest"
+                    ],
+                    ["Sign in", "https://data.gov.au/user/login"],
+                    ["Give feedback", "feedback"]
                 ]
-            ]
-        },
-        {
-            category: "About",
-            links: [
-                ["About data.gov.au", "page/about"],
-                ["Blog", "https://blog.data.gov.au/"]
-            ]
-        }
-    ]
+            }
+        ],
+        // medium media query and bigger (desktop)
+        medium: [
+            {
+                category: "Data.gov.au",
+                links: [
+                    ["About", "page/about"],
+                    [
+                        "Suggest a dataset",
+                        !enableSuggestDatasetPage
+                            ? "mailto:data@digital.gov.au"
+                            : "suggest"
+                    ],
+                    ["Privacy Policy", "page/privacy-policy"]
+                ]
+            },
+            {
+                category: "Publishers",
+                links: [
+                    ["Sign in", "https://data.gov.au/user/login"],
+                    ["Open data toolkit", "https://toolkit.data.gov.au/"]
+                ]
+            },
+            {
+                category: "Developers",
+                links: [
+                    ["Powered by Magda", "https://github.com/TerriaJS/magda/"]
+                ]
+            }
+        ]
+    },
+    months: [
+        "Jan",
+        "Feb",
+        "Mar",
+        "Apr",
+        "May",
+        "Jun",
+        "Jul",
+        "Aug",
+        "Sep",
+        "Oct",
+        "Nov",
+        "Dec"
+    ],
+    boundingBox: {
+        west: 105,
+        south: -45,
+        east: 155,
+        north: -5
+    }
 };

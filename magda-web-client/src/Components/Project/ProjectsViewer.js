@@ -60,7 +60,7 @@ class ProjectsViewer extends Component {
                             this.props.hitCount / config.resultsPerPage
                         )}
                         onPageChange={this.onPageChange.bind(this)}
-                        totalItems ={this.props.hitCount}
+                        totalItems={this.props.hitCount}
                     />
                 )}
             </div>
@@ -123,4 +123,7 @@ ProjectsViewer.contextTypes = {
     router: PropTypes.object.isRequired
 };
 
-export default connect(mapStateToProps, mapDispatchToProps)(ProjectsViewer);
+export default connect(
+    mapStateToProps,
+    mapDispatchToProps
+)(ProjectsViewer);

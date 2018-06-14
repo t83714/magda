@@ -4,6 +4,18 @@ import { actionTypes } from "../constants/ActionTypes";
 import type { Action } from "../types";
 import type { Error } from "../types";
 
+export function showFeedbackForm(): Action {
+    return {
+        type: actionTypes.SHOW_FEEDBACK_FORM
+    };
+}
+
+export function hideFeedbackForm(): Action {
+    return {
+        type: actionTypes.HIDE_FEEDBACK_FORM
+    };
+}
+
 export function sendFeedbacks(): Action {
     return {
         type: actionTypes.SEND_FEEDBACKS
@@ -31,6 +43,7 @@ export function resetFeedback() {
 
 export function fetchFeedback(values) {
     return (dispatch: Function, getState: Function) => {
+        dispatch(sendFeedbacks());
         fetch(config.feedbackUrl, {
             method: "POST",
             body: values,
@@ -38,16 +51,18 @@ export function fetchFeedback(values) {
             headers: {
                 "Content-Type": "application/json"
             }
-        }).then(response => {
-            if (response.ok) {
-                return dispatch(sendFeedbackSuccess());
-            }
-            return dispatch(
-                sendFeedbackFailed({
-                    title: response.status,
-                    detail: response.statusText
-                })
-            );
-        });
+        })
+            .then(response => {
+                if (response.ok) {
+                    return dispatch(sendFeedbackSuccess());
+                }
+                return dispatch(
+                    sendFeedbackFailed({
+                        title: response.status,
+                        detail: response.statusText
+                    })
+                );
+            })
+            .catch(error => dispatch(sendFeedbackFailed(error)));
     };
 }

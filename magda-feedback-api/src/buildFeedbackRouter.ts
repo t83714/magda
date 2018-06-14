@@ -1,5 +1,6 @@
 import * as express from "express";
 import * as request from "request";
+import * as bodyParser from "body-parser";
 
 export interface FeedbackRouterParams {
     trustProxy: boolean;
@@ -14,7 +15,9 @@ export default function buildFeedbackRouter(
     // Create a new Express application.
     var app = express();
     app.set("trust proxy", params.trustProxy);
-    app.use(require("body-parser").json());
+
+    app.use(bodyParser.json({ type: "application/json" }));
+    app.use(bodyParser.json({ type: "application/csp-report" }));
 
     app.post("/v0/csp", function(req, res, next) {
         var parameters = req.body;
@@ -118,9 +121,9 @@ function report(
             function(error, response, body) {
                 res.set("Content-Type", "application/json");
                 if (response.statusCode < 200 || response.statusCode >= 300) {
-                    res
-                        .status(response.statusCode)
-                        .send(JSON.stringify({ result: "FAILED" }));
+                    res.status(response.statusCode).send(
+                        JSON.stringify({ result: "FAILED" })
+                    );
                 } else {
                     res.status(200).send(JSON.stringify({ result: "SUCCESS" }));
                 }

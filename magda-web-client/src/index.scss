@@ -1,15 +1,53 @@
 @import "variables";
+@import "./pancake/sass/pancake.scss";
 html {
-    font-size: 16px;
 }
-body {
-    margin: 0;
-    padding: 0;
-    font-family: $font-base;
-    font-weight: 400;
-    color: $body;
-    font-size: 1rem;
+
+.au-body .au-grid {
+    p,
+    input,
+    a,
+    span {
+        &::selection {
+            background: $AU-color-foreground-action;
+        }
+    }
+    .au-btn.au-btn--secondary,
+    a.au-btn.au-btn--secondary,
+    a {
+        color: $AU-color-foreground-action;
+        border-color: $AU-color-foreground-action;
+    }
+
+    .au-btn.au-btn--primary,
+    a.au-btn.au-btn--primary {
+        background: $AU-colordark-background;
+        color: $AU-colordark-foreground-text;
+        border-color: $AU-color-foreground-action;
+    }
+
+    .au-btn.au-btn--tertiary,
+    a.au-btn.au-btn--tertiary {
+        color: $AU-colordark-foreground-focus;
+        background: transparent;
+        border-color: transparent;
+    }
+
+    a,
+    button,
+    input,
+    select {
+        &:focus {
+            outline-color: $AU-colordark-foreground-focus !important;
+        }
+    }
 }
+
+.au-btn:hover:not(:disabled),
+a.au-btn:hover:not(:disabled) {
+    text-decoration: none;
+}
+
 .sr-only {
     position: absolute;
     width: 1px;
@@ -19,6 +57,21 @@ body {
     overflow: hidden;
     clip: rect(0, 0, 0, 0);
     border: 0;
+}
+
+.au-body.au-body--dark,
+.au-footer.au-footer--dark {
+    border-color: $AU-colordark-foreground-focus !important;
+    background: $AU-colordark-background !important;
+    color: $AU-colordark-foreground-text !important;
+    a,
+    button {
+        color: $AU-colordark-foreground-action !important;
+        &:hover,
+        &:focus {
+            color: $AU-colordark-foreground-focus !important;
+        }
+    }
 }
 
 @keyframes hideMessage {
@@ -33,9 +86,12 @@ body {
     }
 }
 
-.mui-btn {
+.au-btn {
     font-weight: 400;
     text-transform: none;
+    &:focus {
+        outline: 3px solid $AU-color-foreground-focus;
+    }
 }
 
 div {
@@ -52,45 +108,72 @@ div {
 }
 
 a {
-    -webkit-appearance: none;
-    position: relative;
-    background: transparent;
-    text-decoration: none;
-    border: none;
-    border-bottom: solid 1px $magda;
-    transition: background-color 0.1s ease-in-out, border-color 0.1s ease-in-out;
-    cursor: pointer;
-    color: $body;
-    &:hover,
-    &:focus {
-        text-decoration: none;
-    }
-    &:hover {
-        color: #ffffff;
-        background-color: $magda;
-    }
 }
 
-.mui-tabs__bar > li > a {
-    border-bottom: 0px;
-    margin-right: 16px;
-    &:hover {
-        color: $magda;
-        background: transparent;
+.tab-navigation {
+    .au-link-list {
+        display: flex;
+    }
+
+    a {
+        display: inline-block;
+        padding: 1rem 1rem;
+        border-bottom: 5px solid #cfcfcf;
+        &:hover,
+        &:focus {
+            text-decoration: underline;
+            background-color: transparent;
+            color: $AU-color-foreground-action;
+        }
+    }
+    a.mainmenu--active {
+        color: $AU-color-foreground-action;
+        border-color: $AU-color-foreground-action;
     }
 }
 
- .mui-tabs__bar>li.mui--is-active{
-   border-bottom: 0;
- }
-
-.mui-tabs__bar>li.mui--is-active>a, .mui-tabs__bar a.mui--is-active{
-  color: $magda;
-  border-bottom: 2px solid $magda;
+.hidden-sm {
+    @media (max-width: $medium) {
+        display: none !important;
+    }
 }
 
-.hidden-sm{
-  @media (max-width: $medium) {
-      display: none!important;
-  }
+.au-btn + .au-btn {
+    margin-left: 0;
+}
+
+.list--unstyled {
+    padding-left: 0;
+    list-style: none;
+}
+
+// gold starts here
+
+h1 {
+    @include AU-fontgrid(xl, heading);
+    font-weight: 400;
+}
+
+h2 {
+    @include AU-fontgrid(lg, heading);
+    font-weight: 400;
+}
+
+h3 {
+    @include AU-fontgrid(md, heading);
+    font-weight: 400;
+}
+
+h4 {
+    @include AU-fontgrid(sm, heading);
+    font-weight: 400;
+}
+
+.au-text-input {
+    border: 3px solid $AU-color-foreground-action;
+}
+
+.au-body ::selection {
+    background: $AU-color-foreground-action !important;
+    color: $AU-colordark-foreground-text !important;
 }

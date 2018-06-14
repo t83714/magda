@@ -1,3 +1,4 @@
+.DS_Store
 *.class
 *.log
 .classpath
@@ -32,5 +33,8 @@ snapshots
 .cache-tests
 node_modules/
 dist/
-package-lock.json
 kube
+
+pancake
+package-lock.json
+*/package-lock.json

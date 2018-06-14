@@ -5,14 +5,17 @@ import { bindActionCreators } from "redux";
 import { fetchPublishersIfNeeded } from "../../actions/publisherActions";
 import ReactDocumentTitle from "react-document-title";
 import PublisherSummary from "./PublisherSummary";
-import Pagination from "../../UI/Pagination";
 import ErrorHandler from "../../Components/ErrorHandler";
 import getPageNumber from "../../helpers/getPageNumber";
 import ProgressBar from "../../UI/ProgressBar";
 import queryString from "query-string";
 import PropTypes from "prop-types";
-
+import sortBy from "lodash.sortby";
+import reduce from "lodash/reduce";
+import findIndex from "lodash/findIndex";
+import trim from "lodash/trim";
 import "./PublishersViewer.css";
+
 class PublishersViewer extends Component {
     componentWillMount() {
         this.props.fetchPublishersIfNeeded(getPageNumber(this.props) || 1);
@@ -35,25 +38,69 @@ class PublishersViewer extends Component {
         });
     }
 
+    mergedPublishers() {
+        const publishers = reduce(
+            this.props.publishers,
+            (r, p) => {
+                const idx = findIndex(
+                    r,
+                    item =>
+                        trim(item.name).toLowerCase() ===
+                        trim(p.name).toLowerCase()
+                );
+                if (idx === -1) {
+                    r.push(p);
+                    return r;
+                } else {
+                    const findItem = r[idx];
+                    if (
+                        !p.aspects ||
+                        !p.aspects["organization-details"] ||
+                        !p.aspects["organization-details"]["description"]
+                    )
+                        return r;
+                    else if (
+                        !findItem.aspects ||
+                        !findItem.aspects["organization-details"] ||
+                        !findItem.aspects["organization-details"]["description"]
+                    ) {
+                        r.splice(idx, 1, p);
+                        return r;
+                    } else {
+                        if (
+                            trim(
+                                p.aspects["organization-details"]["description"]
+                            ).length >
+                            trim(
+                                findItem.aspects["organization-details"][
+                                    "description"
+                                ]
+                            ).length
+                        ) {
+                            r.splice(idx, 1, p);
+                            return r;
+                        } else {
+                            return r;
+                        }
+                    }
+                }
+            },
+            []
+        );
+        return publishers;
+    }
+
     renderContent() {
         if (this.props.error) {
             return <ErrorHandler error={this.props.error} />;
         } else {
             return (
                 <div className="col-sm-8">
-                    {this.props.publishers.map(p => (
-                        <PublisherSummary publisher={p} key={p.id} />
-                    ))}
-                    {this.props.hitCount > config.resultsPerPage && (
-                        <Pagination
-                            currentPage={+getPageNumber(this.props) || 1}
-                            maxPage={Math.ceil(
-                                this.props.hitCount / config.resultsPerPage
-                            )}
-                            onPageChange={this.onPageChange.bind(this)}
-                            totalItems ={this.props.hitCount}
-                        />
-                    )}
+                    {sortBy(this.mergedPublishers(), [
+                        function(o) {
+                            return o.name.toLowerCase();
+                        }
+                    ]).map(p => <PublisherSummary publisher={p} key={p.id} />)}
                 </div>
             );
         }
@@ -61,8 +108,9 @@ class PublishersViewer extends Component {
 
     render() {
         return (
-            <ReactDocumentTitle title={"Publishers | " + config.appName}>
-                <div className="container publishers-viewer">
+            <ReactDocumentTitle title={"Organisations | " + config.appName}>
+                <div className="publishers-viewer">
+                    <h1>Organisations</h1>
                     <div className="row">
                         {!this.props.isFetching && this.renderContent()}
                         {this.props.isFetching && <ProgressBar />}
@@ -101,4 +149,7 @@ PublishersViewer.contextTypes = {
     router: PropTypes.object.isRequired
 };
 
-export default connect(mapStateToProps, mapDispatchToProps)(PublishersViewer);
+export default connect(
+    mapStateToProps,
+    mapDispatchToProps
+)(PublishersViewer);

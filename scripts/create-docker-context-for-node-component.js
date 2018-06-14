@@ -1,9 +1,17 @@
 #!/usr/bin/env node
+
 const childProcess = require("child_process");
 const fse = require("fs-extra");
 const path = require("path");
 const process = require("process");
 const yargs = require("yargs");
+const _ = require("lodash");
+const {
+    getVersions,
+    getTags,
+    getName,
+    getRepository
+} = require("./docker-util");
 
 const argv = yargs
     .options({
@@ -15,7 +23,19 @@ const argv = yargs
         tag: {
             description:
                 'The tag to pass to "docker build".  This parameter is only used if --build is specified.  If the value of this parameter is `auto`, a tag name is automatically created from NPM configuration.',
+            type: "string",
+            default: "auto"
+        },
+        repository: {
+            description:
+                "The repository to use in auto tag generation. Will default to '', i.e. dockerhub unless --local is set. Requires --tag=auto",
             type: "string"
+        },
+        version: {
+            description:
+                "The version(s) to use in auto tag generation. Will default to the current version in package.json. Requires --tag=auto",
+            type: "string",
+            array: true
         },
         output: {
             description:
@@ -34,11 +54,10 @@ const argv = yargs
             type: "boolean",
             default: false
         },
-        registry: {
+        cacheFromVersion: {
             description:
-                "Specify the container registry",
-            type: "string",
-            default: "localhost:5000/"
+                "Version to cache from when building, using the --cache-from field in docker. Will use the same repository and name. Using this options causes the image to be pulled before build.",
+            type: "string"
         }
     })
     .help().argv;
@@ -56,11 +75,6 @@ const componentDestDir = path.resolve(dockerContextDir, "component");
 
 fse.emptyDirSync(dockerContextDir);
 fse.ensureDirSync(componentDestDir);
-fse.ensureSymlinkSync(
-    path.resolve(componentSrcDir, "..", "node_modules"),
-    path.resolve(dockerContextDir, "node_modules"),
-    "junction"
-);
 
 preparePackage(componentSrcDir, componentDestDir);
 
@@ -80,6 +94,26 @@ if (env.ConEmuANSI === "ON") {
 updateDockerFile(componentSrcDir, componentDestDir);
 
 if (argv.build) {
+    const cacheFromImage =
+        argv.cacheFromVersion &&
+        getRepository(argv.local, argv.repository) +
+            getName() +
+            ":" +
+            argv.cacheFromVersion;
+
+    if (cacheFromImage) {
+        // Pull this image into the docker daemon - if it fails we don't care, we'll just go from scratch.
+        const dockerPullProcess = childProcess.spawnSync(
+            "docker",
+            [...extraParameters, "pull", cacheFromImage],
+            {
+                stdio: "inherit",
+                env: env
+            }
+        );
+        wrapConsoleOutput(dockerPullProcess);
+    }
+
     const tarProcess = childProcess.spawn(
         tar,
         [...extraParameters, "--dereference", "-czf", "-", "*"],
@@ -90,8 +124,14 @@ if (argv.build) {
             shell: true
         }
     );
-    const tag = getTag();
-    const tagArgs = tag ? ["-t", tag] : [];
+    const tags = getTags(argv.tag, argv.local, argv.repository, argv.version);
+    const tagArgs = tags
+        .map(tag => ["-t", tag])
+        .reduce((soFar, tagArgs) => soFar.concat(tagArgs), []);
+
+    const cacheFromArgs = cacheFromImage
+        ? ["--cache-from", cacheFromImage]
+        : [];
 
     const dockerProcess = childProcess.spawn(
         "docker",
@@ -99,6 +139,7 @@ if (argv.build) {
             ...extraParameters,
             "build",
             ...tagArgs,
+            ...cacheFromArgs,
             "-f",
             `./component/Dockerfile`,
             "-"
@@ -109,16 +150,30 @@ if (argv.build) {
         }
     );
 
+    wrapConsoleOutput(dockerProcess);
+
     dockerProcess.on("close", code => {
         fse.removeSync(dockerContextDir);
 
         if (code === 0 && argv.push) {
-            if (!tag) {
+            if (tags.length === 0) {
                 console.error("Can not push an image without a tag.");
                 process.exit(1);
             }
-            childProcess.spawnSync("docker", ["push", tag], {
-                stdio: "inherit"
+
+            // Stop if there's a code !== 0
+            tags.every(tag => {
+                const process = childProcess.spawnSync(
+                    "docker",
+                    ["push", tag],
+                    {
+                        stdio: "inherit"
+                    }
+                );
+
+                code = process.status;
+
+                return code === 0;
             });
         }
         process.exit(code);
@@ -133,7 +188,6 @@ if (argv.build) {
     });
 } else if (argv.output) {
     const outputPath = path.resolve(process.cwd(), argv.output);
-    console.log(outputPath);
 
     const outputTar = fse.openSync(outputPath, "w", 0o644);
 
@@ -155,42 +209,19 @@ if (argv.build) {
     });
 }
 
-function getVersion() {
-    return !argv.local && process.env.npm_package_version
-        ? process.env.npm_package_version
-        : "latest";
-}
-
-function getTag() {
-    let tag = argv.tag;
-    if (tag === "auto") {
-        const tagPrefix = argv.local ? argv.registry: "";
-
-        const name = process.env.npm_package_config_docker_name
-            ? process.env.npm_package_config_docker_name
-            : process.env.npm_package_name
-              ? process.env.npm_package_name
-              : "UnnamedImage";
-        tag = tagPrefix + name + ":" + getVersion();
-    }
-
-    return tag;
-}
-
 function updateDockerFile(sourceDir, destDir) {
-    const tag = getVersion();
-    const repository = argv.local ? "localhost:5000/" : "";
+    const tags = getVersions(argv.local, argv.version);
+    console.log(tags);
+    const repository = getRepository(argv.local, argv.repository);
     const dockerFileContents = fse.readFileSync(
         path.resolve(sourceDir, "Dockerfile"),
         "utf-8"
     );
     const replacedDockerFileContents = dockerFileContents
         // Add a repository if this is a magda image
-        .replace(/FROM (.*magda-.*)(\s|$)/, "FROM " + repository + "$1$2")
-        // Add a tag if none specified
         .replace(
-            /FROM (.+\/[^:\s]+)(\s|$)/,
-            "FROM $1" + (tag ? ":" + tag : "") + "$2"
+            /FROM (.*magda-[^:\s]+)(:[^\s]+)/,
+            "FROM " + repository + "$1" + (tags[0] ? ":" + tags[0] : "$2")
         );
 
     fse.writeFileSync(
@@ -235,35 +266,44 @@ function preparePackage(packageDir, destDir) {
             if (include === "node_modules") {
                 fse.ensureDirSync(dest);
 
+                const env = Object.create(process.env);
+                env.NODE_ENV = "production";
+
                 // Get the list of production packages required by this package.
-                const productionPackageResult = JSON.parse(
-                    childProcess.spawnSync(
-                        "npm",
-                        ["list", "--prod", "--json"],
-                        {
-                            encoding: "utf8",
-                            cwd: packageDir,
-                            shell: true
-                        }
-                    ).stdout
-                );
-                const productionPackages = getPackageList(
-                    productionPackageResult.dependencies,
-                    path.join(packageDir, "node_modules"),
-                    []
+                const rawYarnList = childProcess.spawnSync(
+                    "yarn",
+                    ["list", "--json"],
+                    {
+                        encoding: "utf8",
+                        cwd: packageDir,
+                        shell: true,
+                        env
+                    }
+                ).stdout;
+                const jsonYarnList = JSON.parse(rawYarnList);
+
+                const productionPackages = _.uniqBy(
+                    getPackageList(
+                        null,
+                        jsonYarnList.data.trees,
+                        packageJson.name,
+                        path.resolve(packageDir, "node_modules"),
+                        []
+                    ),
+                    package => package.path
                 );
 
                 prepareNodeModules(src, dest, productionPackages);
+
                 return;
             }
 
-            const type = fse.statSync(src).isFile() ? "file" : "junction";
-
-            // On Windows we can't create symlinks to files without special permissions.
-            // So just copy the file instead.  Usually creating directory junctions is
-            // fine without special permissions, but fall back on copying in the unlikely
-            // event that fails, too.
             try {
+                // On Windows we can't create symlinks to files without special permissions.
+                // So just copy the file instead.  Usually creating directory junctions is
+                // fine without special permissions, but fall back on copying in the unlikely
+                // event that fails, too.
+                const type = fse.statSync(src).isFile() ? "file" : "junction";
                 fse.ensureSymlinkSync(src, dest, type);
             } catch (e) {
                 fse.copySync(src, dest);
@@ -272,51 +312,54 @@ function preparePackage(packageDir, destDir) {
 }
 
 function prepareNodeModules(packageDir, destDir, productionPackages) {
-    const subPackages = fse.readdirSync(packageDir);
-    subPackages.forEach(function(subPackageName) {
-        const src = path.join(packageDir, subPackageName);
-        const dest = path.join(destDir, subPackageName);
+    productionPackages.forEach(src => {
+        const relativePath = path.relative(packageDir, src.path);
+        const dest = path.resolve(destDir, relativePath);
+        const srcPath = path.resolve(packageDir, relativePath);
 
-        if (subPackageName[0] === "@") {
-            // This is a scope directory, recurse.
-            fse.ensureDirSync(dest);
-            prepareNodeModules(src, dest, productionPackages);
-            return;
-        }
+        // console.log("src " + srcPath + " to " + dest);
 
-        if (productionPackages.indexOf(src) == -1) {
-            // Not a production dependency, skip it.
-            return;
-        }
-
-        const stat = fse.lstatSync(src);
-        if (stat.isSymbolicLink()) {
-            // This is a link to another package, presumably created by Lerna.
-            fse.ensureDirSync(dest);
-            preparePackage(src, dest);
-            return;
-        }
-
-        // Regular package, link/copy the whole thing.
         try {
+            const stat = fse.lstatSync(srcPath);
             const type = stat.isFile() ? "file" : "junction";
-            fse.ensureSymlinkSync(src, dest, type);
+            fse.ensureSymlinkSync(srcPath, dest, type);
         } catch (e) {
-            fse.copySync(src, dest);
+            fse.copySync(srcPath, dest);
         }
     });
 }
 
-function getPackageList(dependencies, basePath, result) {
-    if (!dependencies) {
+function getNameFromPackageListing(listing) {
+    // Split the name to get the version (after @)
+    const splitName = listing.split("@");
+
+    // Some packages (particularly @magda) start with an @ - in this case we want the middle part
+    return splitName.length === 2 ? splitName[0] : "@" + splitName[1];
+}
+
+function getPackageList(
+    localChildren,
+    rootPackages,
+    packageName,
+    basePath,
+    result
+) {
+    // If the package that we're finding subpackages for doesn't have its own local children, find it in the root and see if that version of it has any children.
+    const childrenToUse =
+        localChildren ||
+        (depFromRoot = rootPackages
+            .filter(tree => !tree.shadow)
+            .find(tree => getNameFromPackageListing(tree.name) === packageName))
+            .children;
+
+    if (!childrenToUse) {
         return result;
     }
 
-    Object.keys(dependencies).forEach(function(dependencyName) {
-        const dependencyDetails = dependencies[dependencyName];
-        if (dependencyDetails.extraneous) {
-            return;
-        }
+    childrenToUse.forEach(function(dependencyDetails) {
+        const dependencyName = getNameFromPackageListing(
+            dependencyDetails.name
+        );
 
         let dependencyDir = path.join(
             basePath,
@@ -326,30 +369,63 @@ function getPackageList(dependencies, basePath, result) {
         // Does this directory exist?  If not, imitate node's module resolution by walking
         // up the directory tree.
         while (!fse.existsSync(dependencyDir)) {
-            const upOne = path.resolve(
-                dependencyDir,
-                "..",
-                "..",
-                "..",
-                "node_modules",
-                path.basename(dependencyDir)
-            );
+            let upOne;
+            if (dependencyName.indexOf(path.sep) === -1) {
+                upOne = path.resolve(
+                    dependencyDir,
+                    "..",
+                    "..",
+                    "..",
+                    "node_modules",
+                    dependencyName
+                );
+            } else {
+                upOne = path.resolve(
+                    dependencyDir,
+                    "..",
+                    "..",
+                    "..",
+                    "..",
+                    "node_modules",
+                    dependencyName
+                );
+            }
+
             if (upOne === dependencyDir) {
                 break;
             }
+
             dependencyDir = upOne;
         }
 
-        result.push(dependencyDir);
-
-        if (dependencyDetails.dependencies) {
-            getPackageList(
-                dependencyDetails.dependencies,
-                path.join(dependencyDir, "node_modules"),
-                result
-            );
+        if (!fse.existsSync(dependencyDir)) {
+            throw new Error("Could not find path for " + dependencyName);
         }
+
+        result.push({ name: dependencyName, path: dependencyDir });
+
+        // Now that we've added this package to the list to resolve, add all its children.
+        getPackageList(
+            dependencyDetails.children,
+            rootPackages,
+            dependencyName,
+            path.resolve(dependencyDir, "node_modules"),
+            result
+        );
     });
 
     return result;
+}
+
+function wrapConsoleOutput(process) {
+    if (process.stdout) {
+        process.stdout.on("data", data => {
+            console.log(data.toString());
+        });
+    }
+    if (process.stderr) {
+        process.stderr.on("data", data => {
+            console.error(data.toString());
+        });
+    }
 }

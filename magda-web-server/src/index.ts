@@ -4,6 +4,7 @@ import * as URI from "urijs";
 import * as yargs from "yargs";
 import * as morgan from "morgan";
 import * as helmet from "helmet";
+import * as request from "request";
 
 import Registry from "@magda/typescript-common/dist/registry/RegistryClient";
 
@@ -41,6 +42,11 @@ const argv = yargs
         type: "string",
         default: "/"
     })
+    .option("devProxy", {
+        describe:
+            "The URL of the MAGDA API Gateway to proxy to. Useful in development when you want to serve everything from one port for CORS reasons",
+        type: "string"
+    })
     .option("apiBaseUrl", {
         describe:
             "The base URL of the MAGDA API Gateway.  If not specified, the URL is built from the baseUrl.",
@@ -70,6 +76,11 @@ const argv = yargs
         describe:
             "The base URL of the MAGDA admin API.  If not specified, the URL is built from the apiBaseUrl.",
         type: "string"
+    })
+    .option("cspReportUri", {
+        describe:
+            "The URI to send Content Security Policy violation reports to.",
+        type: "string"
     }).argv;
 
 var app = express();
@@ -84,41 +95,51 @@ app.use(
     })
 );
 
+const cspDirectives = {
+    scriptSrc: [
+        "'self'",
+        "'unsafe-inline'", // for VWO until... we get rid of that? :(
+        "data:", // ditto
+        "browser-update.org",
+        "dev.visualwebsiteoptimizer.com",
+        "platform.twitter.com",
+        "www.googletagmanager.com",
+        "www.google-analytics.com",
+        "rum-static.pingdom.net",
+        "https://cdnjs.cloudflare.com/ajax/libs/rollbar.js/2.3.9/rollbar.min.js",
+        "https://tagmanager.google.com/debug"
+    ],
+    objectSrc: ["'none'"],
+    sandbox: ["allow-scripts", "allow-same-origin", "allow-popups"]
+} as helmet.IHelmetContentSecurityPolicyDirectives;
+
+if (argv.cspReportUri) {
+    cspDirectives.reportUri = argv.cspReportUri;
+}
+
 app.use(
     helmet.contentSecurityPolicy({
-        directives: {
-            scriptSrc: [
-                "'self'",
-                "'unsafe-eval'", // for vega until we banish it into an iframe
-                "'unsafe-inline'", // for VWO until... we get rid of that? :(
-                "data:", // ditto
-                "browser-update.org",
-                "dev.visualwebsiteoptimizer.com",
-                "platform.twitter.com",
-                "www.googletagmanager.com",
-                "www.google-analytics.com",
-                "rum-static.pingdom.net"
-            ],
-            objectSrc: ["'none'"],
-            sandbox: ["allow-scripts", "allow-same-origin", "allow-popups"],
-            reportUri: argv.baseUrl + "api/v0/feedback/csp"
-        } as helmet.IHelmetContentSecurityPolicyDirectives,
+        directives: cspDirectives,
         browserSniff: false
     })
 );
 
 app.use(morgan("combined"));
 
-const magda = path.join(__dirname, "..", "node_modules", "@magda");
+// const magda = path.join(__dirname, "..", "node_modules", "@magda");
 
 // const clientRoot = path.join(magda, "web-client");
-const clientRoot = path.join(magda, "kn-web-app");
+// const clientRoot = path.join(magda, "kn-web-app");
+const clientRoot = path.resolve(
+    require.resolve("@magda/kn-web-app/package.json"),
+    ".."
+);
 const clientBuild = path.join(clientRoot, "build");
 console.log("Client: " + clientBuild);
 
-const adminRoot = path.join(magda, "web-admin");
-const adminBuild = path.join(adminRoot, "build");
-console.log("Admin: " + adminBuild);
+// const adminRoot = require.resolve("@magda/web-admin");
+// const adminBuild = path.join(adminRoot, "build");
+// console.log("Admin: " + adminBuild);
 
 const apiBaseUrl = addTrailingSlash(
     argv.apiBaseUrl || new URI(argv.baseUrl).segment("api").toString()
@@ -129,6 +150,7 @@ app.get("/server-config.js", function(req, res) {
         disableAuthenticationFeatures: argv.disableAuthenticationFeatures,
         baseUrl: addTrailingSlash(argv.baseUrl),
         apiBaseUrl: apiBaseUrl,
+        baseExternalUrl: addTrailingSlash(argv.baseExternalUrl),
         searchApiBaseUrl: addTrailingSlash(
             argv.searchApiBaseUrl ||
                 new URI(apiBaseUrl)
@@ -170,13 +192,28 @@ app.get("/server-config.js", function(req, res) {
                     .segment("..")
                     .segment("preview-map")
                     .toString()
+        ),
+        feedbackApiBaseUrl: addTrailingSlash(
+            argv.feedbackApiBaseUrl ||
+                new URI(apiBaseUrl)
+                    .segment("v0")
+                    .segment("feedback")
+                    .segment("user")
+                    .toString()
+        ),
+        correspondenceApiBaseUrl: addTrailingSlash(
+            argv.correspondenceApiBaseUrl ||
+                new URI(apiBaseUrl)
+                    .segment("v0")
+                    .segment("correspondence")
+                    .toString()
         )
     };
     res.type("application/javascript");
     res.send("window.magda_server_config = " + JSON.stringify(config) + ";");
 });
 
-app.use("/admin", express.static(adminBuild));
+// app.use("/admin", express.static(adminBuild));
 app.use(express.static(clientBuild));
 
 // URLs in this list will load index.html and be handled by React routing.
@@ -188,12 +225,14 @@ const topLevelRoutes = [
     "sign-in-redirect",
     "dataset",
     "projects",
-    "publishers",
     "organisation",
     "about",
     "datasource",
     "signin",
     "profile",
+    "publishers", // Renamed to "/organisations" but we still want to redirect it in the web client
+    "organisations",
+    "suggest"
 ];
 
 topLevelRoutes.forEach(topLevelRoute => {
@@ -209,12 +248,32 @@ app.get("/page/*", function(req, res) {
     res.sendFile(path.join(clientBuild, "index.html"));
 });
 
-app.get("/admin", function(req, res) {
-    res.sendFile(path.join(adminBuild, "index.html"));
-});
-app.get("/admin/*", function(req, res) {
-    res.sendFile(path.join(adminBuild, "index.html"));
-});
+// app.get("/admin", function(req, res) {
+//     res.sendFile(path.join(adminBuild, "index.html"));
+// });
+// app.get("/admin/*", function(req, res) {
+//     res.sendFile(path.join(adminBuild, "index.html"));
+// });
+
+if (argv.devProxy) {
+    app.get("/api/*", function(req, res) {
+        console.log(argv.devProxy + req.params[0]);
+        req.pipe(
+            request({
+                url: argv.devProxy + req.params[0],
+                qs: req.query,
+                method: req.method
+            })
+        )
+            .on("error", err => {
+                const msg = "Error on connecting to the webservice.";
+                console.error(msg, err);
+                res.status(500).send(msg);
+            })
+            .pipe(res);
+    });
+}
+
 app.use(
     "/sitemap",
     buildSitemapRouter({

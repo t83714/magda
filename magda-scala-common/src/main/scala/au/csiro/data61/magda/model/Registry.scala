@@ -171,11 +171,18 @@ object Registry {
 
   trait RegistryConverters extends RegistryProtocols {
 
+    def getAcronymFromPublisherName(publisherName:Option[String]): Option[String] = {
+      publisherName
+        .map("""[^a-zA-Z\s]""".r.replaceAllIn(_,""))
+        .map("""\s""".r.split(_).map(_.trim.toUpperCase).filter(!List("","AND","THE","OF").contains(_)).map(_.take(1)).mkString)
+    }
+
     private def convertPublisher(publisher: Record): Agent = {
       val organizationDetails = publisher.aspects.getOrElse("organization-details", JsObject())
       Agent(
         identifier = Some(publisher.id),
         name = organizationDetails.extract[String]('title.?),
+        acronym = getAcronymFromPublisherName(organizationDetails.extract[String]('title.?)),
         imageUrl = organizationDetails.extract[String]('imageUrl.?))
     }
 
@@ -235,11 +242,13 @@ object Registry {
     private def convertDistribution(distribution: JsObject, hit: Record)(implicit defaultOffset: ZoneOffset): Distribution = {
       val distributionRecord = distribution.convertTo[Record]
       val dcatStrings = distributionRecord.aspects.getOrElse("dcat-distribution-strings", JsObject())
+      val datasetFormatAspect = distributionRecord.aspects.getOrElse("dataset-format", JsObject())
 
       val mediaTypeString = dcatStrings.extract[String]('mediaType.?)
       val formatString = dcatStrings.extract[String]('format.?)
       val urlString = dcatStrings.extract[String]('downloadURL.?)
       val descriptionString = dcatStrings.extract[String]('description.?)
+      val betterFormatString = datasetFormatAspect.extract[String]('format.?)
 
       Distribution(
         identifier = Some(distributionRecord.id),
@@ -253,7 +262,10 @@ object Registry {
         downloadURL = urlString,
         byteSize = dcatStrings.extract[Int]('byteSize.?).flatMap(bs => Try(bs.toInt).toOption),
         mediaType = Distribution.parseMediaType(mediaTypeString, None, None),
-        format = formatString)
+        format = betterFormatString match {
+          case Some(format) => Some(format)
+          case None => formatString
+        })
     }
 
     private def tryParseDate(dateString: Option[String])(implicit defaultOffset: ZoneOffset): Option[OffsetDateTime] = {
@@ -280,6 +292,7 @@ object Registry {
     val optionalAspects = List(
       "temporal-coverage",
       "dataset-publisher",
-      "dataset-quality-rating")
+      "dataset-quality-rating",
+      "dataset-format")
   }
 }

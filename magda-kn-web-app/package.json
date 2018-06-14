@@ -2,8 +2,8 @@
   "name": "@magda/kn-web-app",
   "description": "The MAGDA in-browser KN web app.",
   "license": "Apache-2.0",
-  "version": "0.0.32-0",
-  "dependencies": {
+  "version": "0.0.41-0",
+  "devDependencies": {
     "immutable": "^3.8.2",
     "query-string": "^5.1.1",
     "rc-slider": "^8.6.0",

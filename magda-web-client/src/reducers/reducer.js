@@ -1,9 +1,5 @@
 // @flow
 
-// eslint-disable-next-line
-import expect from "expect";
-// eslint-disable-next-line
-// import deepFreeze from 'deep-freeze';
 import datasetSearch from "./datasetSearchReducer";
 import facetPublisherSearch from "./facetPublisherSearchReducer";
 import facetRegionSearch from "./facetRegionSearchReducer";
@@ -20,6 +16,8 @@ import stats from "./statsReducer";
 import discussions from "./discussionReducer";
 import feedback from "./feedbackReducer";
 import topNotification from "./topNotificationReducer";
+import homepageStories from "./homePageStoriesReducer";
+import topBanner from "./topBannerReducer";
 
 import previewData from "./previewDataReducer";
 
@@ -42,7 +40,9 @@ const reducer = combineReducers({
     discussions,
     previewData,
     feedback,
-    topNotification
+    topNotification,
+    homepageStories,
+    topBanner
 });
 
 export default reducer;

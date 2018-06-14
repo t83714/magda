@@ -12,26 +12,26 @@ class AccountNavbar extends React.Component {
 
     render() {
         return (
-            <ul className="mui-list--unstyled account-navbar">
+            <React.Fragment>
                 {this.props.user ? (
                     [
-                        <li key="user">
+                        <li key="/account">
                             <Link to={`/account`}>
                                 {this.props.user.displayName}
                             </Link>
                         </li>,
-                        <li key="signout">
+                        <li key="/signOut">
                             <a href="" onClick={this.signOut.bind(this)}>
                                 Sign Out
                             </a>
                         </li>
                     ]
                 ) : (
-                    <li>
+                    <li key="/account">
                         <Link to={`/account`}>Sign in</Link>
                     </li>
                 )}
-            </ul>
+            </React.Fragment>
         );
     }
 }
@@ -53,4 +53,7 @@ const mapDispatchToProps = dispatch => {
     );
 };
 
-export default connect(mapStateToProps, mapDispatchToProps)(AccountNavbar);
+export default connect(
+    mapStateToProps,
+    mapDispatchToProps
+)(AccountNavbar);
