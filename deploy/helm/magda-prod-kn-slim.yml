@@ -1,0 +1,176 @@
+global:
+  useCombinedDb: false
+  externalUrl: http://knowledgenet.co
+  rollingUpdate:
+    maxUnavailable: 1
+  image:
+    pullPolicy: Always
+    tag: "0.0.36"
+tags:
+    all: false
+    authorization-api: true
+    authorization-db: true
+    elasticsearch: true
+    gateway: true
+    indexer: true
+    registry-api: true
+    registry-db: true
+    search-api: true
+    session-db: true
+    web-server: true
+
+gateway:
+  image:
+    repository: "gcr.io/knowledge-network-prod/data61"
+    tag: "v36"
+  loadBalancerIP: "35.197.180.137"
+  auth:
+    facebookClientId: ""
+    googleClientId: "1049152486192-egoid2mcksouu0cofe326hdb2asuvrc9.apps.googleusercontent.com"
+    aafClientUri: "https://rapid.test.aaf.edu.au/jwt/authnrequest/research/4zqr_Ch2u6k58P6-GEP7jQ" 
+  resources:
+    requests:
+      cpu: 50m
+      memory: 100Mi
+    limits:
+      cpu: 200m
+      memory: 250Mi
+web-server:
+  image:
+    repository: "gcr.io/knowledge-network-prod/data61"
+    tag: "v36"
+  resources:
+    requests:
+      cpu: 0
+      memory: 0
+    limits:
+      cpu: 200m
+      memory: 150Mi
+dap-connector:
+  image:
+    repository: "gcr.io/knowledge-network-prod/data61"
+    tag: "v36"
+  resources:
+    requests:
+      cpu: 0
+      memory: 0
+    limits:
+      cpu: 200m
+      memory: 150Mi
+elasticsearch:
+    client:
+        replicas: 2
+        heapSize: 900m
+        resources:
+            requests:
+                cpu: 200m
+                memory: 1500Mi
+    data:
+        heapSize: 3000m
+        resources:
+            requests:
+                cpu: 800m
+                memory: 5000Mi
+
+indexer:
+  resources:
+    requests:
+      cpu: 0
+      memory: 0
+    limits:
+      cpu: 200m
+      memory: 1000Mi
+preview-map:
+  resources:
+    requests:
+      cpu: 0
+      memory: 0
+    limits:
+      cpu: 200m
+      memory: 150Mi
+registry-datastore:
+    data:
+        storageClass: "standard"
+registry-api:
+  resources:
+    requests:
+      cpu: 0
+      memory: 0
+    limits:
+      cpu: 200m
+      memory: 1000Mi
+registry-db:
+    resources:
+        requests:
+            cpu: 900m
+            memory: 4000Mi
+search-api:
+    replicas: 2
+    requests:
+        cpu: 250m
+        memory: 200Mi
+    limits:
+        cpu: 1000m
+        memory: 1000m
+sleuther-linked-data-rating:
+  resources:
+    requests:
+      cpu: 0
+      memory: 0
+    limits:
+      cpu: 200m
+      memory: 150Mi
+sleuther-broken-link:
+  resources:
+    requests:
+      cpu: 0
+      memory: 0
+    limits:
+      cpu: 200m
+      memory: 150Mi
+sleuther-visualization:
+  resources:
+    requests:
+      cpu: 0
+      memory: 0
+    limits:
+      cpu: 200m
+      memory: 300Mi
+admin-api:
+  resources:
+    requests:
+      cpu: 0
+      memory: 0
+    limits:
+      cpu: 200m
+      memory: 150Mi
+authorization-db:
+    resources:
+        requests:
+            cpu: 250m
+            memory: 500Mi
+authorization-api:
+  data:
+    storageClass: "standard"
+  resources:
+    requests:
+      cpu: 0
+      memory: 0
+    limits:
+      cpu: 200m
+      memory: 150Mi
+discussions-api:
+  resources:
+    requests:
+      cpu: 0
+      memory: 0
+    limits:
+      cpu: 200m
+      memory: 150Mi
+session-db:
+    data:
+        storageClass: "standard"
+    resources:
+        requests:
+            cpu: 250m
+            memory: 500Mi

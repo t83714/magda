@@ -8,10 +8,14 @@ metadata:
   name: kn-ingress
 spec:
   rules:
-  - host: {{ .Values.hostname }}.k8s-dev.oznome.csiro.au
+  - host: dev.knowledgenet.co
     http:
       paths:
       - backend:
           serviceName: gateway
           servicePort: 80
         path: /
+  tls:
+   - secretName: kn-tls-secret-v41
+     hosts:
+     - dev.knowledgenet.co

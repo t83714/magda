@@ -1,6 +1,6 @@
 image:
-  repository: dambusters
-  tag: 0.0.32-0
+  repository: data61/
+  tag: 0.0.41-0
   pullPolicy: Always
 autoscaler:
   enabled: true

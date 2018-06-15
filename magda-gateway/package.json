@@ -11,7 +11,7 @@
     "dev": "run-typescript-in-nodemon src/index.ts --ckanUrl https://data.gov.au",
     "docker-build-local": "create-docker-context-for-node-component --build --push --tag auto --local",
     "docker-build-prod": "create-docker-context-for-node-component --build --push --tag auto",
-    "docker-build-kn": "create-docker-context-for-node-component --build --push --local",
+    "docker-build-kn": "create-docker-context-for-node-component --build",
     "retag-and-push": "retag-and-push"
   },
   "dependencies": {
