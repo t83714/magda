@@ -47,7 +47,7 @@ export default class SearchFrom extends Component {
                     <form role="search" onSubmit={this.handleSubmit}>
                         <div className="search-bar input-group">
                             <input
-                                type="text"
+                                type="search"
                                 autocomplete="off"
                                 className="search-query form-control"
                                 placeholder="Search for data ... e.g. water"
