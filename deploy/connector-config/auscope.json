@@ -1,0 +1,8 @@
+{
+    "type": "magda-csw-connector",
+    "id": "auscope",
+    "name": "AuScope",
+    "sourceUrl": "http://portal.auscope.org.au/geonetwork/srv/eng/csw",
+    "pageSize": 50,
+    "schedule": "30 3 */3 * *"
+}
