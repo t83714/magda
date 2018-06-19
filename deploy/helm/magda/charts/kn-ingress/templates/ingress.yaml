@@ -8,7 +8,7 @@ metadata:
   name: kn-ingress
 spec:
   rules:
-  - host: dev.knowledgenet.co
+  - host: {{ .Values.global.externalUrl }}
     http:
       paths:
       - backend:
@@ -16,6 +16,6 @@ spec:
           servicePort: 80
         path: /
   tls:
-   - secretName: kn-tls-secret-v41
+   - secretName: {{ .Values.global.tls-secret }}
      hosts:
-     - dev.knowledgenet.co
+     - {{ .Values.global.externalUrl }}

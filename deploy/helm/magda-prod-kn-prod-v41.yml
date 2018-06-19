@@ -1,11 +1,12 @@
 global:
   useCombinedDb: false
-  externalUrl: http://knowledgenet.co
+  externalUrl: knowledgenet.co
+  tls-secret: kn-tls-secret
   rollingUpdate:
     maxUnavailable: 1
   image:
     pullPolicy: Always
-    tag: "0.0.36"
+    tag: "0.0.41-0"
 tags:
     all: false
     authorization-api: true
@@ -22,7 +23,7 @@ tags:
 gateway:
   image:
     repository: "gcr.io/knowledge-network-prod/data61"
-    tag: "v36"
+    tag: "v41"
   loadBalancerIP: "35.197.180.137"
   auth:
     facebookClientId: ""
@@ -38,7 +39,7 @@ gateway:
 web-server:
   image:
     repository: "gcr.io/knowledge-network-prod/data61"
-    tag: "v36"
+    tag: "v41"
   resources:
     requests:
       cpu: 0
@@ -49,7 +50,7 @@ web-server:
 dap-connector:
   image:
     repository: "gcr.io/knowledge-network-prod/data61"
-    tag: "v36"
+    tag: "v41"
   resources:
     requests:
       cpu: 0
@@ -71,7 +72,6 @@ elasticsearch:
             requests:
                 cpu: 800m
                 memory: 5000Mi
-
 indexer:
   resources:
     requests:
