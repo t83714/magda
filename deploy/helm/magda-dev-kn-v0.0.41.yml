@@ -1,6 +1,7 @@
 global:
   useCombinedDb: false
   externalUrl: https://dev.knowledgenet.co
+  externalUrlEs: https://dev-es.knowledgenet.co
   rollingUpdate:
     maxUnavailable: 1
   image:
