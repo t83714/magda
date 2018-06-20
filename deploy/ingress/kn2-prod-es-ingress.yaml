@@ -22,7 +22,7 @@ metadata:
         location ~ ^/(?!(datasets30|regions17|datasets32|regions21)) {
            return 405;
         }
-        location ~ ^/(datasets30|regions17|datasets32|regions21)/(?!_search) {
+        location ~ ^/(datasets30|regions17|datasets32|regions21)/(?!(_search|_mapping)) {
            return 405;
         }
         location ~ ^/_cat/(?!indices) {
