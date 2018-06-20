@@ -8,7 +8,7 @@ metadata:
   name: kn-ingress
 spec:
   rules:
-  - host: {{ .Values.global.externalUrl }}
+  - host: {{ .Values.global.externalUrlkn }}
     http:
       paths:
       - backend:
@@ -16,6 +16,6 @@ spec:
           servicePort: 80
         path: /
   tls:
-   - secretName: {{ .Values.global.tlsSecret }}
-     hosts:
-     - {{ .Values.global.externalUrl }}
+  - secretName: {{ .Values.global.tlssecret }}
+    hosts:
+    - {{ .Values.global.externalUrlkn }}

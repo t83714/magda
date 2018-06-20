@@ -51,11 +51,14 @@ cd /app/magda-gateway && lerna run --loglevel=debug --scope=@magda/gateway docke
 gcloud auth configure-docker
 gcloud docker -- push gcr.io/$GCLOUD_PROJECT/data61/magda-web-server:$TAG
 gcloud docker -- push gcr.io/$GCLOUD_PROJECT/data61/magda-gateway:$TAG
+gcloud docker -- push gcr.io/$GCLOUD_PROJECT/data61/magda-indexer:$TAG
 #gcloud docker -- push gcr.io/$GCLOUD_PROJECT/data61/magda-dap-connector:$TAG
 
 if [ $NAMESPACE_EXIST = true ]
 then
-    cd /app/deploy/helm && helm upgrade $NAMESPACE magda  --set web-server.image.repository="gcr.io/$GCLOUD_PROJECT/data61" --set web-server.image.tag=$TAG --set gateway.image.repository="gcr.io/$GCLOUD_PROJECT/data61" --set gateway.image.tag=$TAG -f $HELM_CONFIG_FILE
+    cd /app/deploy/helm && helm upgrade $NAMESPACE magda  --set web-server.image.repository="gcr.io/$GCLOUD_PROJECT/data61" --set web-server.image.tag=$TAG --set gateway.image.repository="gcr.io/$GCLOUD_PROJECT/data61" --set gateway.image.tag=$TAG  --set indexer.image.repository="gcr.io/$GCLOUD_PROJECT/data61" --set indexer.image.tag=$TAG  --set gateway.auth.aafClientUri='https://rapid.test.aaf.edu.au/jwt/authnrequest/research/jn_kJNxp0DebnxU282EA_A' -f $HELM_CONFIG_FILE
+    #cd /app/deploy/helm && helm upgrade $NAMESPACE magda  --set gateway.auth.aafClientUri="https://rapid.test.aaf.edu.au/jwt/authnrequest/research/SwkZe45s_8mnS3jlvsyFyg"  -f $HELM_CONFIG_FILE
+#cd /app/deploy/helm && helm upgrade $NAMESPACE magda --set global.externalUrl="https://knowledgenet.co"  -f $HELM_CONFIG_FILE
 else 
     # Init helm
     kubectl create serviceaccount --namespace kube-system tiller
@@ -69,7 +72,7 @@ else
     # Create oAuth secret
     # For how to create aaf client uri and configure google oAuth, please reference the appendix
     kubectl create secret generic oauth-secrets --from-literal=google-client-secret=$GOOGLE_CLIENT_SECRET --from-literal=facebook-client-secret=$FACEBOOK_CLIENT_SECRET --from-literal=aaf-client-secret=$AAF_CLIENT_SECRET
-    # Install using helm
-    cd /app/deploy/helm && helm install --timeout 999999999 --name $NAMESPACE magda  --set web-server.image.repository="gcr.io/$GCLOUD_PROJECT/data61" --set web-server.image.tag=$TAG --set gateway.image.repository="gcr.io/$GCLOUD_PROJECT/data61" --set gateway.image.tag=$TAG -f  $HELM_CONFIG_FILE
+    # Install using helm  https://rapid.test.aaf.edu.au/jwt/authnrequest/research/jn_kJNxp0DebnxU282EA_A
+    cd /app/deploy/helm && helm install --timeout 999999999 --name $NAMESPACE magda  --set web-server.image.repository="gcr.io/$GCLOUD_PROJECT/data61" --set web-server.image.tag=$TAG --set gateway.image.repository="gcr.io/$GCLOUD_PROJECT/data61" --set gateway.image.tag=$TAG  --set indexer.image.repository="gcr.io/$GCLOUD_PROJECT/data61" --set indexer.image.tag=$TAG  --set gateway.auth.aafClientUri='https://rapid.test.aaf.edu.au/jwt/authnrequest/research/jn_kJNxp0DebnxU282EA_A' -f  $HELM_CONFIG_FILE
 
 fi

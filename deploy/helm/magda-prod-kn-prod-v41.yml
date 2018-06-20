@@ -1,7 +1,8 @@
 global:
   useCombinedDb: false
   externalUrl: knowledgenet.co
-  tlsSecret: kn-tls-secret
+  externalUrlEs: es.knowledgenet.co
+  tlssecret: kn-tls-secret
   rollingUpdate:
     maxUnavailable: 1
   image:
@@ -18,6 +19,8 @@ tags:
     registry-db: true
     search-api: true
     session-db: true
+    kn-ingress: true
+    kn-es-ingress: true
     web-server: true
 
 gateway:
@@ -28,7 +31,7 @@ gateway:
   auth:
     facebookClientId: ""
     googleClientId: "1049152486192-egoid2mcksouu0cofe326hdb2asuvrc9.apps.googleusercontent.com"
-    aafClientUri: "https://rapid.test.aaf.edu.au/jwt/authnrequest/research/4zqr_Ch2u6k58P6-GEP7jQ" 
+    aafClientUri: "https://rapid.test.aaf.edu.au/jwt/authnrequest/research/jn_kJNxp0DebnxU282EA_A" 
   resources:
     requests:
       cpu: 50m
