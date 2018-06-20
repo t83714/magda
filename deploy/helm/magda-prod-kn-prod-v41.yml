@@ -1,7 +1,7 @@
 global:
   useCombinedDb: false
   externalUrl: knowledgenet.co
-  tls-secret: kn-tls-secret
+  tlsSecret: kn-tls-secret
   rollingUpdate:
     maxUnavailable: 1
   image:
