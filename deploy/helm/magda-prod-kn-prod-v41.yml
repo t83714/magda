@@ -1,6 +1,7 @@
 global:
   useCombinedDb: false
   externalUrl: knowledgenet.co
+  externalUrlEs: es.knowledgenet.co
   tlssecret: kn-tls-secret
   rollingUpdate:
     maxUnavailable: 1
@@ -18,6 +19,8 @@ tags:
     registry-db: true
     search-api: true
     session-db: true
+    kn-ingress: true
+    kn-es-ingress: true
     web-server: true
 
 gateway:
