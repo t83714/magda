@@ -1,6 +1,7 @@
 global:
   useCombinedDb: false
-  externalUrl: knowledgenet.co
+  externalUrl: https://knowledgenet.co
+  externalUrlkn: knowledgenet.co
   externalUrlEs: es.knowledgenet.co
   tlssecret: kn-tls-secret
   rollingUpdate:
