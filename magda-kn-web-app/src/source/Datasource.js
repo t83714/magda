@@ -76,8 +76,8 @@ export default class Datasource extends Component {
                                 }
                             }}
                         >
-                            <div class="overlay">
-                                <div class="text">
+                            <div className="overlay">
+                                <div className="text">
                                     <p>{datasourceName}</p>
                                     <p>
                                         {

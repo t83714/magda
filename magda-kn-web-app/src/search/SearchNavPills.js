@@ -12,7 +12,7 @@ import "rc-tooltip/assets/bootstrap.css";
 import "./SearchResult.css";
 
 const createSliderWithTooltip = Slider.createSliderWithTooltip;
-const Range = createSliderWithTooltip(Slider.Range);
+// const Range = createSliderWithTooltip(Slider.Range);
 
 export default class SearchNavPills extends Component {
     constructor(props) {
@@ -59,6 +59,25 @@ export default class SearchNavPills extends Component {
         this.setState({ currentPage: page });
         this.getData(this.preparSearchText(), page * this.state.perPage, 10);
     };
+    preparSearchText() {
+        let byPublisher = "";
+        let byFormat = "";
+        let fromto = "";
+        for (const checkbox of this.selectedPublisherCheckboxes) {
+            byPublisher =
+                byPublisher + "&publisher=" + encodeURIComponent(checkbox);
+        }
+        for (const checkbox of this.selectedFormatCheckboxes) {
+            byFormat = byFormat + "&format=" + encodeURIComponent(checkbox);
+        }
+        if (this.state.min !== 0) {
+            fromto = fromto + "&dateFrom=" + this.min;
+        }
+        if (this.state.max !== 40000) {
+            fromto = fromto + "&dateTo=" + this.max;
+        }
+        return this.state.searchText + byPublisher + byFormat + fromto;
+    }
 
     getData(query, start, limit) {
         // console.log(API.search + 'datasets?query=' + query + '&start='+start + '&limit='+limit+'&facetSize=99999')
@@ -164,21 +183,6 @@ export default class SearchNavPills extends Component {
         console.log(this.preparSearchText());
         this.getData(this.preparSearchText(), 0, 10);
     };
-    preparSearchText() {
-        let byPublisher = "";
-        let byFormat = "";
-        let fromto = "";
-        for (const checkbox of this.selectedPublisherCheckboxes) {
-            byPublisher = byPublisher + "+by+" + encodeURIComponent(checkbox);
-        }
-        for (const checkbox of this.selectedFormatCheckboxes) {
-            byFormat = byFormat + "+as+" + encodeURIComponent(checkbox) + " ";
-        }
-        if (this.min !== 0) {
-            fromto = fromto + "+from+" + this.min + "+to+" + this.max;
-        }
-        return this.state.searchText + byPublisher + byFormat + fromto;
-    }
 
     onAfterChange = value => {
         // console.log(value)
