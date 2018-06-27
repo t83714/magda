@@ -179,26 +179,30 @@ export default class DataSetDetail extends Component {
                                     <td className="cw-table-list">
                                         {this.state.dataset.aspects[
                                             "dcat-dataset-strings"
-                                        ].keywords.map((ele, key) => {
-                                            return (
-                                                <OverlayTrigger
-                                                    bsClass="label-wrap"
-                                                    placement="top"
-                                                    overlay={tooltip}
-                                                    key={key}
-                                                >
-                                                    <div className="cust-label">
-                                                        <Link
-                                                            to={`/search/${ele}`}
-                                                        >
-                                                            {" "}
-                                                            {ele}
-                                                        </Link>{" "}
-                                                        &nbsp;{" "}
-                                                    </div>
-                                                </OverlayTrigger>
-                                            );
-                                        })}
+                                        ].keywords
+                                            ? this.state.dataset.aspects[
+                                                  "dcat-dataset-strings"
+                                              ].keywords.map((ele, key) => {
+                                                  return (
+                                                      <OverlayTrigger
+                                                          bsClass="label-wrap"
+                                                          placement="top"
+                                                          overlay={tooltip}
+                                                          key={key}
+                                                      >
+                                                          <div className="cust-label">
+                                                              <Link
+                                                                  to={`/search/${ele}`}
+                                                              >
+                                                                  {" "}
+                                                                  {ele}
+                                                              </Link>{" "}
+                                                              &nbsp;{" "}
+                                                          </div>
+                                                      </OverlayTrigger>
+                                                  );
+                                              })
+                                            : ""}
                                     </td>
                                 </tr>
                             </tbody>
@@ -220,7 +224,34 @@ export default class DataSetDetail extends Component {
                                                       this.state.perPage
                                       )
                                       .map((ele, key) => {
+                                          console.log(
+                                              ele.aspects[
+                                                  "dcat-distribution-strings"
+                                              ].downloadURL &&
+                                                  ele.aspects[
+                                                      "dcat-distribution-strings"
+                                                  ].accessURL
+                                          );
                                           return ele.aspects[
+                                              "dcat-distribution-strings"
+                                          ].downloadURL === undefined &&
+                                              ele.aspects[
+                                                  "dcat-distribution-strings"
+                                              ].accessURL === undefined ? (
+                                              <li key={key}>
+                                                  <span className="glyphicon glyphicon-link" />
+                                                  Both download URL and access
+                                                  URL unavilable, try using{" "}
+                                                  <a
+                                                      href={
+                                                          ele.aspects["source"]
+                                                              .url
+                                                      }
+                                                  >
+                                                      Data source URL
+                                                  </a>
+                                              </li>
+                                          ) : ele.aspects[
                                               "dcat-distribution-strings"
                                           ].downloadURL ? (
                                               <li key={key}>
