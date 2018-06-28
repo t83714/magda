@@ -1,13 +1,15 @@
 version: "3.2"
 services: 
   kmagda:
-     #build: .  
-     image: csiroenvinf/magda-builder  
+     image: csiroenvinf/magda-builder-cached:kn-0.0.41 
      volumes:
         - type: bind
           source: /var/run/docker.sock
           target: /var/run/docker.sock
         - type: bind
-          source: .
+          source: ${SECRETSDIR} 
+          target: /secrets
+        - type: bind
+          source: ../
           target: /app
      command: tail -f /dev/null
