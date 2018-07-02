@@ -83,7 +83,7 @@ indexer:
       memory: 0
     limits:
       cpu: 200m
-      memory: 1000Mi
+      memory: 2048Mi
 preview-map:
   resources:
     requests:
