@@ -28,6 +28,7 @@ const API = {
         "records?limit=0&aspect=organization-details&optionalAspect=source",
     dataSource:
         registryApiUrl +
-        "records?aspect=organization-details&optionalAspect=source&limit=20000"
+        "records?aspect=organization-details&optionalAspect=source&limit=20000",
+    elasticSearch: "https://es.knowledgenet.co/datasets32/_search"
 };
 export default API;

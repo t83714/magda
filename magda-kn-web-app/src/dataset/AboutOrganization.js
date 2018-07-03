@@ -3,12 +3,13 @@ import { Grid, Row, Col } from "react-bootstrap";
 import { Link } from "react-router-dom";
 
 import API from "../config";
+import BubbleChart from "./BubbleChart";
 import "./DataSet.css";
 
 export default class AboutOrganization extends Component {
     constructor(props) {
         super(props);
-        this.state = { pub_id: "", name: "", datasetNum: 0 };
+        this.state = { pub_id: "", name: "", datasetNum: 0, keywords: [] };
     }
 
     componentWillMount(props) {
@@ -17,6 +18,9 @@ export default class AboutOrganization extends Component {
     componentDidMount() {
         this.getData();
     }
+    keywordClick = keyword => {
+        this.props.history.push("/search/" + keyword);
+    };
     getData() {
         if (this.state.pub_id !== "")
             fetch(
@@ -32,10 +36,44 @@ export default class AboutOrganization extends Component {
                 .then(json => {
                     this.setState({ aspects: json.aspects, name: json.name });
                     this.getDatasetCountByPublisher(json.name);
+                    this.getKeywords(json.name);
                 })
                 .catch(error => {
                     console.log("error on .catch", error);
                 });
+    }
+    getKeywords(publisherName) {
+        let query = (this.query = {
+            size: 0,
+            query: {
+                bool: {
+                    must: [{ match: { "publisher.name": publisherName } }]
+                }
+            },
+            aggs: {
+                formats: {
+                    terms: {
+                        field: "keywords.raw",
+                        size: 100
+                    }
+                }
+            }
+        });
+        fetch(API.elasticSearch, {
+            contentType: "application/json",
+            method: "POST",
+            body: JSON.stringify(query),
+            dataType: "json"
+        })
+            .then(res => res.json())
+            .then(json => {
+                console.log(json);
+                let keywords = json.aggregations.formats.buckets.map(keys => {
+                    return { label: keys.key, value: keys.doc_count };
+                });
+                this.setState({ keywords: keywords });
+            })
+            .catch(error => console.log(error));
     }
     getDatasetCountByPublisher(publisher) {
         fetch(
@@ -59,6 +97,11 @@ export default class AboutOrganization extends Component {
     }
 
     render() {
+        let data = [
+            { _id: 1, value: 5, sentiment: "#000", selected: "true" },
+            { _id: 1, value: 5, sentiment: "#000", selected: "true" },
+            { _id: 1, value: 5, sentiment: "#000", selected: "true" }
+        ];
         return (
             <Grid bsClass="padding-top">
                 <Row>
@@ -150,6 +193,47 @@ export default class AboutOrganization extends Component {
                         </ul>
                     </Col>
                 </Row>
+                <Row>
+                    <Col xs={3} />
+                    <Col xs={8}>
+                        {this.state.keywords.length === 0 ? (
+                            ""
+                        ) : (
+                            <BubbleChart
+                                graph={{
+                                    zoom: 0.9,
+                                    offsetX: -0.0,
+                                    offsetY: -0.0
+                                }}
+                                showLegend={true} // optional value, pass false to disable the legend.
+                                legendPercentage={20} // number that represent the % of with that legend going to use.
+                                legendFont={{
+                                    family: "Arial",
+                                    size: 12,
+                                    color: "#000",
+                                    weight: "normal"
+                                }}
+                                valueFont={{
+                                    family: "Arial",
+                                    size: 12,
+                                    color: "#fff",
+                                    weight: "bold"
+                                }}
+                                labelFont={{
+                                    family: "Arial",
+                                    size: 16,
+                                    color: "#fff",
+                                    weight: "normal"
+                                }}
+                                data={this.state.keywords}
+                                onclick={this.keywordClick}
+                            />
+                        )}
+                    </Col>
+                </Row>
+                <br />
+                <br />
+                <br />
             </Grid>
         );
     }

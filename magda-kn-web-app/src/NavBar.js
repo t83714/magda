@@ -39,7 +39,7 @@ export default class NavBar extends Component {
     };
 
     render() {
-        console.log(this.state.user);
+        // console.log(this.state.user);
         return (
             <Navbar collapseOnSelect fixedTop>
                 <Navbar.Header>
@@ -57,7 +57,7 @@ export default class NavBar extends Component {
                 <Navbar.Collapse>
                     <Nav pullRight>
                         <IndexLinkContainer to="/">
-                            <NavItem exact eventKey={1}>
+                            <NavItem exact="true" eventKey={1}>
                                 Home
                             </NavItem>
                         </IndexLinkContainer>

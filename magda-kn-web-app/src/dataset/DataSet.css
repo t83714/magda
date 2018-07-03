@@ -89,3 +89,7 @@ pre {
 h3.org-name {
     font-size: 20px;
 }
+
+g g:hover {
+    cursor: pointer;
+}
