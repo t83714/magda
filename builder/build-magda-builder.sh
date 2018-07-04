@@ -1,2 +1,2 @@
 #!/bin/bash
-docker build --no-cache -t csiroenvinf/magda-builder ./docker-files/magda-builder
+docker build --no-cache -t csiroenvinf/magda-builder -f ./docker-files/magda-builder/Dockerfile .
