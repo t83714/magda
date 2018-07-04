@@ -7,8 +7,6 @@ echo ""
 echo ""
 
 cd /app
-git add .
-git commit -m "commit for pull"
 git pull
 yarn install
 lerna link
@@ -42,6 +40,8 @@ echo ""
 cd /app/deploy/helm && helm delete --timeout 600 --purge $NAMESPACE
 kubectl delete job --all
 kubectl delete statefulsets --all
+# Don't deleted kn-tls-secrets-v41 or default-token-*
+kubectl delete secrets auth-secrets oauth-secrets db-passwords  
 
 echo ""
 echo ""
@@ -74,7 +74,29 @@ gcloud docker -- push gcr.io/knowledge-network-192205/data61/magda-gateway:$TAG
 
 echo ""
 echo ""
-echo "Deploying Via Helm"
+echo "Creating and deploying secrets"
+echo ""
+echo ""
+
+kubectl create secret generic db-passwords --from-literal=combined-db=p4ssw0rd --from-literal=authorization-db=p4ssw0rd --from-literal=discussions-db=p4ssw0rd --from-literal=session-db=p4ssw0rd --from-literal=registry-db=p4ssw0rd --from-literal=combined-db-client=p4ssw0rd --from-literal=authorization-db-client=p4ssw0rd --from-literal=discussions-db-client=p4ssw0rd --from-literal=session-db-client=p4ssw0rd --from-literal=registry-db-client=p4ssw0rd --from-literal=elasticsearch=p4ssw0rd
+cd /app/deploy/helm && ./create-auth-secrets.sh
+kubectl create secret generic oauth-secrets --from-literal=google-client-secret="$GOOGLECLIENTSECRET" --from-literal=facebook-client-secret=$FACEBOOKCLIENTSECRET --from-literal=aaf-client-secret="$AAFCLIENTSECRET"
+
+echo ""
+echo ""
+echo "Deploying KN Via Helm"
 echo ""
 echo ""
 cd /app/deploy/helm && helm install --timeout 999999999 --name $NAMESPACE magda --set web-server.image.repository="gcr.io/knowledge-network-192205/data61" --set web-server.image.tag=$TAG --set gateway.image.repository="gcr.io/knowledge-network-192205/data61" --set gateway.image.tag=$TAG -f magda-dev-kn-v0.0.41.yml
+
+echo ""
+echo ""
+echo "Populating with some sample data"
+echo ""
+echo ""
+mkdir -p /app/deploy/connector-config-test
+cp /app/deploy/connector-config/act-government.json /app/deploy/connector-config-test/
+cd /app/deploy/ && kubectl delete configmap connector-config --ignore-not-found && kubectl create configmap connector-config --from-file ./connector-config-test/
+cd /app/deploy/ && npm run generate-connector-jobs -- --prod true --in ./connector-config-test --out ./kubernetes/generated/test
+cd /app/deploy/ && kubectl create -f ./kubernetes/generated/test/connector-act-government.json
+

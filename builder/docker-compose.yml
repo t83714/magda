@@ -2,6 +2,8 @@ version: "3.2"
 services: 
   kmagda:
      image: csiroenvinf/magda-builder-cached:kn-0.0.41 
+     env_file:
+        - .env
      volumes:
         - type: bind
           source: /var/run/docker.sock
