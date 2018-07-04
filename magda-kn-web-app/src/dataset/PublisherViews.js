@@ -1,6 +1,7 @@
 import React, { Component } from "react";
 import {
     Row,
+    Col,
     ButtonToolbar,
     Well,
     InputGroup,
@@ -9,7 +10,9 @@ import {
     MenuItem
 } from "react-bootstrap";
 import { Link } from "react-router-dom";
+import BubbleChart from "./BubbleChart";
 import Pagination from "./Pagination";
+import API from "../config";
 
 import "./DataSet.css";
 
@@ -21,8 +24,10 @@ export default class PublisherViews extends Component {
             viewType: "line",
             publisherMap: new Map(),
             datasetInfo: [],
+            currentDatasource: "",
             currentPage: 0,
-            perPage: 20
+            perPage: 20,
+            keywords: []
         };
         //view type: line, grid
         this.searchTextChange = this.searchTextChange.bind(this);
@@ -62,6 +67,7 @@ export default class PublisherViews extends Component {
                 );
             }
             this.setState({ dropdownTitle: "All Datasources", currentPage: 0 });
+            this.getKeywords("All Datasources");
         } else {
             this.allPublisher = this.props.publisherMap.get(e);
             // console.log(this.props.datasource.get(e))
@@ -73,8 +79,62 @@ export default class PublisherViews extends Component {
                     ")",
                 currentPage: 0
             });
+            this.getKeywords(this.props.datasource.get(e).name);
         }
     }
+    getKeywords(datasource) {
+        console.log(datasource);
+        this.setState({ currentDatasource: datasource });
+        let query = "";
+        if (datasource === "All Datasources") {
+            query = {
+                size: 0,
+                aggs: {
+                    formats: {
+                        terms: {
+                            field: "keywords.raw",
+                            size: 100
+                        }
+                    }
+                }
+            };
+        } else {
+            query = {
+                size: 0,
+                query: {
+                    bool: {
+                        must: [{ match: { catalog: datasource } }]
+                    }
+                },
+                aggs: {
+                    formats: {
+                        terms: {
+                            field: "keywords.raw",
+                            size: 100
+                        }
+                    }
+                }
+            };
+        }
+        fetch(API.elasticSearch, {
+            contentType: "application/json",
+            method: "POST",
+            body: JSON.stringify(query),
+            dataType: "json"
+        })
+            .then(res => res.json())
+            .then(json => {
+                console.log(json);
+                let keywords = json.aggregations.formats.buckets.map(keys => {
+                    return { label: keys.key, value: keys.doc_count };
+                });
+                this.setState({ keywords: keywords });
+            })
+            .catch(error => console.log(error));
+    }
+    keywordClick = keyword => {
+        this.props.history.push("/search/" + keyword);
+    };
 
     parentPropsUpdate() {
         const size =
@@ -98,9 +158,13 @@ export default class PublisherViews extends Component {
                         this.props.publisherMap.get(datasourceKeys[key])
                     );
                 }
+                this.getKeywords("All Datasources");
             } else {
                 this.allPublisher = this.allPublisher.concat(
                     this.props.publisherMap.get(this.props.default)
+                );
+                this.getKeywords(
+                    this.props.datasource.get(this.props.default).name
                 );
             }
         }
@@ -307,15 +371,51 @@ export default class PublisherViews extends Component {
                     <hr />
                 </Row>
                 <Row>
-                    {this.state.viewType === "line" ? lineView : gridView}
-                    <Pagination
-                        perPage={this.state.perPage}
-                        total={display.length}
-                        updateCurrentPage={this.updateCurrentPage}
-                    />
+                    <Col xs={8}>
+                        {this.state.viewType === "line" ? lineView : gridView}
+                        <Pagination
+                            perPage={this.state.perPage}
+                            total={display.length}
+                            updateCurrentPage={this.updateCurrentPage}
+                        />
+                    </Col>
+                    <Col xs={4}>
+                        <h3>Keywords for {this.state.currentDatasource}</h3>
+                        <hr />
+                        {this.state.keywords.length === 0 ? (
+                            ""
+                        ) : (
+                            <BubbleChart
+                                graph={{
+                                    zoom: 0.9,
+                                    offsetX: -0.0,
+                                    offsetY: -0.0
+                                }}
+                                width={400}
+                                height={400}
+                                showLegend={false} // optional value, pass false to disable the legend.
+                                valueFont={{
+                                    family: "Arial",
+                                    size: 12,
+                                    color: "#fff",
+                                    weight: "bold"
+                                }}
+                                labelFont={{
+                                    family: "Arial",
+                                    size: 16,
+                                    color: "#fff",
+                                    weight: "normal"
+                                }}
+                                data={this.state.keywords}
+                                onclick={this.keywordClick}
+                            />
+                        )}
+                    </Col>
                     <br />
                     <br />
                 </Row>
+                <br />
+                <br />
             </div>
         );
     }

@@ -43,7 +43,7 @@ export default class AboutOrganization extends Component {
                 });
     }
     getKeywords(publisherName) {
-        let query = (this.query = {
+        let query = {
             size: 0,
             query: {
                 bool: {
@@ -58,7 +58,7 @@ export default class AboutOrganization extends Component {
                     }
                 }
             }
-        });
+        };
         fetch(API.elasticSearch, {
             contentType: "application/json",
             method: "POST",
