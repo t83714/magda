@@ -39,3 +39,4 @@ pancake
 package-lock.json
 */package-lock.json
 .env
+*/.env
