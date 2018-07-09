@@ -11,3 +11,11 @@ NAMESPACE=kn-v41-validation
 TAG=$1
 echo $TAG
 kubectl config set-context $(kubectl config current-context) --namespace=$NAMESPACE
+
+echo ""
+echo ""
+echo "Initializing Helm"
+echo ""
+echo ""
+
+helm init --upgrade
