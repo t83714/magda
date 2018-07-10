@@ -8,6 +8,7 @@ import Checkbox from "../search/Checkbox";
 import Pagination from "../dataset/Pagination";
 import "./DataSet.css";
 import API from "../config";
+import BubbleChart from "./BubbleChart";
 
 import "rc-slider/assets/index.css";
 import "rc-tooltip/assets/bootstrap.css";
@@ -31,7 +32,8 @@ export default class DataSetListForOrg extends Component {
             facetFormatCollapse: false,
             searchText: "",
             min: this.min,
-            max: this.max
+            max: this.max,
+            keywords: []
         };
         this.searchTextChange = this.searchTextChange.bind(this);
         this.handleSubmit = this.handleSubmit.bind(this);
@@ -99,9 +101,50 @@ export default class DataSetListForOrg extends Component {
         }
         return this.state.searchText + byPublisher + byFormat + fromto;
     }
+    keywordClick = keyword => {
+        // this.props.history.push("/search/" + keyword);
+        console.log("Keyword <" + keyword + "> has been clicked");
+    };
+
+    getKeywords(publisherName) {
+        let query = {
+            size: 0,
+            query: {
+                bool: {
+                    must: [{ match: { "publisher.name": publisherName } }]
+                }
+            },
+            aggs: {
+                keywords_agg: {
+                    terms: {
+                        field: "keywords.raw",
+                        size: 100
+                    }
+                }
+            }
+        };
+        fetch(API.elasticSearch, {
+            contentType: "application/json",
+            method: "POST",
+            body: JSON.stringify(query),
+            dataType: "json"
+        })
+            .then(res => res.json())
+            .then(json => {
+                console.log(json);
+                let keywords = json.aggregations.keywords_agg.buckets.map(
+                    keys => {
+                        return { label: keys.key, value: keys.doc_count };
+                    }
+                );
+                this.setState({ keywords: keywords });
+            })
+            .catch(error => console.log(error));
+    }
 
     getData(query, start, limit) {
         //+ '&start='+ start +'&limit='+ limit +'&facetSize=99999'
+        this.getKeywords(this.state.publisher);
         fetch(
             API.search +
                 "datasets?query=" +
@@ -350,6 +393,39 @@ export default class DataSetListForOrg extends Component {
                                         Refine Result{" "}
                                     </Button>
                                 </div>
+                                <br />
+                                <br />
+                                <br />
+                                <h4>Keyworks for {this.state.publisher}</h4>
+                                <hr />
+                                {this.state.keywords.length === 0 ? (
+                                    ""
+                                ) : (
+                                    <BubbleChart
+                                        graph={{
+                                            zoom: 0.9,
+                                            offsetX: -0.0,
+                                            offsetY: -0.0
+                                        }}
+                                        width={400}
+                                        height={400}
+                                        showLegend={false} // optional value, pass false to disable the legend.
+                                        valueFont={{
+                                            family: "Arial",
+                                            size: 12,
+                                            color: "#fff",
+                                            weight: "bold"
+                                        }}
+                                        labelFont={{
+                                            family: "Arial",
+                                            size: 16,
+                                            color: "#fff",
+                                            weight: "normal"
+                                        }}
+                                        data={this.state.keywords}
+                                        onclick={this.keywordClick}
+                                    />
+                                )}
                             </Col>
                         </Row>
                     </Grid>

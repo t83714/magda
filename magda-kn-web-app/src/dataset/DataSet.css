@@ -1,10 +1,16 @@
 .org-name {
     padding-bottom: 10px;
 }
+.thumbnail {
+    min-height: 180px;
+}
 .thumbnail > img {
     height: 160px;
 }
-
+.thumbnail .btn-toolbar {
+    position: absolute;
+    bottom: 40px;
+}
 .padding-top {
     padding-top: 85px;
 }

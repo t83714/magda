@@ -19,7 +19,8 @@ export default class AboutOrganization extends Component {
         this.getData();
     }
     keywordClick = keyword => {
-        this.props.history.push("/search/" + keyword);
+        // this.props.history.push("/search/" + keyword);
+        console.log("Keyword <" + keyword + "> has been clicked");
     };
     getData() {
         if (this.state.pub_id !== "")
@@ -51,7 +52,7 @@ export default class AboutOrganization extends Component {
                 }
             },
             aggs: {
-                formats: {
+                keywords_agg: {
                     terms: {
                         field: "keywords.raw",
                         size: 100
@@ -68,9 +69,11 @@ export default class AboutOrganization extends Component {
             .then(res => res.json())
             .then(json => {
                 console.log(json);
-                let keywords = json.aggregations.formats.buckets.map(keys => {
-                    return { label: keys.key, value: keys.doc_count };
-                });
+                let keywords = json.aggregations.keywords_agg.buckets.map(
+                    keys => {
+                        return { label: keys.key, value: keys.doc_count };
+                    }
+                );
                 this.setState({ keywords: keywords });
             })
             .catch(error => console.log(error));

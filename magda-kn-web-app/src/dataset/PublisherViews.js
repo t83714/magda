@@ -133,7 +133,8 @@ export default class PublisherViews extends Component {
             .catch(error => console.log(error));
     }
     keywordClick = keyword => {
-        this.props.history.push("/search/" + keyword);
+        // this.props.history.push("/search/" + keyword);
+        console.log("Keyword <" + keyword + "> has been clicked");
     };
 
     parentPropsUpdate() {
@@ -150,13 +151,13 @@ export default class PublisherViews extends Component {
             });
             this.allPublisher = [];
             const datasourceKeys = [...this.props.datasource.keys()];
-            // console.log(this.props.default==='All')
             if (this.props.default === "All") {
                 for (let key in datasourceKeys) {
                     // console.log(this.props.publisherMap.get(datasourceKeys[key]))
                     this.allPublisher = this.allPublisher.concat(
                         this.props.publisherMap.get(datasourceKeys[key])
                     );
+                    // console.log(this.allPublisher.length)
                 }
                 this.getKeywords("All Datasources");
             } else {
@@ -234,13 +235,13 @@ export default class PublisherViews extends Component {
             )
             .map((value, key) => {
                 return (
-                    <div className="col-xs-3" key={key}>
+                    <div className="col-xs-4" key={key}>
                         <div className="thumbnail">
                             {/* <img className="" src={value.aspects['organization-details'].imageUrl ? value.aspects['organization-details'].imageUrl: '/img/emptyImg.png' } alt="logo" /> */}
                             <div className="caption">
-                                <Link to={"/organisation/" + value.id}>
-                                    <h4 className="org-name">{value.name}</h4>
-                                </Link>
+                                {/* <Link to={"/organisation/" + value.id}> */}
+                                <h4 className="org-name">{value.name}</h4>
+                                {/* </Link> */}
                                 {/* <p className="card-text">{value.aspects['organization-details'].description}</p> */}
                                 <ButtonToolbar>
                                     <Link
@@ -372,7 +373,12 @@ export default class PublisherViews extends Component {
                 </Row>
                 <Row>
                     <Col xs={8}>
-                        {this.state.viewType === "line" ? lineView : gridView}
+                        <Row>
+                            {this.state.viewType === "line"
+                                ? lineView
+                                : gridView}
+                        </Row>
+                        <hr />
                         <Pagination
                             perPage={this.state.perPage}
                             total={display.length}

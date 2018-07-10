@@ -218,7 +218,7 @@ export default class BubbleChart extends Component {
             });
 
         node.append("title").text(function(d) {
-            return "search using " + d.label;
+            return d.label;
         });
     }
 
