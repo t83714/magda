@@ -11,37 +11,13 @@ git pull
 yarn install
 lerna link
 
-echo ""
-echo ""
-echo "Authenticating and Connecting to the Cluster"
-echo ""
-echo ""
+# Authenticate to the cluster and initialize helm
+source /app/builder/authenticate_to_cluster.sh
 
-gcloud auth activate-service-account kn-dev-robot@knowledge-network-192205.iam.gserviceaccount.com --key-file=/secrets/kn-dev-robot.json
-gcloud container clusters get-credentials kn-dev-cluster-1 --zone australia-southeast1-a --project knowledge-network-192205
-NAMESPACE=kn-v41-validation
-TAG=$1
-kubectl config set-context $(kubectl config current-context) --namespace=$NAMESPACE
 
-echo ""
-echo ""
-echo "Upgrading Helm"
-echo ""
-echo ""
+# Delete existing deployment
 
-helm init --upgrade
-
-echo ""
-echo ""
-echo "Destroying Existing Helm Deployment and Related Jobs and Secrets"
-echo ""
-echo ""
-
-cd /app/deploy/helm && helm delete --timeout 600 --purge $NAMESPACE
-kubectl delete job --all
-kubectl delete statefulsets --all
-# Don't deleted kn-tls-secrets-v41 or default-token-*
-kubectl delete secrets auth-secrets oauth-secrets db-passwords  
+source /app/builder/delete_deployment.sh
 
 echo ""
 echo ""
