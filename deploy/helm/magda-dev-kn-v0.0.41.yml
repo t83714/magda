@@ -1,7 +1,9 @@
 global:
   useCombinedDb: false
+  externalUrlkn: dev.knowledgenet.co
   externalUrl: https://dev.knowledgenet.co
-  externalUrlEs: https://dev-es.knowledgenet.co
+  externalUrlEs: dev-es.knowledgenet.co
+  tlssecret: kn-tls-secret-v41
   rollingUpdate:
     maxUnavailable: 1
   image:
