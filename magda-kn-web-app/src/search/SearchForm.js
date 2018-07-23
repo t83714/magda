@@ -48,7 +48,7 @@ export default class SearchFrom extends Component {
                         <div className="search-bar input-group">
                             <input
                                 type="search"
-                                autocomplete="off"
+                                autoComplete="off"
                                 className="search-query form-control"
                                 placeholder="Search for data ... e.g. water"
                                 name="q"

@@ -5,6 +5,7 @@ import { OrderedSet } from "immutable";
 import SearchResultView from "./SearchResultView";
 import Checkbox from "./Checkbox";
 import Pagination from "../dataset/Pagination";
+import BubbleChart from "../dataset/BubbleChart";
 import API from "../config";
 
 import "rc-slider/assets/index.css";
@@ -31,7 +32,8 @@ export default class SearchNavPills extends Component {
             min: this.min,
             max: this.max,
             facetPublisherCollapse: false,
-            facetFormatCollapse: false
+            facetFormatCollapse: false,
+            keywords: []
         };
     }
 
@@ -115,6 +117,7 @@ export default class SearchNavPills extends Component {
                 this.selectedPublisherCheckboxes = new Set([
                     ...newPublishers.keys()
                 ]);
+                // this.getKeywords()
                 // Calculate date range
                 // const year = json.facets[1].options
                 // for(let key in year){
@@ -130,6 +133,42 @@ export default class SearchNavPills extends Component {
                 console.log("error on .catch", error);
             });
     }
+    getKeywords() {
+        let query = (this.query = {
+            size: 0,
+            aggs: {
+                formats: {
+                    terms: {
+                        field: "keywords.raw",
+                        size: 100
+                    }
+                }
+            }
+        });
+        let queryUrl = this.state.searchText
+            ? API.elasticSearch + "?q=" + this.state.searchText
+            : API.elasticSearch;
+        fetch(queryUrl, {
+            contentType: "application/json",
+            method: "POST",
+            body: JSON.stringify(query),
+            dataType: "json"
+        })
+            .then(res => res.json())
+            .then(json => {
+                console.log(json);
+                let keywords = json.aggregations.formats.buckets.map(keys => {
+                    return { label: keys.key, value: keys.doc_count };
+                });
+                this.setState({
+                    keywords: keywords
+                });
+            })
+            .catch(error => console.log(error));
+    }
+    keywordClick = keyword => {
+        this.props.history.push("/search/" + keyword);
+    };
 
     togglePublisherCheckbox = label => {
         if (this.selectedPublisherCheckboxes.has(label)) {
@@ -220,6 +259,31 @@ export default class SearchNavPills extends Component {
                             />
                         </Col>
                         <Col md={4}>
+                            {/* <BubbleChart
+                                graph= {{
+                                    zoom: 0.5,
+                                    offsetX: -0.00,
+                                    offsetY: -0.00,
+                                }}
+                                showLegend={false} // optional value, pass false to disable the legend.
+                                weight={300}
+                                height={400}
+                                valueFont={{
+                                        family: 'Arial',
+                                        size: 12,
+                                        color: '#fff',
+                                        weight: 'bold',
+                                    }}
+                                labelFont={{
+                                        family: 'Arial',
+                                        size: 16,
+                                        color: '#fff',
+                                        weight: 'normal',
+                                    }}
+                                data={this.state.keywords}
+                                onclick={this.keywordClick}
+                            />
+                            <hr /> */}
                             <div className="right-filter">
                                 <Row>
                                     <h3 className="col-xs-8">
