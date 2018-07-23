@@ -396,7 +396,7 @@ export default class DataSetListForOrg extends Component {
                                 <br />
                                 <br />
                                 <br />
-                                <h4>Keyworks for {this.state.publisher}</h4>
+                                <h4>Keywords for {this.state.publisher}</h4>
                                 <hr />
                                 {this.state.keywords.length === 0 ? (
                                     ""
