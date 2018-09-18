@@ -31,4 +31,5 @@ const API = {
         "records?aspect=organization-details&optionalAspect=source&limit=20000",
     elasticSearch: "https://es.knowledgenet.co/datasets32/_search"
 };
+
 export default API;
