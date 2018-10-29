@@ -37,9 +37,10 @@ gcloud auth configure-docker
 gcloud docker -- push gcr.io/$GCLOUD_PROJECT/data61/magda-web-server:$TAG
 gcloud docker -- push gcr.io/$GCLOUD_PROJECT/data61/magda-gateway:$TAG
 # gcloud docker -- push gcr.io/$GCLOUD_PROJECT/data61/magda-indexer:$TAG
-gcloud docker -- push gcr.io/$GCLOUD_PROJECT/data61/magda-dap-connector:$TAG
+# gcloud docker -- push gcr.io/$GCLOUD_PROJECT/data61/magda-dap-connector:$TAG
 
 
-# cd /app/deploy/helm && helm upgrade $NAMESPACE magda  --set web-server.image.repository="gcr.io/$GCLOUD_PROJECT/data61" --set web-server.image.tag=$TAG --set gateway.image.repository="gcr.io/$GCLOUD_PROJECT/data61" --set gateway.image.tag=$TAG  --set indexer.image.repository="gcr.io/$GCLOUD_PROJECT/data61" --set indexer.image.tag=$TAG  --set gateway.auth.aafClientUri='https://rapid.test.aaf.edu.au/jwt/authnrequest/research/jn_kJNxp0DebnxU282EA_A' -f $HELM_CONFIG_FILE
+cd /app/deploy/helm && helm upgrade $NAMESPACE magda  --set web-server.image.repository="gcr.io/$GCLOUD_PROJECT/data61" --set web-server.image.tag=$TAG --set gateway.image.repository="gcr.io/$GCLOUD_PROJECT/data61" --set gateway.image.tag=$TAG    -f $HELM_CONFIG_FILE
 #cd /app/deploy/helm && helm upgrade $NAMESPACE magda  --set gateway.auth.aafClientUri="https://rapid.test.aaf.edu.au/jwt/authnrequest/research/SwkZe45s_8mnS3jlvsyFyg"  -f $HELM_CONFIG_FILE
 #cd /app/deploy/helm && helm upgrade $NAMESPACE magda --set global.externalUrl="https://knowledgenet.co"  -f $HELM_CONFIG_FILE
+# cd /app/deploy/helm && helm install --timeout 999999999 --name $NAMESPACE magda --set web-server.image.repository="gcr.io/knowledge-network-192205/data61" --set web-server.image.tag=$TAG --set gateway.image.repository="gcr.io/knowledge-network-192205/data61" --set gateway.image.tag=$TAG -f magda-dev-kn-staging-v41.yml
