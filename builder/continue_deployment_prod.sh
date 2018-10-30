@@ -21,7 +21,11 @@ gcloud container clusters get-credentials $GCLOUD_CLUSTER --zone $GCLOUD_ZONE --
 kubectl config set-context $(kubectl config current-context) --namespace=$NAMESPACE
 
 
-cd /app  && git pull && yarn install && lerna link
+cd /app  
+git pull 
+yarn install 
+lerna link
+
 cd /app/magda-web-server && lerna run --loglevel=debug --scope=@magda/typescript-common --scope=@magda/web-admin --scope=@magda/web-server --scope=@magda/web-client --scope=@magda/kn-web-app* build
 cd /app/magda-web-server && lerna run --loglevel=debug --scope=@magda/web-server docker-build-kn -- -- --tag gcr.io/$GCLOUD_PROJECT/data61/magda-web-server:$TAG
  
