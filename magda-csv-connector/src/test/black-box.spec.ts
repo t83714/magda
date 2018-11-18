@@ -1,7 +1,7 @@
 "use strict";
 
 import { runConnectorTest } from "@magda/typescript-common/dist/test/connectors/runConnectorTest";
-import { MockCSVCatalog } from "./MockCSVCatalog";
+import { MockFileServer } from "@magda/typescript-common/dist/test/connectors/MockFileServer";
 
 const fs = require("fs");
 const path = require("path");
@@ -30,7 +30,7 @@ const TEST_CASES = [
     }
 ];
 
-runConnectorTest(TEST_CASES, MockCSVCatalog, {
+runConnectorTest(TEST_CASES, MockFileServer, {
     cleanRegistry: function(registry: any) {
         Object.values(registry.records).forEach(record => {
             if (record.aspects && record.aspects["csv-dataset"]) {

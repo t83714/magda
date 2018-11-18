@@ -1,6 +1,6 @@
-import { MockExpressServer } from "@magda/typescript-common/dist/test/connectors/MockExpressServer";
+import { MockExpressServer } from "./MockExpressServer";
 
-export class MockCSVCatalog extends MockExpressServer {
+export class MockFileServer extends MockExpressServer {
     mime: any;
     spec: any;
 
