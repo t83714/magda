@@ -1,15 +1,15 @@
 import minion from "@magda/minion-framework/dist/index";
-import onRecordFound from "./onRecordFound";
+import { onRecordFound, ASPECT_NAME } from "./onRecordFound";
 import commonYargs from "@magda/minion-framework/dist/commonYargs";
 
 const ID = "minion-visualization";
 const argv = commonYargs(ID, 6311, "http://localhost:6311");
 
 const aspectDefinition = {
-    id: "visualization-info",
+    id: ASPECT_NAME,
     name:
         "Information to power smart visualisations for distributions in the front-end",
-    jsonSchema: require("@magda/registry-aspects/visualization-info.schema.json")
+    jsonSchema: require(`@magda/registry-aspects/${ASPECT_NAME}.schema.json`)
 };
 
 minion({

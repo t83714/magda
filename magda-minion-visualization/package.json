@@ -10,7 +10,8 @@
     "dev": "run-typescript-in-nodemon src/index.ts",
     "docker-build-local": "create-docker-context-for-node-component --build --push --tag auto --local",
     "docker-build-prod": "create-docker-context-for-node-component --build --push --tag auto",
-    "retag-and-push": "retag-and-push"
+    "retag-and-push": "retag-and-push",
+    "test": "mocha --compilers ts:ts-node/register,tsx:ts-node/register --require tsconfig-paths/register \"src/test/**/*.spec.ts\""
   },
   "author": "",
   "license": "Apache-2.0",
@@ -31,7 +32,8 @@
     "papaparse": "^4.3.6",
     "read-pkg-up": "^3.0.0",
     "request": "^2.79.0",
-    "urijs": "^1.18.7"
+    "urijs": "^1.18.7",
+    "xlsx": "^0.14.1"
   },
   "config": {
     "registryUrl": "http://localhost:6101/v0",

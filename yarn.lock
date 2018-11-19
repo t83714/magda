@@ -1263,6 +1263,16 @@ ajv@^6.1.0:
     json-schema-traverse "^0.4.1"
     uri-js "^4.2.1"
 
+ajv@^6.5.5:
+  version "6.5.5"
+  resolved "https://registry.yarnpkg.com/ajv/-/ajv-6.5.5.tgz#cf97cdade71c6399a92c6d6c4177381291b781a1"
+  integrity sha512-7q7gtRQDJSyuEHjuVgHoUa2VuemFiCMrfQc9Tc08XTAc4Zj/5U1buQJ0HU6i7fKjXU09SVgSmxa4sLvuvS8Iyg==
+  dependencies:
+    fast-deep-equal "^2.0.1"
+    fast-json-stable-stringify "^2.0.0"
+    json-schema-traverse "^0.4.1"
+    uri-js "^4.2.2"
+
 align-text@^0.1.1, align-text@^0.1.3:
   version "0.1.4"
   resolved "https://registry.yarnpkg.com/align-text/-/align-text-0.1.4.tgz#0cd90a561093f35d0a99256c22b7069433fad117"
@@ -7222,6 +7232,11 @@ fileset@^2.0.2:
     glob "^7.0.3"
     minimatch "^3.0.3"
 
+filesize-parser@^1.5.0:
+  version "1.5.0"
+  resolved "https://registry.yarnpkg.com/filesize-parser/-/filesize-parser-1.5.0.tgz#97ad66d5b0d7154b2e8b1b4e83f526aed33c62f3"
+  integrity sha512-UTDpJB22VvozK7t31slU9WCAPSdcUWuwD7P7S6LBXswdgzUz+YhoziLOohknFcx0Kq5LWCAj4MEKY9q3zGq47Q==
+
 filesize@3.5.11:
   version "3.5.11"
   resolved "https://registry.yarnpkg.com/filesize/-/filesize-3.5.11.tgz#1919326749433bb3cf77368bd158caabcc19e9ee"
@@ -12622,7 +12637,7 @@ pako@~1.0.5:
   resolved "https://registry.yarnpkg.com/pako/-/pako-1.0.6.tgz#0101211baa70c4bca4a0f63f2206e97b7dfaf258"
   integrity sha512-lQe48YPsMJAig+yngZ87Lus+NF+3mtu7DVOBu6b/gHO1YpKwIj5AWjZ/TOS7i46HD/UixzWb1zeWDZfGZ3iYcg==
 
-papaparse@^4.3.3, papaparse@^4.3.6:
+papaparse@^4.3.3:
   version "4.5.0"
   resolved "https://registry.yarnpkg.com/papaparse/-/papaparse-4.5.0.tgz#fb625d390b6e5d544db20658ce3665002c3d8e80"
   integrity sha1-+2JdOQtuXVRNsgZYzjZlACw9joA=
@@ -18584,6 +18599,19 @@ xlsx@^0.14.0:
   version "0.14.0"
   resolved "https://registry.yarnpkg.com/xlsx/-/xlsx-0.14.0.tgz#4da79b08ad9e32106de66613f7a0d3ce559b1fad"
   integrity sha512-1MDQ7XYRj6JqbXmgCN+ivL6Nr77NzyynM2Inekr5xfmVdsr628FK1nvy6d3T7Y40fbzCj4EMaica4i6YT5UfBA==
+  dependencies:
+    adler-32 "~1.2.0"
+    cfb "^1.1.0"
+    codepage "~1.14.0"
+    commander "~2.17.1"
+    crc-32 "~1.2.0"
+    exit-on-epipe "~1.0.1"
+    ssf "~0.10.2"
+
+xlsx@^0.14.1:
+  version "0.14.1"
+  resolved "https://registry.yarnpkg.com/xlsx/-/xlsx-0.14.1.tgz#ecedf536bd1e94055486ff484f5888dcaa89bd3d"
+  integrity sha512-7hjB5YuyJo1fuuzXQjwuxD8LSUzE4Rxu5ToC3fB5JSunZxGjLcgKg69bEFG9GYoxeVDx5GL0k1dUodlvaQNRQw==
   dependencies:
     adler-32 "~1.2.0"
     cfb "^1.1.0"

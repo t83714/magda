@@ -1,12 +1,14 @@
 import { MockExpressServer } from "./MockExpressServer";
 
 const body = require("body-parser");
-const djv = require("djv");
+const Ajv = require("ajv");
+const ajv: any = new Ajv();
+
+ajv.addFormat("date-time", /^(\d{4}-\d{2}-\d{2})(T\d{2}:\d{2}:\d{2}Z)?$/);
 
 export class MockRegistry extends MockExpressServer {
     aspects: any = {};
     records: any = {};
-    env: any = djv();
 
     runImplementation(registry: any) {
         registry.use(
@@ -15,10 +17,13 @@ export class MockRegistry extends MockExpressServer {
             })
         );
 
+        // registry.use((req: any, res: any, next: any) => {
+        //     console.log(req.method, req.path, req.body);
+        //     next();
+        // });
+
         registry.put("/aspects/:id", (req: any, res: any) => {
             this.aspects[req.params.id] = req.body;
-            // our mock registry will validate the data it gets against the schemas it gets
-            this.env.addSchema(req.params.id, req.body.jsonSchema);
             res.json(req.body);
         });
 
@@ -30,36 +35,57 @@ export class MockRegistry extends MockExpressServer {
                     req.body.aspects
                 )) {
                     try {
-                        let invalid = this.env.validate(
-                            `${aspect}`,
-                            aspectBody
-                        );
-                        if (invalid) {
+                        const schema = this.aspects[aspect].jsonSchema;
+                        let valid = ajv.validate(schema, aspectBody);
+                        if (!valid) {
+                            const invalid = ajv.errors;
                             return res
                                 .status(500)
                                 .json({
                                     aspect,
                                     aspectBody,
-                                    schema: this.aspects[aspect].jsonSchema,
+                                    schema,
                                     invalid
                                 })
                                 .end();
                         }
                     } catch (e) {
-                        // https://github.com/korzio/djv/issues/71
-                        // return res
-                        //     .status(500)
-                        //     .json({
-                        //         aspect,
-                        //         aspectBody,
-                        //         schema: this.aspects[aspect].jsonSchema,
-                        //         error: e.message
-                        //     })
-                        //     .end();
                         console.log(e.message);
                     }
                 }
             }
+            res.json(req.body);
+        });
+
+        registry.put("/records/:id/aspects/:aspect", (req: any, res: any) => {
+            const { id, aspect } = req.params;
+            const aspectBody = req.body;
+            this.records[id] = this.records[req.params.id] || {
+                id,
+                aspects: {}
+            };
+            this.records[id].aspects[aspect] = aspectBody;
+
+            // validate aspect
+            try {
+                const schema = this.aspects[aspect].jsonSchema;
+                let valid = ajv.validate(schema, aspectBody);
+                if (!valid) {
+                    const invalid = ajv.errors;
+                    return res
+                        .status(500)
+                        .json({
+                            aspect,
+                            aspectBody,
+                            schema,
+                            invalid
+                        })
+                        .end();
+                }
+            } catch (e) {
+                console.log(e.message);
+            }
+
             res.json(req.body);
         });
 

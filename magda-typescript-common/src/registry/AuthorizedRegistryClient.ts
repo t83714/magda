@@ -121,19 +121,21 @@ export default class AuthorizedRegistryClient extends RegistryClient {
                         }
                     }
                 );
-        return <any>retry(
-            operation,
-            this.secondsBetweenRetries,
-            this.maxRetries,
-            (e, retriesLeft) =>
-                console.log(
-                    formatServiceError(
-                        `Failed to GET hook ${hookId}`,
-                        e,
-                        retriesLeft
+        return <any>(
+            retry(
+                operation,
+                this.secondsBetweenRetries,
+                this.maxRetries,
+                (e, retriesLeft) =>
+                    console.log(
+                        formatServiceError(
+                            `Failed to GET hook ${hookId}`,
+                            e,
+                            retriesLeft
+                        )
                     )
-                )
-        ).catch(createServiceError);
+            ).catch(createServiceError)
+        );
     }
 
     getHooks(): Promise<WebHook[] | Error> {

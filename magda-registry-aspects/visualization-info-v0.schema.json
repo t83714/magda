@@ -1,0 +1,54 @@
+{
+    "$schema": "http://json-schema.org/schema#",
+    "title":
+        "Aspect providing information to make front-end visualisations of distributions better",
+    "type": "object",
+    "properties": {
+        "format": {
+            "type": "object",
+            "properties": {
+                "name": {
+                    "type": "string"
+                },
+                "wellFormed": {
+                    "type": "boolean"
+                }
+            }
+        },
+        "sheets": {
+            "type": "array",
+            "items": {
+                "type": "object",
+                "properties": {
+                    "name": {
+                        "type": "string"
+                    },
+                    "fields": {
+                        "type": "array",
+                        "items": {
+                            "type": "object",
+                            "properties": {
+                                "name": {
+                                    "type": "string"
+                                },
+                                "type": {
+                                    "type": "string"
+                                },
+                                "subType": {
+                                    "type": "string"
+                                }
+                            },
+                            "additionalProperties": true
+                        }
+                    },
+                    "sample": {
+                        "type": "array",
+                        "items": {
+                            "type": "object"
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
