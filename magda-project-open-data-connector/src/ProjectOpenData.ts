@@ -13,6 +13,41 @@ export default class ProjectOpenData implements ConnectorSource {
     private maxRetries: number;
     private dataPromise: Promise<object>;
 
+    // project open data spec allows URLs for licences
+    // ArcGIS creates custom URLs rather than using https://project-open-data.cio.gov/open-licenses/ lookup table
+    getDatasetLicence(data: any): Promise<any> {
+        data.dataset = Promise.all(
+            data.dataset.map((dataset: any) => {
+                return new Promise(resolve => {
+                    if (
+                        dataset.license &&
+                        dataset.license.startsWith("http") &&
+                        !dataset.license.includes("creativecommons")
+                    ) {
+                        request(
+                            dataset.license,
+                            { json: true },
+                            (error, response, body) => {
+                                if (error) {
+                                    console.log(error);
+                                    return resolve(dataset);
+                                } else {
+                                    if (body.description) {
+                                        dataset.license = body.description;
+                                    }
+                                    return resolve(dataset);
+                                }
+                            }
+                        );
+                    } else {
+                        return resolve(dataset);
+                    }
+                });
+            })
+        );
+        return data;
+    }
+
     constructor(options: ProjectOpenDataOptions) {
         this.id = options.id;
         this.name = options.name;
@@ -43,7 +78,7 @@ export default class ProjectOpenData implements ConnectorSource {
                         retriesLeft
                     )
                 )
-        );
+        ).then(data => this.getDatasetLicence(data));
     }
 
     public getJsonDatasets(): AsyncPage<any[]> {

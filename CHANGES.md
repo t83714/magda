@@ -1,5 +1,7 @@
 ## 0.0.51
 
+-   Download unknown project open data license URLs to extract human readable licence
+
 ## 0.0.50
 
 -   Added configurable argument to `magda-web-server` module to accept Google Analytics IDs
