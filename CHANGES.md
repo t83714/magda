@@ -1,6 +1,7 @@
 ## 0.0.51
 
 -   Download unknown project open data license URLs to extract human readable licence
+-   Redirect HTTP requests to HTTPS URLs
 -   Fixed chart won't displayed correctly under IE11
 
 ## 0.0.50
