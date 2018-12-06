@@ -12,6 +12,7 @@ spec:
       labels:
         service: content-api
     spec:
+      priorityClassName: magda-8
       containers:
       - name: content-api
         image: {{ template "dockerimage" . }}

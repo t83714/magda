@@ -2,6 +2,7 @@
 
 -   Redirect HTTP requests to HTTPS URLs
 -   Fixed chart won't displayed correctly under IE11
+-   Added preemption priority classes
 
 ## 0.0.50
 
