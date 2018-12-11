@@ -283,6 +283,14 @@ app.use(
 );
 app.use("/preview-map", createGenericProxy(argv.previewMap));
 
+app.use(
+    createCkanRedirectionRouter({
+        ckanRedirectionDomain: argv.ckanRedirectionDomain,
+        ckanRedirectionPath: argv.ckanRedirectionPath,
+        registryApiBaseUrlInternal: routes.registry.to
+    })
+);
+
 // Proxy any other URL to magda-web
 app.use("/", createGenericProxy(argv.web));
 
