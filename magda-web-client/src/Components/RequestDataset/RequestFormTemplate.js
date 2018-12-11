@@ -1,7 +1,6 @@
 import React from "react";
 import AUtextInput from "../../pancake/react/text-inputs";
 import AUbutton from "../../pancake/react/buttons";
-import AUheader from "../../pancake/react/header";
 import "./FormTemplate.css";
 
 //This is the react form template
@@ -17,6 +16,7 @@ export default class RequestFormTemplate extends React.Component {
             senderNameValid: true
         };
     }
+
     componentDidMount() {
         const message = this.props.message ? this.props.message : "";
         const senderEmail = this.props.senderEmail
@@ -78,6 +78,26 @@ export default class RequestFormTemplate extends React.Component {
         this.props.handleSubmit(this.state);
     };
 
+    handleClear = e => {
+        e.preventDefault();
+        this.setState(
+            () => {
+                return {
+                    message: "",
+                    senderName: "",
+                    senderEmail: "",
+                    senderEmailValid: true,
+                    messageValid: true,
+                    senderNameValid: true,
+                    clearButtonDisabled: true
+                };
+            },
+            () => {
+                this.props.handleChange(this.state);
+            }
+        );
+    };
+
     /**
      * Handles change event when typed into any of the form inputs.
      * Sets the state according to which input is being typed in
@@ -94,6 +114,24 @@ export default class RequestFormTemplate extends React.Component {
             () => {
                 // put this in a callback since setState is async
                 this.props.handleChange(this.state);
+                //the below toggles the disabled state of the clear
+                if (
+                    (this.state.message && this.state.message !== "") ||
+                    (this.state.senderName && this.state.senderName !== "") ||
+                    (this.state.senderEmail && this.state.senderEmail !== "")
+                ) {
+                    this.setState(() => {
+                        return {
+                            clearButtonDisabled: false
+                        };
+                    });
+                } else {
+                    this.setState(() => {
+                        return {
+                            clearButtonDisabled: true
+                        };
+                    });
+                }
             }
         );
     };
@@ -101,16 +139,9 @@ export default class RequestFormTemplate extends React.Component {
     render() {
         return (
             <form className="correspondence-form" method="post">
-                {this.props.title &&
-                    (this.props.smallTitle ? (
-                        <h3 className="correspondence-small-title">
-                            {this.props.title}
-                        </h3>
-                    ) : (
-                        <AUheader title={this.props.title} />
-                    ))}
+                {this.props.title && <h1>{this.props.title}</h1>}
                 <label htmlFor="message" className="field-label">
-                    {this.props.textAreaLabel} *
+                    {this.props.textAreaLabel}
                 </label>
                 <AUtextInput
                     as="textarea"
@@ -132,7 +163,7 @@ export default class RequestFormTemplate extends React.Component {
                     </label>
                 )}
                 <label htmlFor="senderName" className="field-label">
-                    Your Name *
+                    Your Name
                 </label>
                 <AUtextInput
                     id="senderName"
@@ -153,7 +184,7 @@ export default class RequestFormTemplate extends React.Component {
                     </label>
                 )}
                 <label htmlFor="senderEmail" className={"field-label"}>
-                    Email *
+                    Email
                 </label>
                 <AUtextInput
                     id="senderEmail"
@@ -179,6 +210,22 @@ export default class RequestFormTemplate extends React.Component {
                     disabled={this.props.isSending}
                 >
                     {this.props.isSending ? "Sending..." : "Send"}
+                </AUbutton>
+                <AUbutton
+                    onClick={this.handleClear}
+                    className="au-btn--secondary correspondence-clear-button"
+                    disabled={
+                        !this.state.message &&
+                        this.state.message === "" &&
+                        (!this.state.senderName &&
+                            this.state.senderName === "") &&
+                        (!this.state.senderEmail &&
+                            this.state.senderEmail === "")
+                            ? true
+                            : false
+                    }
+                >
+                    Clear
                 </AUbutton>
             </form>
         );

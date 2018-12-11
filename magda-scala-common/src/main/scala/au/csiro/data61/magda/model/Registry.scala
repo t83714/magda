@@ -91,7 +91,12 @@ object Registry {
     url: String,
     eventTypes: Set[EventType],
     isWaitingForResponse: Option[Boolean],
-    config: WebHookConfig)
+    config: WebHookConfig,
+    enabled: Boolean = true,
+    lastRetryTime: Option[OffsetDateTime] = None,
+    retryCount: Int = 0,
+    isRunning: Option[Boolean] = None,
+    isProcessing: Option[Boolean] = None)
 
   case class WebHookConfig(
     aspects: Option[List[String]] = None,
@@ -114,9 +119,11 @@ object Registry {
 
     val values = findValues
   }
+  case class RegistryCountResponse(
+    count: Long)
 
   case class RegistryRecordsResponse(
-    totalCount: Long,
+    hasMore: Boolean,
     nextPageToken: Option[String],
     records: List[Record])
 
@@ -145,12 +152,13 @@ object Registry {
     implicit val aspectFormat = jsonFormat3(AspectDefinition.apply)
     implicit val webHookPayloadFormat = jsonFormat6(WebHookPayload.apply)
     implicit val webHookConfigFormat = jsonFormat6(WebHookConfig.apply)
-    implicit val webHookFormat = jsonFormat9(WebHook.apply)
+    implicit val webHookFormat = jsonFormat14(WebHook.apply)
     implicit val registryRecordsResponseFormat = jsonFormat3(RegistryRecordsResponse.apply)
     implicit def qualityRatingAspectFormat = jsonFormat2(QualityRatingAspect.apply)
     implicit val webHookAcknowledgementFormat = jsonFormat3(WebHookAcknowledgement.apply)
     implicit val webHookAcknowledgementResponse = jsonFormat1(WebHookAcknowledgementResponse.apply)
     implicit val recordSummaryFormat = jsonFormat3(RecordSummary.apply)
+    implicit val recordPageFormat = jsonFormat1(RegistryCountResponse.apply)
 
     implicit object RecordTypeFormat extends RootJsonFormat[RecordType] {
       def write(obj: RecordType) = obj match {
@@ -171,23 +179,45 @@ object Registry {
 
   trait RegistryConverters extends RegistryProtocols {
 
-    def getAcronymFromPublisherName(publisherName:Option[String]): Option[String] = {
+    def getAcronymFromPublisherName(publisherName: Option[String]): Option[String] = {
       publisherName
-        .map("""[^a-zA-Z\s]""".r.replaceAllIn(_,""))
-        .map("""\s""".r.split(_).map(_.trim.toUpperCase).filter(!List("","AND","THE","OF").contains(_)).map(_.take(1)).mkString)
+        .map("""[^a-zA-Z\s]""".r.replaceAllIn(_, ""))
+        .map("""\s""".r.split(_).map(_.trim.toUpperCase).filter(!List("", "AND", "THE", "OF").contains(_)).map(_.take(1)).mkString)
     }
 
     private def convertPublisher(publisher: Record): Agent = {
       val organizationDetails = publisher.aspects.getOrElse("organization-details", JsObject())
+      val jurisdiction = organizationDetails.extract[String]('jurisdiction.?)
+      val name = organizationDetails.extract[String]('title.?)
       Agent(
         identifier = Some(publisher.id),
-        name = organizationDetails.extract[String]('title.?),
+        name = name,
+        jurisdiction = jurisdiction,
+        aggKeywords = if (jurisdiction.isEmpty) Some(name.getOrElse(publisher.id).toLowerCase) else jurisdiction.map(name.getOrElse(publisher.id) + ":" + _).map(_.toLowerCase),
+        description = organizationDetails.extract[String]('description.?),
         acronym = getAcronymFromPublisherName(organizationDetails.extract[String]('title.?)),
-        imageUrl = organizationDetails.extract[String]('imageUrl.?))
+        imageUrl = organizationDetails.extract[String]('imageUrl.?),
+        phone = organizationDetails.extract[String]('phone.?),
+        email = organizationDetails.extract[String]('email.?),
+        addrStreet = organizationDetails.extract[String]('addrStreet.?),
+        addrSuburb = organizationDetails.extract[String]('addrSuburb.?),
+        addrState = organizationDetails.extract[String]('addrState.?),
+        addrPostCode = organizationDetails.extract[String]('addrPostCode.?),
+        addrCountry = organizationDetails.extract[String]('addrCountry.?),
+        website = organizationDetails.extract[String]('website.?))
+    }
+
+    def getNullableStringField(data:JsObject, field:String):Option[String] = {
+      data.fields.get(field) match {
+        case None => None
+        case Some(JsNull) => None
+        case Some(JsString(str)) => Some(str)
+        case _ => deserializationError(s"Invalid nullableString field: ${field}")
+      }
     }
 
     def convertRegistryDataSet(hit: Record)(implicit defaultOffset: ZoneOffset): DataSet = {
-      val dcatStrings = hit.aspects("dcat-dataset-strings")
+      val dcatStrings = hit.aspects.getOrElse("dcat-dataset-strings", JsObject())
       val source = hit.aspects("source")
       val temporalCoverage = hit.aspects.getOrElse("temporal-coverage", JsObject())
       val distributions = hit.aspects.getOrElse("dataset-distributions", JsObject("distributions" -> JsArray()))
@@ -195,8 +225,11 @@ object Registry {
 
       val qualityAspectOpt = hit.aspects.get("dataset-quality-rating")
 
+      var hasQuality: Boolean = false
+
       val quality: Double = qualityAspectOpt match {
         case Some(qualityAspect) if !qualityAspect.fields.isEmpty =>
+          hasQuality = true
           val ratings = qualityAspect.fields.map {
             case (key, value) =>
               value.convertTo[QualityRatingAspect]
@@ -206,8 +239,8 @@ object Registry {
           if (totalWeighting > 0) {
             ratings.map(rating =>
               (rating.score) * (rating.weighting / totalWeighting)).reduce(_ + _)
-          } else 1d
-        case _ => 1d
+          } else 0d
+        case _ => 0d
       }
 
       val coverageStart = ApiDate(tryParseDate(temporalCoverage.extract[String]('intervals.? / element(0) / 'start.?)), dcatStrings.extract[String]('temporal.? / 'start.?).getOrElse(""))
@@ -223,7 +256,7 @@ object Registry {
         identifier = hit.id,
         title = dcatStrings.extract[String]('title.?),
         catalog = source.extract[String]('name.?),
-        description = dcatStrings.extract[String]('description.?),
+        description = getNullableStringField(dcatStrings, "description"),
         issued = tryParseDate(dcatStrings.extract[String]('issued.?)),
         modified = tryParseDate(dcatStrings.extract[String]('modified.?)),
         languages = dcatStrings.extract[String]('languages.? / *).toSet,
@@ -236,7 +269,9 @@ object Registry {
         contactPoint = dcatStrings.extract[String]('contactPoint.?).map(cp => Agent(Some(cp))),
         distributions = distributions.extract[JsObject]('distributions.? / *).map(convertDistribution(_, hit)),
         landingPage = dcatStrings.extract[String]('landingPage.?),
-        quality = quality)
+        quality = quality,
+        hasQuality = hasQuality,
+        score = None)
     }
 
     private def convertDistribution(distribution: JsObject, hit: Record)(implicit defaultOffset: ZoneOffset): Distribution = {
@@ -264,7 +299,7 @@ object Registry {
         mediaType = Distribution.parseMediaType(mediaTypeString, None, None),
         format = betterFormatString match {
           case Some(format) => Some(format)
-          case None => formatString
+          case None         => formatString
         })
     }
 
@@ -275,7 +310,7 @@ object Registry {
       dateString
         .flatMap(s => DateParser.parseDateDefault(s, false))
         .map {
-          //FIXME: Remove this hackiness when we get a proper temporal sleuther
+          //FIXME: Remove this hackiness when we get a proper temporal minion
           case date if date.isBefore(YEAR_100)  => date.withYear(date.getYear + 2000)
           case date if date.isBefore(YEAR_1000) => date.withYear(Integer.parseInt(date.getYear.toString() + "0"))
           case date                             => date

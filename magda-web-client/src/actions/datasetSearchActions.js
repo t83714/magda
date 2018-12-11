@@ -1,6 +1,6 @@
 // @flow
 import fetch from "isomorphic-fetch";
-import parseQuery from "../helpers/parseQuery";
+import buildSearchQueryString from "../helpers/buildSearchQueryString";
 import { config } from "../config";
 import { actionTypes } from "../constants/ActionTypes";
 import type { FetchError } from "../types";
@@ -49,7 +49,7 @@ export function fetchSearchResults(query: string, queryObject: Object): Store {
     return (dispatch: Dispatch) => {
         let url: string = config.searchApiUrl + `datasets?${query}`;
         dispatch(requestResults(queryObject, query));
-        return fetch(url)
+        return fetch(url, config.fetchOptions)
             .then((response: Object) => {
                 if (response.status === 200) {
                     return response.json();
@@ -88,9 +88,13 @@ export function shouldFetchSearchResults(
 }
 
 export function fetchSearchResultsIfNeeded(urlQueryObject: Object): Store {
-    const apiQuery = parseQuery(urlQueryObject);
     return (dispatch, getState) => {
-        if (shouldFetchSearchResults(getState(), urlQueryObject.q, apiQuery)) {
+        const state = getState();
+        const apiQuery = buildSearchQueryString(
+            urlQueryObject,
+            state.content.configuration.searchResultsPerPage
+        );
+        if (shouldFetchSearchResults(state, urlQueryObject.q, apiQuery)) {
             return dispatch(fetchSearchResults(apiQuery, urlQueryObject));
         }
     };

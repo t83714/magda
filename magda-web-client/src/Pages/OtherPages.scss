@@ -1,0 +1,14 @@
+.app-container {
+    &.loading {
+        // page height - header height
+        min-height: calc(100vh - 112px);
+    }
+}
+
+.visuallyhidden {
+    display: inline-block;
+    width: 0;
+    height: 0;
+    overflow: hidden;
+    white-space: nowrap;
+}

@@ -7,6 +7,8 @@ import { fetchPublisherSearchResults } from "../../actions/facetPublisherSearchA
 import React, { Component } from "react";
 import FacetBasic from "./FacetBasic";
 import queryString from "query-string";
+import MagdaNamespacesConsumer from "../../Components/i18n/MagdaNamespacesConsumer";
+
 class Publisher extends Component {
     constructor(props) {
         super(props);
@@ -14,15 +16,16 @@ class Publisher extends Component {
         this.onSearchPublisherFacet = this.onSearchPublisherFacet.bind(this);
         this.onTogglePublisherOption = this.onTogglePublisherOption.bind(this);
         // we use an integer event to notify children of the reset event
-        this.state = {
-            resetFilterEvent: 0
-        };
+        //-- we should find a better way to do this. At least, its value should be set synchronously
+        //-- Can't use state as you don't know when it's in place
+        this.resetFilterEvent = 0;
     }
 
     onTogglePublisherOption(publishers) {
         const queryOptions = publishers.map(p => p.value);
         this.props.updateQuery({
-            organisation: queryOptions
+            organisation: queryOptions,
+            page: undefined
         });
         this.props.dispatch(updatePublishers(publishers));
         this.props.closeFacet();
@@ -37,36 +40,48 @@ class Publisher extends Component {
         // update redux
         this.props.dispatch(resetPublisher());
         // let children know that the filter is being reset
-        this.setState({
-            resetFilterEvent: this.state.resetFilterEvent + 1
-        });
+        this.resetFilterEvent++;
     }
 
-    onSearchPublisherFacet() {
+    componentDidUpdate(prevProps) {
+        if (this.props.location.search !== prevProps.location.search) {
+            const query = queryString.parse(this.props.location.search);
+            if (!query.organisation) {
+                this.props.dispatch(resetPublisher());
+                this.resetFilterEvent++;
+            }
+        }
+    }
+
+    onSearchPublisherFacet(facetQuery) {
         this.props.dispatch(
-            fetchPublisherSearchResults(
-                queryString.parse(this.props.location.search).q || "*"
-            )
+            fetchPublisherSearchResults(this.props.generalQuery, facetQuery)
         );
     }
 
     render() {
         return (
-            <FacetBasic
-                title="organisation"
-                id="publisher"
-                hasQuery={Boolean(this.props.activePublishers.length)}
-                options={this.props.publisherOptions}
-                activeOptions={this.props.activePublishers}
-                facetSearchResults={this.props.publisherSearchResults}
-                onToggleOption={this.onTogglePublisherOption}
-                onResetFacet={this.onResetPublisherFacet}
-                searchFacet={this.onSearchPublisherFacet}
-                toggleFacet={this.props.toggleFacet}
-                isOpen={this.props.isOpen}
-                closeFacet={this.props.closeFacet}
-                resetFilterEvent={this.state.resetFilterEvent}
-            />
+            <MagdaNamespacesConsumer ns={["searchDatasetsPage"]}>
+                {translate => (
+                    <FacetBasic
+                        title={translate(["publisherFilterTitle", "Publisher"])}
+                        id="publisher"
+                        hasQuery={Boolean(this.props.activePublishers.length)}
+                        options={
+                            this.props.publisherSearchResults ||
+                            this.props.publisherOptions
+                        }
+                        activeOptions={this.props.activePublishers}
+                        onToggleOption={this.onTogglePublisherOption}
+                        onResetFacet={this.onResetPublisherFacet}
+                        searchFacet={this.onSearchPublisherFacet}
+                        toggleFacet={this.props.toggleFacet}
+                        isOpen={this.props.isOpen}
+                        closeFacet={this.props.closeFacet}
+                        resetFilterEvent={this.resetFilterEvent}
+                    />
+                )}
+            </MagdaNamespacesConsumer>
         );
     }
 }
@@ -76,7 +91,8 @@ function mapStateToProps(state) {
     return {
         publisherOptions: datasetSearch.publisherOptions,
         activePublishers: datasetSearch.activePublishers,
-        publisherSearchResults: facetPublisherSearch.data
+        publisherSearchResults: facetPublisherSearch.data,
+        generalQuery: datasetSearch.queryObject
     };
 }
 

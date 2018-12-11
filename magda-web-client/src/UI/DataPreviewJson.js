@@ -21,12 +21,12 @@ class DataPreviewJson extends Component<{
             reactJsonTree: null
         };
     }
-    componentWillReceiveProps(nextProps) {
+    componentDidUpdate(prevProps) {
         if (
-            nextProps.distribution.downloadURL !==
+            prevProps.distribution.downloadURL !==
             this.props.distribution.downloadURL
         ) {
-            this.fetchData(nextProps.distribution.downloadURL);
+            this.fetchData(this.props.distribution.downloadURL);
         }
     }
 
@@ -44,7 +44,7 @@ class DataPreviewJson extends Component<{
             loading: true,
             json: null
         });
-        return fetch(config.proxyUrl + url)
+        return fetch(config.proxyUrl + url, config.fetchOptions)
             .then(response => {
                 if (!response.ok) {
                     throw new Error(

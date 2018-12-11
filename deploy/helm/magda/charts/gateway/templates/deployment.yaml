@@ -15,11 +15,19 @@ spec:
       - name: gateway
         image: {{ template "dockerimage" . }}
         imagePullPolicy: {{ .Values.image.pullPolicy | default .Values.global.image.pullPolicy }}
+        ports:
+        - containerPort: {{ .Values.service.internalPort }}
         command: [
             "node",
             "/usr/src/app/component/dist/index.js",
             "--listenPort", "80",
             "--externalUrl", {{ .Values.global.externalUrl | quote }},
+            {{- if .Values.ckanRedirectionDomain }}
+            "--ckanRedirectionDomain", {{ .Values.ckanRedirectionDomain | quote }},
+            {{- end }}
+            {{- if .Values.ckanRedirectionPath }}
+            "--ckanRedirectionPath", {{ .Values.ckanRedirectionPath | quote }},
+            {{- end }}
             "--dbHost", "session-db",
             "--dbPort", "5432",
 {{- if .Values.auth.facebookClientId }}
@@ -28,22 +36,38 @@ spec:
 {{- if .Values.auth.googleClientId }}
             "--googleClientId", {{ .Values.auth.googleClientId | quote }},
 {{- end }}
+{{- if .Values.enableAuthEndpoint }}
+            "--enableAuthEndpoint", {{ .Values.enableAuthEndpoint | quote }},
+{{- end }}
+{{- if .Values.enableWebAccessControl }}
+            "--enableWebAccessControl", {{ .Values.enableWebAccessControl | quote }},
+{{- end }}
 {{- if .Values.auth.aafClientUri}}
             "--aafClientUri", {{ .Values.auth.aafClientUri| quote }},
 {{- end }}
-            "--proxyRoutesPath", "/etc/routes/routes.json",
+            "--proxyRoutesJson", "/etc/config/routes.json",
+            "--helmetJson", "/etc/config/helmet.json",
+            "--cspJson", "/etc/config/csp.json",
+            "--corsJson", "/etc/config/cors.json",
             "--web", "http://web",
             "--authorizationApi", "http://authorization-api/v0",
             "--previewMap", "http://preview-map:6110",
-            "--ckanUrl", "https://data.gov.au",
+            "--ckanUrl", "https://data.gov.au"
         ]
         volumeMounts:
-          - name: routes
-            mountPath: /etc/routes
+          - name: config
+            mountPath: /etc/config
+        readinessProbe:
+          httpGet:
+            path: /v0/healthz
+            port: 80
+          initialDelaySeconds: 10
+          periodSeconds: 10
+          timeoutSeconds: 10
 {{- if .Values.global.enableLivenessProbes }}
         livenessProbe:
           httpGet:
-            path: /auth
+            path: /v0/healthz
             port: 80
           initialDelaySeconds: 10
           periodSeconds: 10
@@ -59,6 +83,18 @@ spec:
             secretKeyRef:
               name: auth-secrets
               key: jwt-secret
+{{- if .Values.enableWebAccessControl }}
+        - name: WEB_ACCESS_USERNAME
+          valueFrom:
+            secretKeyRef:
+              name: web-access-secret
+              key: username
+        - name: WEB_ACCESS_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: web-access-secret
+              key: password
+{{- end }}
         - name: SESSION_SECRET
           valueFrom:
             secretKeyRef:
@@ -103,6 +139,6 @@ spec:
               key: session-db-client
 {{- end }}
       volumes:
-        - name: routes
+        - name: config
           configMap:
-            name: gateway-routes
+            name: gateway-config

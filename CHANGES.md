@@ -1,31 +1,312 @@
+## 0.0.50
+
+-   Added configurable argument to `magda-web-server` module to accept Google Analytics IDs
+-   Make datasetSearchSuggestionScoreThreshold and searchResultsPerPage runtime configurable
+-   Hide dataset source for csv datasets
+-   Make sure MS Excel format does not break into two.
+-   Make home page items come from content api
+-   Make header menu items come from content api
+-   Remove all global references to config.appName and allow getting this configuration item from content api
+-   Changed some existing content ids to group things better
+-   Reorganised content api to require less number of requests to get small JSON content items
+-   Email Templates are configurable from content API
+-   Allow a CKAN non-root path to be used for redirects
+-   Allow CKAN resource downloads to pass through to CKAN to maintain links
+-   Add something to mock admin interface to make users admins and not
+-   Take CSW connector distribution access url and format from distributor field under distributionInfo as well as from transfer options (previous.)
+-   Delete registry API /records/{recordId}/aspects endpoint
+-   Hook actors will report its status to its parent actor when changes
+-   Updated external links on About page to open in new window
+-   Fixed some WA source spatial data are not indexed properly
+-   Boost the score weighting of name & acronym field during org seaching
+-   Sort by relevence unless keyword is "\*" (in this case sort by Alphabetical order) during org search
+-   Removed search.data.gov.au-specific third party javascript
+-   Added ability to include arbitrary HTML in `index.html` through the content api
+-   Fixed: added added vendor prefix to `au-select` component CSS
+-   Fixed content-api test case logic
+-   Migrate static pages to a json structure and make it editable.
+-   Hide "Download" button for distributions without downloadUrl
+-   Fixed content-api migrator script version conflict issue
+-   Make footer area configurable
+-   Fixed broken document link in docs/README.md
+-   Show quality rating only if present
+-   Fixed: cached auth api response causing login problems
+-   Upgraded java version for `magda-scala-builder` docker image to fix `unsatisfiable constraints` error
+-   Make jurisdiction field available from registry api
+-   Fixed an issue of scss-compiler not updated all variables
+-   Added more configurable scss variables
+-   Added internationalisation library to frontend
+-   Adjusted content-api to prevent SQL injection
+-   Made occurrences of "organisation" in the front-end configurable through internationalisation.
+-   Make jurisdiction information available from search api
+-   Organisation search result from search api will be aggregated based on jurisdiction and name
+-   Updated helm config to allow for statefulsets to be kept off GKE preemptible nodes.
+-   Switched `<a>` element in `HeaderNav` to be `<Link>` from `react-router-dom` to maintain router history
+-   Fixed: minion crawler may go into an endless loop
+-   Fixed an issue caused search Panel option filter stop working
+-   The CkanTransformer will remove generic organisation descriptions.
+-   Fixed non-RC versions not being released to docker hub.
+-   Fixed DAP connector not automatically being released to docker hub.
+-   Fixed an issue that `create-secrets` didn't handle `cloudsql-instance-credentials` & `storage-account-credentials` probably
+-   `create-secrets` will load ENV vars according to question data types
+-   Include Magda user agent in external HTTP resource accesses
+-   Made admin UI create CSV connector with internal URL
+-   Fixed magda-apidocs-server incorrectly builds into $PWD directory on windows
+-   Fixed an issue that DAP connector not handle access error correctly
+-   Stopped caching anything requested through the admin ui.
+-   Removed old admin ui code
+-   Made access notes show up on distribution page with configurable text
+-   Added contact point to distribution page, made title configurable
+-   When `match-part` search strategy is used, a message is shown on UI
+-   Made broken link minion per domain request wait time configurable
+-   Fixed mobile menu not show-up properly
+
+## 0.0.49
+
+-   In web dataset page, made facet search reset when user clicks on facet button so that it does not show result from last time.
+-   Made issued and update date not appear when valid dates are not available.
+-   Specify correct externalURL and namespace for gitlab to fix deployment auth.
+-   Add a CSV connector
+-   Rename config page to admin; include connector management functionality
+-   Update content API to accept csvs
+-   Enable admin api and fix up admin api ability to work in speficied namespace
+-   Set CSW connector MD_Metadata dateStamp as issue date
+-   Made "Ask a question" button send the question directly to the contactPoint for the dataset if possible.
+-   Added ability to ensure that all emails go to default recipient despite what their normal recipient would be.
+-   Made contact point visible on dataset page
+-   Allowed UI SCSS variables to be changed via k8s job
+-   Added a `set-scss-vars` script for updating UI SCSS variables
+-   Fixed that `leaflet.css` had not been included by SCSS compiler
+-   Allowed the cluster to be protected by a password
+-   Made the add a dataset form appear where the results get to a certain configurable score threshold
+-   Made the CSW connector look for names for service-based datasets in another place
+-   Made CSW connector gracefully handle datasets without ids instead of crashing
+-   Fixed Gitlab UI only preview failed to download main CSS file
+-   Removed CORS handling from Scala APIs, should be entirely handled by the gateway.
+-   Made the format minion listen to `dcat-distribution-strings` instead of `dataset-distributions`, should be more efficient
+-   Better support for SPSS files in the format minion
+-   Made files marked with a ".extension" format resolve to "extension" correctly in the format minion.
+-   Fixed an redirection issue when handling 404 status from registry API
+-   Re-added admin api to released docker images
+-   Made gateway nominate its container port to fix it working with a password and also the GCE ingress
+-   Stopped the helm chart from assuming that the `postgres` user password and the `proxyuser` password are the same in GKE deploys
+-   Fixed the storage account credentials being created incorrectly through the secrets tool
+-   Allows gateway to redirect trailing slash for APIDocs module
+
+## 0.0.48
+
+-   Add No results label when there are no results in organisation and location facets.
+-   Make sure CKAN connector doesn't loop forever if server reports wrong dataset count or empty page
+-   Remove AU govt logo and add more space to top menu.
+-   Whitelist KMZ.
+-   Rename sleuthers to minions
+-   Add ability to change content (logo).
+-   CSW connector will exit with code 1 if error happens
+-   Fixed an issue of format enhancer processing MIME
+-   Fixed an issue that format enhancer may exit when dcat-string not available
+-   Updated email template & make email clickable
+-   Updated aims connector URL
+-   Raised the default resources for registry-api.
+-   Added API document for Minions
+-   Updated magda links in footer.
+-   Switch apidocs root to `<host>`
+-   Removed unused jQuery dependency from format-minion
+-   Split the registry api into full and read only modes that can run separately in production
+-   Take open data connector license from dataset level to distribution level and add basic black box test
+-   Fix logo vertical alignment and partially hidden issue
+-   Made header padding even
+-   Made the broken link minion use `GET` for everything and ignore the data.
+-   Fixed trim with zero records deleted returning 400
+
+## 0.0.47
+
+-   Document public portions of authorization api
+-   Document search api
+-   Make contents API and contents database migrator for storing items which will be dynamically configurable in the future.
+-   Hyperlink organisation url on organisation page
+-   Align format facet based on its position on the page
+-   Reformat page title to be consistent throughout
+-   Remove browser default button background for search facet (for safari and IE)
+-   Removed `x-powered-by` & `server` headers from response
+-   Updated header logo to be correct branding type
+-   Uses the Header component from Design System
+-   Registry will now periodically retry Webhook
+-   Fixed an issue that connector record triming might not fully completed
+-   Fixed an issue that indexer webhook event types not properly setup
+-   Removed feedback-api, discussions-api and discussions-db as they're no longer used
+-   Moved standard and data.gov.au config to a separate repo
+-   Added better readiness probes to elasticsearch
+-   Adjusted resources requirements/limits
+-   Push footer below the fold while loading page content
+-   Unify tooltip styles across different instances, remove react-tooltip
+-   Change chart config dropdown label from xAxis to X axis and yAxis to Y axis
+-   Unify H1 size
+-   Fixed an issue that dataset / organisation debounced search request not cancel upon URL changes
+-   Upgraded terriajs server to 2.7.4 to address redirect vulnerability.
+-   Added apiDoc for indexer
+
+## 0.0.46
+
+-   Make pagination on mobile responsive.
+-   Added cronjob for broken-link-sleuther
+-   Remove all starting non word chars from organisation title
+-   Make pagination on mobile responsive.
+-   Fixed inconsistent case with format
+-   Made broken links sleuther perform a get request with content range when head request returns 405 (method not allowed).
+-   Make pagination on mobile responsive.
+-   Fixed a facet overflow issue on desktop
+-   Allow user apply default date in filter
+-   Mobile menu style change
+-   Fixed Not found redirect working differently in different browsers, and fixed not found error preventing new record from showing
+-   Added mechanism to produce api documentation
+-   Fixed an issue where organisation Page dataset links set incorrect `publisher` query parameter
+-   Remove extra slash when additional info is missing on dataset page and distribution page
+-   Added a tooltip to organisation filter if it's clicked to from the org page the first time
+-   Hid filters on mobile
+-   Made it so that if you follow a link with filters active on mobile, the next search you make cancels them
+-   Added a more generic purple tooltip component
+-   Added `create-secrets` script for managing secrets
+-   Make source link wrap and add line break
+-   Made dev connector jobs execute every week only
+
+## 0.0.45
+
+-   Redirect CKAN/DGA Urls
+-   Add config for fallback banner
+-   prevent old content being loaded when navigating through page history
+-   Display a 'clear search' link after error message
+-   Fixed inconsistent breakpoints
+-   Unify styles of tagline for search results
+-   Unify result count style
+-   Fixed a date filter bug that freeze UI on slow internet
+-   Fixed the error 'Can't call setState (or forceUpdate) on an unmounted component' for Data Preview
+-   Fixed `Clear All` button not clear filter panel UI state
+-   Change non-homepage search placeholder text color to WCAG AAA compliant
+-   Added more details in organisations/publishers page to reflect design.
+-   Adjusted sitemap and robots.txt to help google navigate around better
+-   Made the javascript work with chrome 41 (googlebot)
+-   Made the fallback banner site url configurable
+
+## 0.0.44
+
+-   Added more analytics events for Downloads/Views by Organisation, Search result click and Dataset request/feedback
+-   Removed `button` element for distribution download link on dataset page.
+-   Updated documentation for setting up `Docker Edge` for Kubernetes.
+-   Modified error message text and omitted homepage articles if search error occurs.
+-   Changed chart icons on dataset page
+-   Made `elasticsearch` supports synonyms
+-   Upgraded `elasticsearch` to v6.3.0
+-   Enable organisation search
+-   Disabled scroll to zoom on dataset preview map until map is clicked on and added terria zoom controls to preview map
+-   Change appearance of mobile search box
+-   Improve filter button icon alignment
+-   adjust dataset page layout to accomodate new mobile design
+-   Disable /auth route in production & change gateway health checking endpoint to /v0/healthz
+-   Stopped indexer skipping datasets that have no distributions. These datasets can now be discovered via search.
+-   Added more heuristics to charting, made it parse dates and sort the x axis.
+-   Improve chart view on mobile
+-   Fixed `Ask a question about this dataset` button (on dataset page) won't open form on safari browser
+-   Remove input content from Scala service Malformat query parameter error message
+-   Improved mobile navigation
+-   Improved dataset page paddings and margins
+-   Moved express helmet to gateway module
+-   Make chart title wrap
+-   Upgraded TerriaJS to 6.0.4 in preview map
+-   Changed the preview map to not use terrain.
+-   Made CORS, CSP, Node-Helmet and proxied routes configurable through helm.
+-   Add links to about page
+-   Fixed a rendering glitch with react modal
+-   Trim empty rows off before table rendering to prevent empty rows after sorting by column
+-   Make suggestion form scrollable on short screen
+-   Default button color fix
+-   Small improvement on how search box looks on mobile and desktop
+-   Improve organisation search page
+-   Added extra contact fields to registry & search organization API
+-   Added connector for CSIRO DAP (thanks @jevy-wangfei!)
+-   Adjust line spacing for dataset page
+-   Fix the bug that which does not allow add another option to publisher or format filters once you have performed a search using the filter.
+-   Improved CSW connector to avoid incorrect organisation information being picked
+-   Replace banner svg icon
+-   Improved styling of suggest dataset form
+-   Improve distribution link alignment
+-   Improve UI for chart loading error
+-   Make dataset ask a question form only scrollable on short screens
+-   Added auto gzip compress to gateway
+-   Made CSW connector retrieve country field from alternative JSON path
+-   Fixed Sitemap times out if input is invalid
+-   Fixed Organisation content position moved (flicking) during data loading
+-   Fixed Organisation page router history issue
+-   Fixed Search Panel `Clear` button doesn't work
+-   Fixed bug where dataset ids where "undefined" in distribution URLs.
+-   Corrected incorrect source-link-status aspect name in UI dataset request URL
+-   Updated URL of City of Launceston connector.
+-   Keep search text in synch.
+-   Make pagination on mobile responsive.
+-   Made CKAN harvesters execute on an hourly basis.
+
+## 0.0.43
+
+-   Fix design system react import for SASS overrides
+-   Add breadcrumb for dataset page and distribution page
+-   Added further styling filters to coverup markdown rendering on dataset pages
+-   Added UNSAFE\_ annotations or refactored to prepare for [React async rendering](https://reactjs.org/blog/2018/03/27/update-on-async-rendering.html).
+-   Hide zendesk floating feedback button on mobile
+-   Modified the look and layout of the distribution pages.
+-   Made close button on suggest form rounded and thicker
+-   Location and Date filters can be applied by clicking outside of the box
+-   Changed registry /records api `pageToken` as long type parameter to avoid runtime error
+-   Improved mobile responsiveness on dataset and search results page
+-   Updated homepage tagline.
+-   Upgraded `basemaps.cartocdn.com` url to HTTPS.
+-   Upgraded `rollbar.js` 2.3.9 -> 2.4.1
+-   Added community link to header
+-   Map filter clear button only active when region is selected
+-   Fixed a bug in search filter that makes filters irresponsible
+-   Fixed a bug on not able to get correct distribution and blank dataset title in breadcrumb
+-   Changed chart icons on dataset page
+-   Fixed: Enter a dataset page with `*` query string will see a blank page
+-   Fixed: when checking if fetch is required, dataset id from url params need to be decoded
+-   Enable organisation search
+
+## 0.0.42
+
+-   Implemented the new pagination design
+-   remove border for basal button style to prevent duplication
+-   Use http://colorbrewer2.org/#type=sequential&scheme=BuPu&n=3 for data vis palette
+-   Do not load preview map on mobile, give user option to view in national map instead
+-   Added redirect for CKAN dataset URLs (UUID or slug) to their new canonical location
+-   Fixed pagination bar shows incorrect result count
+-   Added Zendesk feedback widget activated via footer link
+-   Made end of content spacing consistent
+-   Added `flex` display and set consistent padding from footer.
+-   Added filter count to search results
+-   Made filter selections move only when applied on publisher and format
+-   reset pagination on query change
+-   Removed underline from organisations in search
+-   Modified styling for `ask a question` button to use secondary AUButton styling.
+-   Restricted markdown <strong> tag to be default style.
+-   Added `bottom-border` property to make dataset filters stand out more.
+-   Fixed page refresh when using a dataset tag as a link.
+-   Replaced underscores with spaces on distribution links, making them wrap on mobile
+-   Improved modal design on report/ask a question on a dataset
+-   Removed `totalCount` field from registry api pagination objects.
+-   Added `/count` endpoint to registry api
+-   Set default quality to 0 when indexing
+-   Use Async appender for logback logging
+-   Removed logging to file
+-   Akka logging setting adjustment
+-   Made publisher and format filter search use the search backend instead of client-side autocomplete.
+-   Updated data quality explanation
+-   Made go-to-external-distribution button into an <a> tag instead of a javascript button.
+-   Update some results found message
+
 ## 0.0.41
 
--   Make mobile logo bigger, fixed a bug in safari
--   Close mobile nav when navigation occurs
--   improve preview tab active state and prevent scrolling when tab changes
--   Automatically show homepage stories when scrolling starts on mobile
--   Make organisation page more consistent with rest of the site
--   Make mobile logo bigger, fixed a bug in safari
--   Close mobile nav when navigation occurs
 -   Create Suggest a Dataset Page
 -   Add Suggest a Dataset on search results page
 -   Fixed display of chart axis config dropdowns in Firefox.
 -   Fixed LanguageAnalyzerSpec from generating stop words as search values.
 -   Updated prettier config to not reformat package.json in to an invalid 4 space tab width.
--   Resolved comma spacing in no dataset results error.
--   Added vertical spacing for `DataPreview` chart fields.
--   Add call to action from design systems
--   Use Design System react components from local pancake to allow CSS color overrides
--   Create Suggest a Dataset Page
--   Add Suggest a Dataset on search results page
--   Fixed display of chart axis config dropdowns in Firefox.
--   Fixed LanguageAnalyzerSpec from generating stop words as search values.
--   Updated prettier config to not reformat package.json in to an invalid 4 space tab width.
--   Add a missing module from design guide that caused select to not style properly
--   Positioned the buttons & format icons at middle position of the Files & APIs section
--   Made publisher acronym search case insensitive & added test cases
--   Added vertical spacing for `DataPreview` chart fields.
--   Updated About page links to be more inline with design system standards.
 -   Positioned the buttons & format icons at middle position of the Files & APIs section
 -   Made publisher acronym search case insensitive & added test cases
 -   Added vertical spacing for `DataPreview` chart fields.
@@ -34,6 +315,7 @@
 -   Fixed a issue that state region layer could be removed from region filter panel map
 -   Adjust search box placeholder color to be more visible on mobile and more consistent on desktop
 -   Corrected email template style to be inline with designs.
+-   Switched development/preview to use let's encrypt certificates for HTTPS.
 
 ## 0.0.40
 

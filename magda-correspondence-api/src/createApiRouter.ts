@@ -11,11 +11,14 @@ import { sendMail } from "./mail";
 import { SMTPMailer } from "./SMTPMailer";
 import { DatasetMessage } from "./model";
 import renderTemplate, { Templates } from "./renderTemplate";
+import EmailTemplateRender from "./EmailTemplateRender";
 export interface ApiRouterOptions {
     registry: RegistryClient;
+    templateRender: EmailTemplateRender;
     defaultRecipient: string;
     smtpMailer: SMTPMailer;
     externalUrl: string;
+    alwaysSendToDefaultRecipient: boolean;
 }
 
 function validateMiddleware(
@@ -60,6 +63,31 @@ export default function createApiRouter(
             })
     );
 
+    /**
+     * @apiGroup Correspondence API
+     *
+     * @api {post} /v0/send/dataset/request Send Dataset Request
+     *
+     * @apiDescription Sends a request for a dataset to the site administrators
+     *
+     * @apiParam (Request body) {string} senderName The name of the sender
+     * @apiParam (Request body) {string} senderEmail The email address of the sender
+     * @apiParam (Request body) {string} message The message to send
+     *
+     * @apiSuccess {string} status OK
+     *
+     * @apiSuccessExample {json} 200
+     *    {
+     *         "status": "OK"
+     *    }
+     *
+     * @apiError {string} status FAILED
+     *
+     * @apiErrorExample {json} 400
+     *    {
+     *         "status": "Failed"
+     *    }
+     */
     router.post("/public/send/dataset/request", validateMiddleware, function(
         req,
         res
@@ -67,6 +95,7 @@ export default function createApiRouter(
         const body: DatasetMessage = req.body;
         const subject = `Data Request from ${body.senderName}`;
         const html = renderTemplate(
+            options.templateRender,
             Templates.Request,
             body,
             subject,
@@ -74,29 +103,70 @@ export default function createApiRouter(
         );
 
         handlePromise(
-            sendMail(
-                options.smtpMailer,
-                options.defaultRecipient,
-                body,
-                html,
-                subject
-            ),
+            html.then(({ renderedContent, attachments }) => {
+                return sendMail(
+                    options.smtpMailer,
+                    options.defaultRecipient,
+                    body,
+                    renderedContent,
+                    attachments,
+                    subject,
+                    options.defaultRecipient
+                );
+            }),
             res
         );
     });
 
+    /**
+     * @apiGroup Correspondence API
+     *
+     * @api {post} /v0/send/dataset/:datasetId/question Send a question about a dataest
+     *
+     * @apiDescription Sends a question about a dataset to the data custodian if available,
+     *  and to the administrators if not
+     *
+     * @apiParam (Request body) {string} senderName The name of the sender
+     * @apiParam (Request body) {string} senderEmail The email address of the sender
+     * @apiParam (Request body) {string} message The message to send
+     *
+     * @apiSuccess {string} status OK
+     *
+     * @apiSuccessExample {json} 200
+     *    {
+     *         "status": "OK"
+     *    }
+     *
+     * @apiError {string} status FAILED
+     *
+     * @apiErrorExample {json} 400
+     *    {
+     *         "status": "Failed"
+     *    }
+     */
     router.post(
         "/public/send/dataset/:datasetId/question",
         validateMiddleware,
-        function(req, res) {
+        async function(req, res) {
             const body: DatasetMessage = req.body;
 
             const promise = getDataset(req.params.datasetId).then(dataset => {
-                const subject = `Question About ${
-                    dataset.aspects["dcat-dataset-strings"].title
-                }`;
+                const dcatDatasetStrings =
+                    dataset.aspects["dcat-dataset-strings"];
+
+                const { contactPoint } = dcatDatasetStrings;
+
+                const validContactPoint =
+                    contactPoint && emailValidator.validate(contactPoint);
+
+                const recipient = validContactPoint
+                    ? contactPoint
+                    : options.defaultRecipient;
+
+                const subject = `Question About ${dcatDatasetStrings.title}`;
 
                 const html = renderTemplate(
+                    options.templateRender,
                     Templates.Question,
                     body,
                     subject,
@@ -104,48 +174,18 @@ export default function createApiRouter(
                     dataset
                 );
 
-                return sendMail(
-                    options.smtpMailer,
-                    options.defaultRecipient,
-                    body,
-                    html,
-                    subject,
-                    // TODO: Send to the dataset's contactPoint
-                    options.defaultRecipient
-                );
-            });
-
-            handlePromise(promise, res, req.params.datasetId);
-        }
-    );
-
-    router.post(
-        "/public/send/dataset/:datasetId/report",
-        validateMiddleware,
-        function(req, res) {
-            const body: DatasetMessage = req.body;
-
-            const promise = getDataset(req.params.datasetId).then(dataset => {
-                const subject = `Feedback Regarding ${
-                    dataset.aspects["dcat-dataset-strings"].title
-                }`;
-
-                const html = renderTemplate(
-                    Templates.Feedback,
-                    body,
-                    subject,
-                    options.externalUrl,
-                    dataset
-                );
-
-                return sendMail(
-                    options.smtpMailer,
-                    options.defaultRecipient,
-                    body,
-                    html,
-                    subject,
-                    options.defaultRecipient
-                );
+                return html.then(({ renderedContent, attachments }) => {
+                    return sendMail(
+                        options.smtpMailer,
+                        options.defaultRecipient,
+                        body,
+                        renderedContent,
+                        attachments,
+                        subject,
+                        recipient,
+                        options.alwaysSendToDefaultRecipient
+                    );
+                });
             });
 
             handlePromise(promise, res, req.params.datasetId);

@@ -7,16 +7,15 @@ import facetFormatSearch from "./facetFormatSearchReducer";
 import regionMapping from "./regionMappingReducer";
 import record from "./recordReducer";
 import publisher from "./publisherReducer";
-import project from "./projectReducer";
 import userManagement from "./userManagementReducer";
 import featuredDatasets from "./featuredDatasetsReducer";
 import featuredPublishers from "./featuredPublishersReducer";
 import news from "./newsReducer";
+import content from "./contentReducer";
 import stats from "./statsReducer";
-import discussions from "./discussionReducer";
-import feedback from "./feedbackReducer";
 import topNotification from "./topNotificationReducer";
 import homepageStories from "./homePageStoriesReducer";
+import staticPagesReducer from "./staticPagesReducer";
 import topBanner from "./topBannerReducer";
 
 import previewData from "./previewDataReducer";
@@ -31,16 +30,15 @@ const reducer = combineReducers({
     facetFormatSearch,
     record,
     publisher,
-    project,
     userManagement,
     featuredDatasets,
     featuredPublishers,
     news,
+    content,
     stats,
-    discussions,
     previewData,
-    feedback,
     topNotification,
+    staticPages: staticPagesReducer,
     homepageStories,
     topBanner
 });

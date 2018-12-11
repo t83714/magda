@@ -1,7 +1,6 @@
 import "leaflet/dist/leaflet.css";
 import "./FacetRegion.css";
 import React, { Component } from "react";
-import FacetHeader from "./FacetHeader";
 import RegionMap from "./RegionMap";
 import RegionSearchBox from "./RegionSearchBox";
 import defined from "../../helpers/defined";
@@ -22,7 +21,7 @@ class FacetRegion extends Component {
          * @property {boolean} popUpIsOpen whether the popup window that shows the bigger map is open or not
          */
         this.state = {
-            _activeRegion: {
+            _activeRegion: props.activeRegion || {
                 regionId: undefined,
                 regionType: undefined
             },
@@ -31,12 +30,16 @@ class FacetRegion extends Component {
         };
     }
 
-    componentWillReceiveProps(nextProps) {
-        if (nextProps.activeRegion !== this.state._activeRegion) {
-            this.setState({
-                _activeRegion: nextProps.activeRegion
-            });
+    static getDerivedStateFromProps(props, state) {
+        // only set props to state if state is not already set and if props is not empty
+        if (!state._activeRegion.regionId && props.activeRegion.regionId) {
+            return {
+                ...state,
+                applyButtonDisabled: false,
+                _activeRegion: props.activeRegion
+            };
         }
+        return null;
     }
 
     onToggleOption(option) {
@@ -64,8 +67,25 @@ class FacetRegion extends Component {
         });
     }
 
+    componentDidUpdate(prevProps) {
+        if (prevProps.resetFilterEvent !== this.props.resetFilterEvent) {
+            this.props.closeFacet();
+            this.setState({
+                _activeRegion: {
+                    regionId: undefined,
+                    regionType: undefined
+                },
+                applyButtonDisabled: true
+            });
+        } else if (!this.props.isOpen && prevProps.isOpen) {
+            this.onApplyFilter();
+        }
+    }
+
     onApplyFilter() {
-        this.props.onToggleOption(this.state._activeRegion);
+        if (this.state._activeRegion.regionId !== undefined) {
+            this.props.onToggleOption(this.state._activeRegion);
+        }
     }
 
     searchBoxValueChange(value) {
@@ -123,6 +143,10 @@ class FacetRegion extends Component {
                     <button
                         className="au-btn au-btn--secondary"
                         onClick={this.props.onResetFacet}
+                        disabled={
+                            this.state._activeRegion.regionId === undefined &&
+                            this.state._activeRegion.regionType === undefined
+                        }
                     >
                         {" "}
                         Clear{" "}
@@ -145,6 +169,7 @@ class FacetRegion extends Component {
             <div className="facet-body facet-region">
                 <RegionSearchBox
                     renderOption={this.renderOption}
+                    renderNoOption={this.renderNoOption}
                     onToggleOption={this.onToggleOption}
                     options={this.props.facetSearchResults}
                     searchFacet={this.props.searchFacet}
@@ -156,20 +181,8 @@ class FacetRegion extends Component {
     }
 
     render() {
-        return (
-            <div className="facet-wrapper">
-                <FacetHeader
-                    onResetFacet={this.props.onResetFacet}
-                    title={this.props.title}
-                    id={this.props.id}
-                    activeOptions={[this.props.activeRegion]}
-                    hasQuery={this.props.hasQuery}
-                    onClick={this.props.toggleFacet}
-                    isOpen={this.props.isOpen}
-                />
-                {this.props.isOpen && this.renderBox()}
-            </div>
-        );
+        if (!this.props.isOpen) return null;
+        return <div className="facet-wrapper">{this.renderBox()}</div>;
     }
 }
 

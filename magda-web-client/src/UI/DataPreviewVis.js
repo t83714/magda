@@ -3,7 +3,6 @@ import React, { Component } from "react";
 import DataPreviewTable from "./DataPreviewTable";
 import DataPreviewChart from "./DataPreviewChart";
 import type { ParsedDistribution } from "../helpers/record";
-
 import "./DataPreviewVis.css";
 
 class DataPreviewVis extends Component<{
@@ -24,16 +23,21 @@ class DataPreviewVis extends Component<{
     }
 
     renderChart() {
-        return <DataPreviewChart distribution={this.props.distribution} />;
+        return (
+            <DataPreviewChart
+                distribution={this.props.distribution}
+                onChangeTab={this.onChangeTab}
+            />
+        );
     }
 
     renderTable() {
         return <DataPreviewTable distribution={this.props.distribution} />;
     }
 
-    onChangeTab(e) {
+    onChangeTab(tab) {
         this.setState({
-            visType: e.target.value
+            visType: tab
         });
     }
 
@@ -49,17 +53,20 @@ class DataPreviewVis extends Component<{
 
         return (
             <nav className="tab-navigation">
-                <ul className="au-link-list  au-link-list--inline tab-list">
+                <ul className="au-link-list au-link-list--inline tab-list">
                     {tabs.map(t => (
                         <li key={t.value}>
                             <button
-                                className={`au-link ${
+                                className={`${t.value.toLowerCase()} au-link ${
                                     t.value.toLowerCase() === activeTab.value
                                         ? "tab-active"
                                         : null
                                 }`}
                                 value={t.value.toLowerCase()}
-                                onClick={this.onChangeTab}
+                                onClick={this.onChangeTab.bind(
+                                    this,
+                                    t.value.toLowerCase()
+                                )}
                             >
                                 {t.label}
                             </button>
@@ -91,7 +98,7 @@ class DataPreviewVis extends Component<{
         if (!bodyRenderResult) return null;
         return (
             <div className="data-preview-vis">
-                <h3>Data Preview</h3>
+                <h3 className="section-heading">Data Preview</h3>
                 {bodyRenderResult}
             </div>
         );

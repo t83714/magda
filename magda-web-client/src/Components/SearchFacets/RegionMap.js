@@ -1,4 +1,3 @@
-import "leaflet/dist/leaflet.css";
 import "./RegionMap.css";
 import React, { Component } from "react";
 // eslint-disable-next-line
@@ -29,7 +28,7 @@ class RegionMap extends Component {
         }
 
         L.tileLayer(
-            "http://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}.png",
+            "https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}.png",
             {
                 attribution:
                     '&copy; <a href="http://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors, &copy; <a href="https://carto.com/attributions">CARTO</a>'

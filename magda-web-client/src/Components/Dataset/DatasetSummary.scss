@@ -19,11 +19,16 @@
         }
     }
 
-    .dataset-summary-publisher {
+    a.dataset-summary-publisher {
         opacity: 0.75;
         @include AU-fontgrid(xs);
         margin-bottom: 5px;
         display: inline-block;
+        text-decoration: none;
+        &:hover,
+        &:focus {
+            text-decoration: underline;
+        }
     }
 
     .dataset-summary-description {
@@ -68,6 +73,10 @@
     .dataset-summary-updated,
     .dataset-summary-quality {
         float: left;
-        line-height: 1.5em;
+        line-height: 1.5rem;
+    }
+
+    .dataset-summary-quality .tooltip {
+        line-height: 1.8rem;
     }
 }

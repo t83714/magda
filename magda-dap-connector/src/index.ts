@@ -35,9 +35,8 @@ const argv = addJwtSecretFromEnvVar(
             type: "number",
             default: 1000
         })
-        .option("distributionSize",{
-            describe:
-                "The number of distributions harvested.",
+        .option("distributionSize", {
+            describe: "The number of distributions harvested.",
             type: "number",
             default: 24
         })
@@ -148,7 +147,7 @@ const distributionAspectBuilders: AspectBuilder[] = [
     //         "utf8"
     //     )
     // },
-	{
+    {
         aspectDefinition: {
             id: "dap-resource",
             name: "DAP Resource",

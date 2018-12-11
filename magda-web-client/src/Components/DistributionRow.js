@@ -1,19 +1,19 @@
 import React, { Component } from "react";
 import { connect } from "react-redux";
 import PropTypes from "prop-types";
-import type { ParsedDistribution } from "../helpers/record";
+import { ParsedDistribution } from "../helpers/record";
 import { Link } from "react-router-dom";
-import { showTopNotification } from "../actions/topNotificationAction";
 import "./DistributionRow.css";
 import defaultFormatIcon from "../assets/format-passive-dark.svg";
 import downloadIcon from "../assets/download.svg";
 import newTabIcon from "../assets/external.svg";
 import { Medium } from "../UI/Responsive";
-import ga from "../analytics/googleAnalytics";
-import ReactTooltip from "react-tooltip";
+import { gapi } from "../analytics/ga";
+
 const formatIcons = {
     default: defaultFormatIcon
 };
+
 const dataFormatCategories = [
     "api",
     "archive",
@@ -77,7 +77,7 @@ const CategoryDetermineConfigItems = [
 ];
 
 export type PropType = {
-    datasetId: string,
+    dataset: Dataset,
     distribution: ParsedDistribution
 };
 
@@ -118,17 +118,30 @@ class DistributionRow extends Component {
         return matchedCategory;
     }
 
+    /**
+     * Replace underscores in links with spaces
+     * This stops the text from going off the edge of the screen
+     */
+    renderDistributionLink = title => {
+        if (title.includes("_")) {
+            return title.replace(/_/g, " ");
+        } else {
+            return title;
+        }
+    };
+
     render() {
-        const { datasetId, distribution } = this.props;
+        const { dataset, distribution } = this.props;
         let distributionLink;
-        if (!distribution.downloadURL && distribution.accessURL)
+        if (!distribution.downloadURL && distribution.accessURL) {
             distributionLink = distribution.accessURL;
-        else
+        } else {
             distributionLink = `/dataset/${encodeURIComponent(
-                datasetId
+                dataset.identifier
             )}/distribution/${encodeURIComponent(distribution.identifier)}/?q=${
                 this.props.searchText
             }`;
+        }
 
         return (
             <div
@@ -141,7 +154,6 @@ class DistributionRow extends Component {
                     <div className="row">
                         <Medium>
                             <div className="col-sm-1">
-                                <ReactTooltip />
                                 <img
                                     className="format-icon"
                                     src={
@@ -154,26 +166,44 @@ class DistributionRow extends Component {
                             </div>
                         </Medium>
 
-                        <div className="col-md-11">
+                        <div className="col-sm-11">
                             <div className="distribution-row-link">
                                 {!distribution.downloadURL &&
                                 distribution.accessURL ? (
                                     <div>
                                         <span itemProp="name">
-                                            {distribution.title}
-                                        </span>(<span itemProp="fileFormat">
+                                            {this.renderDistributionLink(
+                                                distribution.title
+                                            )}
+                                        </span>
+                                        (
+                                        <span itemProp="fileFormat">
                                             {distribution.format}
-                                        </span>)
+                                        </span>
+                                        )
                                     </div>
                                 ) : (
                                     <Link to={distributionLink}>
                                         <span itemProp="name">
-                                            {distribution.title}
-                                        </span>(<span itemProp="fileFormat">
+                                            {this.renderDistributionLink(
+                                                distribution.title
+                                            )}
+                                        </span>
+                                        (
+                                        <span itemProp="fileFormat">
                                             {distribution.format}
-                                        </span>)
+                                        </span>
+                                        )
                                     </Link>
                                 )}
+                                <a
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    href={distributionLink}
+                                    className="new-tab-button"
+                                >
+                                    <img src={newTabIcon} alt="new tab" />
+                                </a>
                             </div>
 
                             <div
@@ -190,55 +220,47 @@ class DistributionRow extends Component {
                         </div>
                     </div>
                 </div>
-                <div className="col-md-3 button-area">
-                    {distribution.downloadURL ? (
-                        <button
+                <div className="col-sm-3 button-area">
+                    {distribution.downloadURL && (
+                        <a
                             className="download-button au-btn au-btn--secondary"
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            href={distribution.downloadURL}
                             onClick={() => {
-                                if (!distribution.downloadURL) {
-                                    this.props.dispatch(
-                                        showTopNotification(
-                                            "Download link is not available for this data source!",
-                                            "Error:",
-                                            "error"
-                                        )
-                                    );
-                                    return;
-                                }
-
                                 // google analytics download tracking
                                 const resource_url = encodeURIComponent(
                                     distribution.downloadURL
                                 );
                                 if (resource_url) {
-                                    ga("send", {
-                                        hitType: "event",
-                                        eventCategory: "Resource",
-                                        eventAction: "Download",
-                                        eventLabel: resource_url
+                                    // legacy support
+                                    gapi.event({
+                                        category: "Resource",
+                                        action: "Download",
+                                        label: resource_url
+                                    });
+                                    // new events
+                                    gapi.event({
+                                        category: "Download by Dataset",
+                                        action: dataset.title,
+                                        label: resource_url
+                                    });
+                                    gapi.event({
+                                        category: "Download by Source",
+                                        action: dataset.source,
+                                        label: resource_url
+                                    });
+                                    gapi.event({
+                                        category: "Download by Publisher",
+                                        action: dataset.publisher.name,
+                                        label: resource_url
                                     });
                                 }
-                                window.location = distribution.downloadURL;
                             }}
                         >
-                            <img src={downloadIcon} alt="download" />
-                            <a
-                                className="button-text"
-                                itemProp="contentUrl"
-                                href={distribution.downloadURL}
-                            >
-                                Download
-                            </a>
-                        </button>
-                    ) : null}{" "}
-                    <button
-                        className="au-btn au-btn--secondary new-tab-button"
-                        onClick={() => {
-                            window.open(distributionLink, distribution.title);
-                        }}
-                    >
-                        <img src={newTabIcon} alt="new tab" />
-                    </button>
+                            <img src={downloadIcon} alt="download" /> Download
+                        </a>
+                    )}
                 </div>
             </div>
         );
@@ -246,12 +268,12 @@ class DistributionRow extends Component {
 }
 
 DistributionRow.propTypes = {
-    datasetId: PropTypes.string,
+    dataset: PropTypes.object,
     distribution: PropTypes.object
 };
 
 DistributionRow.defaultProps = {
-    datasetId: null,
+    dataset: null,
     distribution: null
 };
 

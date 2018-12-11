@@ -1,10 +1,10 @@
 import React, { Component } from "react";
 import PropTypes from "prop-types";
 import "./ChartConfig.css";
-import bar from "../assets/bar-chart.svg";
-import pie from "../assets/circle-chart.svg";
-import line from "../assets/line-chart.svg";
-import scatter from "../assets/point-chart.svg";
+import bar from "../assets/chart-bar.svg";
+import pie from "../assets/chart-pie.svg";
+import line from "../assets/chart-line.svg";
+import scatter from "../assets/chart-dot.svg";
 import ChartDatasetEncoder from "../helpers/ChartDatasetEncoder";
 import findIndex from "lodash/findIndex";
 
@@ -13,6 +13,13 @@ const chartIcons = {
     pie,
     line,
     scatter
+};
+
+const chartTitles = {
+    bar: "Bar Chart",
+    pie: "Pie Chart",
+    line: "Line Chart",
+    scatter: "Scatter Chart"
 };
 
 export default class ChartConfig extends Component {
@@ -25,7 +32,10 @@ export default class ChartConfig extends Component {
                     name="input"
                     label={label}
                     id={label}
-                    value={findIndex(options, item => item === this.props[id])}
+                    value={findIndex(
+                        options,
+                        item => item.idx === this.props[id].idx
+                    )}
                     onChange={e => {
                         const idx = e.target.value;
                         this.onChange(id, options[idx]);
@@ -58,16 +68,20 @@ export default class ChartConfig extends Component {
         return (
             <div className="chart-config_icon-select">
                 <label tabIndex="-1">Chart Type</label>
-                {ChartDatasetEncoder.avlChartTypes.map(v => (
-                    <button
-                        className={this.props.chartType === v ? "isActive" : ""}
-                        onClick={e => this.onChange("chartType", v)}
-                        key={v}
-                        title={v}
-                    >
-                        <img alt={v} src={chartIcons[v]} />
-                    </button>
-                ))}
+                <div className="button-group">
+                    {ChartDatasetEncoder.avlChartTypes.map(v => (
+                        <button
+                            className={
+                                this.props.chartType === v ? "isActive" : ""
+                            }
+                            onClick={e => this.onChange("chartType", v)}
+                            key={v}
+                            title={chartTitles[v]}
+                        >
+                            <img alt={v} src={chartIcons[v]} />
+                        </button>
+                    ))}
+                </div>
             </div>
         );
     }
@@ -99,14 +113,14 @@ export default class ChartConfig extends Component {
                     {this.renderDropdownSelect(
                         this.props.xAxisOptions,
                         "xAxis",
-                        "xAxis"
+                        "X axis"
                     )}
                 </div>
                 <div className="y-axis">
                     {this.renderDropdownSelect(
                         this.props.yAxisOptions,
                         "yAxis",
-                        "yAxis"
+                        "Y axis"
                     )}
                 </div>
             </div>

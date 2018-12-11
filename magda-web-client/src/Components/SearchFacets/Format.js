@@ -12,15 +12,16 @@ class Format extends Component {
         this.onSearchFormatFacet = this.onSearchFormatFacet.bind(this);
         this.onToggleFormatOption = this.onToggleFormatOption.bind(this);
         // we use an integer event to notify children of the reset event
-        this.state = {
-            resetFilterEvent: 0
-        };
+        //-- we should find a better way to do this. At least, its value should be set synchronously
+        //-- Can't use state as you don't know when it's in place
+        this.resetFilterEvent = 0;
     }
 
     onToggleFormatOption(formats) {
         const queryOptions = formats.map(p => p.value);
         this.props.updateQuery({
-            format: queryOptions
+            format: queryOptions,
+            page: undefined
         });
         this.props.dispatch(updateFormats(formats));
         this.props.closeFacet();
@@ -35,16 +36,22 @@ class Format extends Component {
         // update redux
         this.props.dispatch(resetFormat());
         // let children know that the filter is being reset
-        this.setState({
-            resetFilterEvent: this.state.resetFilterEvent + 1
-        });
+        this.resetFilterEvent++;
     }
 
-    onSearchFormatFacet() {
+    componentDidUpdate(prevProps) {
+        if (this.props.location.search !== prevProps.location.search) {
+            const query = queryString.parse(this.props.location.search);
+            if (!query.format) {
+                this.props.dispatch(resetFormat());
+                this.resetFilterEvent++;
+            }
+        }
+    }
+
+    onSearchFormatFacet(facetQuery) {
         this.props.dispatch(
-            fetchFormatSearchResults(
-                queryString.parse(this.props.location.search).q || "*"
-            )
+            fetchFormatSearchResults(this.props.generalQuery, facetQuery)
         );
     }
 
@@ -54,16 +61,17 @@ class Format extends Component {
                 title="format"
                 id="format"
                 hasQuery={Boolean(this.props.activeFormats.length)}
-                options={this.props.formatOptions}
+                options={
+                    this.props.formatSearchResults || this.props.formatOptions
+                }
                 activeOptions={this.props.activeFormats}
-                facetSearchResults={this.props.formatSearchResults}
                 onToggleOption={this.onToggleFormatOption}
                 onResetFacet={this.onResetFormatFacet}
                 searchFacet={this.onSearchFormatFacet}
                 toggleFacet={this.props.toggleFacet}
                 isOpen={this.props.isOpen}
                 closeFacet={this.props.closeFacet}
-                resetFilterEvent={this.state.resetFilterEvent}
+                resetFilterEvent={this.resetFilterEvent}
             />
         );
     }
@@ -74,7 +82,8 @@ function mapStateToProps(state) {
     return {
         formatOptions: datasetSearch.formatOptions,
         activeFormats: datasetSearch.activeFormats,
-        formatSearchResults: facetFormatSearch.data
+        formatSearchResults: facetFormatSearch.data,
+        generalQuery: datasetSearch.queryObject
     };
 }
 

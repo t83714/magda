@@ -1,5 +1,7 @@
 package au.csiro.data61.magda.indexer
 
+import com.sksamuel.elastic4s.http.ElasticDsl._
+import com.sksamuel.elastic4s.http.ElasticDsl
 import java.time.temporal.ChronoUnit
 import java.util.UUID
 
@@ -42,6 +44,8 @@ class WebhookSpec extends BaseApiSpec with RegistryConverters with ModelProtocol
   override def buildConfig = ConfigFactory.parseString("indexer.requestThrottleMs=1").withFallback(super.buildConfig)
   val cachedListCache: scala.collection.mutable.Map[String, List[_]] = scala.collection.mutable.HashMap.empty
 
+  blockUntilNotRed()
+
   describe("when webhook received") {
     it("should index new datasets") {
       loadDatasetsThroughEvents() { (allDataSets: List[DataSet], response: SearchResult) =>
@@ -52,6 +56,11 @@ class WebhookSpec extends BaseApiSpec with RegistryConverters with ModelProtocol
           publisher = dataSet.publisher.map(publisher =>
             Agent(
               identifier = publisher.identifier,
+              aggKeywords =
+                if (publisher.jurisdiction.isEmpty)
+                  Some(publisher.name.getOrElse(publisher.identifier.get).toLowerCase)
+                else
+                  publisher.jurisdiction.map(publisher.name.getOrElse(publisher.identifier.get) + ":" + _).map(_.toLowerCase),
               name = publisher.name,
               acronym = getAcronymFromPublisherName(publisher.name),
               imageUrl = publisher.imageUrl)),
@@ -91,6 +100,7 @@ class WebhookSpec extends BaseApiSpec with RegistryConverters with ModelProtocol
           // We don't care about this.
           indexed = None,
           quality = 0,
+          score = None,
 
           distributions = dataSet.distributions.map(distribution => distribution.copy(
             // This will be derived from the format so might not match the input
@@ -123,9 +133,11 @@ class WebhookSpec extends BaseApiSpec with RegistryConverters with ModelProtocol
           val builtIndex = buildIndex()
           Await.result(builtIndex.indexer.index(Source.fromIterator(() => dataSets.iterator)), 30 seconds)
 
-          Await.result(builtIndex.indexer.ready, 30 seconds)
-          refresh(builtIndex.indexId)
-          blockUntilExactCount(dataSets.size, builtIndex.indexId, builtIndex.indices.getType(Indices.DataSetsIndexType))
+          Await.result(builtIndex.indexer.ready, 120 seconds)
+          builtIndex.indexNames.foreach{ idxName =>
+            refresh(idxName)
+          }
+          blockUntilExactCount(dataSets.size, builtIndex.indexId)
 
           val events = dataSetsToDelete.map(dataSet =>
             RegistryEvent(
@@ -138,7 +150,7 @@ class WebhookSpec extends BaseApiSpec with RegistryConverters with ModelProtocol
           val payload = WebHookPayload(
             action = "records.changed",
             lastEventId = 104856,
-            events = Some(events),
+            events = Some(events.toList),
             records = None,
             aspectDefinitions = None,
             deferredResponseUrl = None)
@@ -149,8 +161,10 @@ class WebhookSpec extends BaseApiSpec with RegistryConverters with ModelProtocol
 
           val expectedDataSets = dataSets.filter(dataSet => !dataSetsToDelete.contains(dataSet))
 
-          refresh(builtIndex.indexId)
-          blockUntilExactCount(expectedDataSets.size, builtIndex.indexId, builtIndex.indices.getType(Indices.DataSetsIndexType))
+          builtIndex.indexNames.foreach{ idxName =>
+            refresh(idxName)
+          }
+          blockUntilExactCount(expectedDataSets.size, builtIndex.indexId)
 
           Get("/v0/datasets?query=*&limit=10000") ~> builtIndex.searchApi.routes ~> check {
             status shouldBe OK
@@ -160,7 +174,9 @@ class WebhookSpec extends BaseApiSpec with RegistryConverters with ModelProtocol
             result.dataSets.map(_.identifier).toSet shouldEqual expectedDataSets.map(_.identifier).toSet
           }
 
-          deleteIndex(builtIndex.indexId)
+          builtIndex.indexNames.foreach{ idxName =>
+            deleteIndex(idxName)
+          }
       }
     }
 
@@ -175,8 +191,10 @@ class WebhookSpec extends BaseApiSpec with RegistryConverters with ModelProtocol
       forAll(gen) {
         case (dataSetsToDelete, deletedDataSetsToSave) =>
           val builtIndex = buildIndex()
-          Await.result(builtIndex.indexer.ready, 30 seconds)
-          refresh(builtIndex.indexId)
+          Await.result(builtIndex.indexer.ready, 120 seconds)
+          builtIndex.indexNames.foreach{ idxName =>
+            refresh(idxName)
+          }
 
           val events = dataSetsToDelete.map(dataSet =>
             RegistryEvent(
@@ -189,8 +207,8 @@ class WebhookSpec extends BaseApiSpec with RegistryConverters with ModelProtocol
           val payload = WebHookPayload(
             action = "records.changed",
             lastEventId = 104856,
-            events = Some(events),
-            records = Some(deletedDataSetsToSave.map(x => dataSetToRecord((x, Nil)))),
+            events = Some(events.toList),
+            records = Some(deletedDataSetsToSave.map(x => dataSetToRecord((x, Nil))).toList),
             aspectDefinitions = None,
             deferredResponseUrl = None)
 
@@ -200,8 +218,10 @@ class WebhookSpec extends BaseApiSpec with RegistryConverters with ModelProtocol
 
           val expectedDataSets = deletedDataSetsToSave
 
-          refresh(builtIndex.indexId)
-          blockUntilExactCount(expectedDataSets.size, builtIndex.indexId, builtIndex.indices.getType(Indices.DataSetsIndexType))
+          builtIndex.indexNames.foreach{ idxName =>
+            refresh(idxName)
+          }
+          blockUntilExactCount(expectedDataSets.size, builtIndex.indexId)
 
           Get("/v0/datasets?query=*&limit=10000") ~> builtIndex.searchApi.routes ~> check {
             status shouldBe OK
@@ -211,7 +231,9 @@ class WebhookSpec extends BaseApiSpec with RegistryConverters with ModelProtocol
             result.dataSets.map(_.identifier).toSet shouldEqual expectedDataSets.map(_.identifier).toSet
           }
 
-          deleteIndex(builtIndex.indexId)
+          builtIndex.indexNames.foreach{ idxName =>
+            deleteIndex(idxName)
+          }
       }
     }
   }
@@ -229,7 +251,7 @@ class WebhookSpec extends BaseApiSpec with RegistryConverters with ModelProtocol
     qualityGen.map { case x => dataSets.zip(x) }
   }
 
-  case class TestIndex(indexId: String, indices: Indices, indexer: SearchIndexer, webhookApi: WebhookApi, searchQueryer: SearchQueryer, searchApi: SearchApi)
+  case class TestIndex(indexId: String, indices: Indices, indexer: SearchIndexer, webhookApi: WebhookApi, searchQueryer: SearchQueryer, searchApi: SearchApi, indexNames: List[String])
 
   def buildIndex(): TestIndex = {
     val indexId = UUID.randomUUID().toString
@@ -240,10 +262,19 @@ class WebhookSpec extends BaseApiSpec with RegistryConverters with ModelProtocol
     val searchQueryer = new ElasticSearchQueryer(indices)
     val searchApi = new SearchApi(searchQueryer)(config, logger)
 
-    indexer.ready.await(60 seconds)
-    blockUntilIndexExists(indices.getIndex(config, Indices.DataSetsIndex))
+    val indexNames = List(
+      indices.getIndex(config, Indices.DataSetsIndex),
+      indices.getIndex(config, Indices.PublishersIndex),
+      indices.getIndex(config, Indices.FormatsIndex)
+    )
 
-    TestIndex(indexId, indices, indexer, webhookApi, searchQueryer, searchApi)
+    indexer.ready.await(60 seconds)
+
+    indexNames.foreach{ idxName =>
+      blockUntilIndexExists(idxName)
+    }
+
+    TestIndex(indexNames(0), indices, indexer, webhookApi, searchQueryer, searchApi, indexNames)
   }
 
   def loadDatasetsThroughEvents()(fn: (List[DataSet], SearchResult) => Unit) {
@@ -273,8 +304,11 @@ class WebhookSpec extends BaseApiSpec with RegistryConverters with ModelProtocol
       }
       val allDataSets = dataSetsBatches.flatten.map(_._1)
 
-      refresh(builtIndex.indexId)
-      blockUntilExactCount(allDataSets.size, builtIndex.indexId, builtIndex.indices.getType(Indices.DataSetsIndexType))
+      builtIndex.indexNames.foreach{ idxName =>
+        refresh(idxName)
+      }
+
+      blockUntilExactCount(allDataSets.size, builtIndex.indexId)
 
       Get(s"/v0/datasets?query=*&limit=${allDataSets.size}") ~> builtIndex.searchApi.routes ~> check {
         status shouldBe OK
@@ -283,7 +317,9 @@ class WebhookSpec extends BaseApiSpec with RegistryConverters with ModelProtocol
         fn(allDataSets, response)
       }
 
-      deleteIndex(builtIndex.indexId)
+      builtIndex.indexNames.foreach{ idxName =>
+        deleteIndex(idxName)
+      }
     }
   }
 
@@ -344,7 +380,9 @@ class WebhookSpec extends BaseApiSpec with RegistryConverters with ModelProtocol
                     "title" -> publisher.name.toJson,
                     "imageUrl" -> publisher.imageUrl.toJson)))))).toJson,
             "dataset-quality-rating" -> {
-              if (dataSet.quality == 1) {
+              if (!dataSet.hasQuality) {
+                JsObject()
+              } else if (dataSet.quality == 1) {
                 JsObject()
               } else if (quality.isEmpty) {
                 JsObject("x" -> JsObject("score" -> dataSet.quality.toJson, "weighting" -> 1.toJson))

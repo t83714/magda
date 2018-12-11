@@ -28,19 +28,20 @@
     .col-2 {
         width: calc(100% / 2 - 8px);
         & > div {
-            height: calc(100% - 13px);
+            height: calc(100%);
         }
     }
 
     .row.stories {
         margin-bottom: 12px;
     }
+
+    .homepage-stories-show-stories-button-container {
+        text-align: center;
+    }
     .homepage-stories-show-stories-button {
-        position: fixed;
         border: none;
-        left: 50%;
         bottom: 0px;
-        margin-left: -67px;
         background: $AU-colordark-background;
         box-shadow: 0px 3px 6px rgba(0, 0, 0, 0.16),
             0px 3px 6px rgba(0, 0, 0, 0.23);

@@ -28,7 +28,7 @@ class RegistryCrawler(interface: RegistryExternalInterface, indexer: SearchIndex
   def crawlInProgress: Boolean = lastCrawl.map(!_.isCompleted).getOrElse(false)
 
   def crawl(): Future[Unit] = {
-    if (crawlInProgress) lastCrawl.get 
+    if (crawlInProgress) lastCrawl.get
     else {
       lastCrawl = Some(newCrawl())
       lastCrawl.get
@@ -105,9 +105,9 @@ class RegistryCrawler(interface: RegistryExternalInterface, indexer: SearchIndex
   }
 
   private def streamForInterface(): Source[DataSet, NotUsed] = {
-    val firstPageFuture = () => interface.getDataSetsReturnToken(0, 10)
+    val firstPageFuture = () => interface.getDataSetsReturnToken(0, 50)
 
-    val crawlSource = tokenCrawl(firstPageFuture, 10)
+    val crawlSource = tokenCrawl(firstPageFuture, 100)
       .map(dataSet => dataSet.copy(publisher =
         dataSet.publisher))
       .alsoTo(Sink.fold(0) {

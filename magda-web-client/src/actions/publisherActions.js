@@ -12,10 +12,11 @@ export function requestPublishers(): FacetAction {
     };
 }
 
-export function receivePublishers(json: Object): FacetAction {
+export function receivePublishers(json: Object, keyword: string): FacetAction {
     return {
         type: actionTypes.RECEIVE_PUBLISHERS,
-        json
+        json,
+        keyword
     };
 }
 
@@ -46,21 +47,32 @@ export function requestPublisherError(error: FetchError): FacetAction {
     };
 }
 
-function fetchPublishers(start) {
+export function resetFetchPublisher() {
+    return {
+        type: actionTypes.RESET_FETCH_PUBLISHER
+    };
+}
+
+function fetchPublishers(start, query, searchResultsPerPage) {
     return (dispatch: Function) => {
         dispatch(requestPublishers());
-        const url = `${
-            config.registryApiUrl
-        }records?aspect=organization-details&limit=1000`;
-        return fetch(url)
+        const url = `${config.searchApiUrl +
+            "organisations"}?query=${query}&start=${(start - 1) *
+            searchResultsPerPage}&limit=${searchResultsPerPage}`;
+        return fetch(url, config.fetchOptions)
             .then(response => {
-                if (response.status === 200) {
-                    return response.json();
+                if (!response.ok) {
+                    let statusText = response.statusText;
+                    // response.statusText are different in different browser, therefore we unify them here
+                    if (response.status === 404) {
+                        statusText = "Not Found";
+                    }
+                    throw Error(statusText);
                 }
-                throw new Error(response.statusText);
+                return response.json();
             })
             .then(json => {
-                return dispatch(receivePublishers(json));
+                return dispatch(receivePublishers(json, query));
             })
             .catch(error =>
                 dispatch(
@@ -81,10 +93,17 @@ function shouldFetchPublishers(state) {
     return true;
 }
 
-export function fetchPublishersIfNeeded(start: number): Object {
+export function fetchPublishersIfNeeded(start: number, query: string): Object {
     return (dispatch: Function, getState: Function) => {
-        if (shouldFetchPublishers(getState())) {
-            return dispatch(fetchPublishers(start));
+        const state = getState();
+        if (shouldFetchPublishers(state)) {
+            return dispatch(
+                fetchPublishers(
+                    start,
+                    query,
+                    state.content.configuration.searchResultsPerPage
+                )
+            );
         } else {
             return Promise.resolve();
         }
@@ -97,13 +116,18 @@ function fetchPublisher(id) {
         const url = `${
             config.registryApiUrl
         }records/${id}?aspect=organization-details`;
-        console.log(url);
-        return fetch(url)
+
+        return fetch(url, config.fetchOptions)
             .then(response => {
-                if (response.status === 200) {
-                    return response.json();
+                if (!response.ok) {
+                    let statusText = response.statusText;
+                    // response.statusText are different in different browser, therefore we unify them here
+                    if (response.status === 404) {
+                        statusText = "Not Found";
+                    }
+                    throw Error(statusText);
                 }
-                throw new Error(response.statusText);
+                return response.json();
             })
             .then(json => {
                 return dispatch(receivePublisher(json));

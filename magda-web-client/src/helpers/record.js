@@ -136,6 +136,7 @@ export type ParsedDataset = {
     publisher: Publisher,
     source: string,
     linkedDataRating: number,
+    contactPoint: string,
     error: ?FetchError
 };
 
@@ -225,7 +226,7 @@ function getFormatString(aspects) {
 function guessCompatiblePreviews(format, isTimeSeries): CompatiblePreviews {
     // Make a guess of compatible previews from the format
     // Should be temporary before it's properly implemented
-    //  in the "visualization sleuther"
+    //  in the "visualization minion"
     const compatiblePreviews = {
         map: false,
         chart: false,
@@ -274,7 +275,7 @@ function guessCompatiblePreviews(format, isTimeSeries): CompatiblePreviews {
 export function parseDistribution(
     record?: RawDistribution
 ): ParsedDistribution {
-    const identifier = record ? record["id"] : "";
+    const identifier = record ? record["id"] : null;
     const title = record ? record["name"] : "";
 
     const aspects = record
@@ -286,6 +287,7 @@ export function parseDistribution(
     const format = getFormatString(aspects);
     const downloadURL = info.downloadURL || null;
     const accessURL = info.accessURL || null;
+    const accessNotes = info.accessNotes || null;
     const updatedDate = info.modified ? getDateString(info.modified) : null;
     const license = info.license || "License restrictions unknown";
     const description = info.description || "No description provided";
@@ -318,6 +320,7 @@ export function parseDistribution(
         format,
         downloadURL,
         accessURL,
+        accessNotes,
         updatedDate,
         license,
         linkStatusAvailable,
@@ -339,7 +342,7 @@ export function parseDataset(dataset?: RawDataset): ParsedDataset {
     const aspects = dataset
         ? Object.assign({}, defaultDatasetAspects, dataset["aspects"])
         : defaultDatasetAspects;
-    const identifier = dataset ? dataset.id : "";
+    const identifier = dataset ? dataset.id : null;
     const datasetInfo = aspects["dcat-dataset-strings"];
     const distribution = aspects["dataset-distributions"];
     const temporalCoverage = aspects["temporal-coverage"];
@@ -347,17 +350,18 @@ export function parseDataset(dataset?: RawDataset): ParsedDataset {
     const tags = datasetInfo.keywords || [];
     const landingPage = datasetInfo.landingPage || "";
     const title = datasetInfo.title || "";
-    const issuedDate =
-        getDateString(datasetInfo.issued) || "Unknown issued date";
+    const issuedDate = getDateString(datasetInfo.issued) || null;
     const updatedDate = datasetInfo.modified
         ? getDateString(datasetInfo.modified)
         : null;
     const publisher = aspects["dataset-publisher"]
         ? aspects["dataset-publisher"]["publisher"]
         : defaultPublisher;
-
+    const contactPoint: string = aspects["dcat-dataset-strings"].contactPoint;
     const source: string = aspects["source"]
-        ? aspects["source"]["name"]
+        ? aspects["source"]["type"] !== "csv-dataset"
+            ? aspects["source"]["name"]
+            : undefined
         : defaultDatasetAspects["source"]["name"];
 
     function calcQuality(qualityAspect) {
@@ -370,6 +374,9 @@ export function parseDataset(dataset?: RawDataset): ParsedDataset {
     const linkedDataRating: number = aspects["dataset-quality-rating"]
         ? calcQuality(aspects["dataset-quality-rating"])
         : 0;
+    const hasQuality: boolean = aspects["dataset-quality-rating"]
+        ? true
+        : false;
 
     const distributions = distribution["distributions"].map(d => {
         const distributionAspects = Object.assign(
@@ -427,6 +434,7 @@ export function parseDataset(dataset?: RawDataset): ParsedDataset {
         issuedDate,
         updatedDate,
         landingPage,
+        contactPoint,
         tags,
         description,
         distributions,
@@ -434,6 +442,7 @@ export function parseDataset(dataset?: RawDataset): ParsedDataset {
         temporalCoverage,
         publisher,
         error,
-        linkedDataRating
+        linkedDataRating,
+        hasQuality
     };
 }

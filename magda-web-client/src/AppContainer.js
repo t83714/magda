@@ -1,4 +1,4 @@
-import ReactDocumentTitle from "react-document-title";
+import MagdaDocumentTitle from "./Components/i18n/MagdaDocumentTitle";
 import React from "react";
 import { config } from "./config.js";
 import { connect } from "react-redux";
@@ -8,6 +8,7 @@ import Banner from "./UI/Banner";
 import Footer from "./Components/Footer/Footer";
 
 import { requestWhoAmI } from "./actions/userManagementActions";
+import { fetchContent } from "./actions/contentActions";
 import Notification from "./UI/Notification";
 import { hideTopNotification } from "./actions/topNotificationAction";
 
@@ -21,37 +22,41 @@ import AUskipLink from "./pancake/react/skip-link";
 import "./AppContainer.css";
 
 class AppContainer extends React.Component {
-    componentWillMount() {
+    componentDidMount() {
         this.props.requestWhoAmI();
+        this.props.fetchContent();
     }
 
     render() {
-        const footerNavs = config.footerNavigation;
         return (
-            <ReactDocumentTitle title={config.appName}>
-                <div className="au-grid">
-                    <AUskipLink
-                        links={[
-                            {
-                                link: "#content",
-                                text: "Skip to main content"
-                            },
-                            {
-                                link: "#nav",
-                                text: "Skip to main navigation"
-                            }
-                        ]}
-                    />
-                    <Medium>
-                        <Banner />
-                    </Medium>
+            <MagdaDocumentTitle>
+                <div className="au-grid wrapper">
+                    <div>
+                        <AUskipLink
+                            links={[
+                                {
+                                    link: "#content",
+                                    text: "Skip to main content"
+                                },
+                                {
+                                    link: "#nav",
+                                    text: "Skip to main navigation"
+                                }
+                            ]}
+                        />
+                        {config.fallbackUrl && (
+                            <Medium>
+                                <Banner fallbackUrl={config.fallbackUrl} />
+                            </Medium>
+                        )}
 
-                    <Switch>
-                        <Route exact path="/" component={HomePage} />
-                        <Route path="/*" component={OtherPages} />
-                    </Switch>
+                        <Switch>
+                            <Route exact path="/" component={HomePage} />
+                            <Route path="/*" component={OtherPages} />
+                        </Switch>
+                    </div>
 
-                    <Footer footerNavs={footerNavs} />
+                    <Footer />
 
                     {this.props.topNotification.visible ? (
                         <Notification
@@ -74,7 +79,7 @@ class AppContainer extends React.Component {
                         />
                     ) : null}
                 </div>
-            </ReactDocumentTitle>
+            </MagdaDocumentTitle>
         );
     }
 }
@@ -89,6 +94,7 @@ const mapDispatchToProps = dispatch => {
     return bindActionCreators(
         {
             requestWhoAmI: requestWhoAmI,
+            fetchContent,
             hideTopNotification
         },
         dispatch

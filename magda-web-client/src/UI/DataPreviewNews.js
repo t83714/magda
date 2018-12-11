@@ -30,12 +30,12 @@ export default class News extends Component<{
             newsItems: null
         };
     }
-    componentWillReceiveProps(nextProps) {
+    componentDidUpdate(prevProps) {
         if (
-            nextProps.distribution.downloadURL !==
+            prevProps.distribution.downloadURL !==
             this.props.distribution.downloadURL
         ) {
-            this.fetchData(nextProps.distribution.downloadURL);
+            this.fetchData(this.props.distribution.downloadURL);
         }
     }
 
@@ -49,7 +49,7 @@ export default class News extends Component<{
             loading: true,
             newsItems: null
         });
-        return fetch(config.proxyUrl + url)
+        return fetch(config.proxyUrl + url, config.fetchOptions)
             .then(response => {
                 if (!response.ok) {
                     throw new Error(

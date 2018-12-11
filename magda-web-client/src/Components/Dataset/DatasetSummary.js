@@ -1,13 +1,14 @@
 import React, { Component } from "react";
 import MarkdownViewer from "../../UI/MarkdownViewer";
 import defined from "../../helpers/defined";
-import getDateString from "../../helpers/getDateString";
+import { parseDataset } from "../../helpers/record";
 import QualityIndicator from "../../UI/QualityIndicator";
 import "./DatasetSummary.css";
 import { Link } from "react-router-dom";
 import uniq from "lodash.uniq";
 import fileIcon from "../../assets/format-passive-dark.svg";
 import Divider from "../../UI/Divider";
+import { gapi } from "../../analytics/ga";
 
 export default class DatasetSummary extends Component {
     constructor(props) {
@@ -21,22 +22,28 @@ export default class DatasetSummary extends Component {
                 .filter(dis => defined(dis.format))
                 .map(dis => dis.format)
         );
-        return (
+        return formats.length ? (
             <div className="dataset-summary-downloads">
                 <img src={fileIcon} alt="File icon" />{" "}
                 {formats.map((f, i) => <span key={i}>{f}</span>)}
             </div>
-        );
+        ) : null;
     }
 
     render() {
         const dataset = this.props.dataset;
+        const parsed = parseDataset({
+            aspects: {
+                "dcat-dataset-strings": dataset
+            }
+        });
         const publisher = dataset.publisher && dataset.publisher.name;
         const publisherIdent =
             dataset.publisher && dataset.publisher.identifier;
         const searchText = defined(this.props.searchText)
             ? this.props.searchText
             : "";
+        const searchResultNumber = this.props.searchResultNumber;
         return (
             <div className="dataset-summary">
                 <h2 className="dataset-summary-title">
@@ -44,6 +51,15 @@ export default class DatasetSummary extends Component {
                         to={`/dataset/${encodeURIComponent(
                             dataset.identifier
                         )}?q=${searchText}`}
+                        onClick={() => {
+                            if (searchResultNumber) {
+                                gapi.event({
+                                    category: "Search and Result Clicked",
+                                    action: this.props.searchText,
+                                    label: (searchResultNumber + 1).toString()
+                                });
+                            }
+                        }}
                     >
                         {dataset.title}
                     </Link>
@@ -64,18 +80,19 @@ export default class DatasetSummary extends Component {
                     />
                 </div>
                 <div className="dataset-summary-meta">
-                    {defined(dataset.modified) && (
+                    {defined(parsed.updatedDate) && (
                         <span className="dataset-summary-updated">
-                            Dataset Updated {getDateString(dataset.modified)}
+                            Dataset Updated {parsed.updatedDate}
                             <Divider />
                         </span>
                     )}
-                    {defined(dataset.quality) && (
-                        <div className="dataset-summary-quality">
-                            <QualityIndicator quality={dataset.quality} />
-                            <Divider />
-                        </div>
-                    )}
+                    {dataset.hasQuality &&
+                        defined(dataset.quality) && (
+                            <div className="dataset-summary-quality">
+                                <QualityIndicator quality={dataset.quality} />
+                                <Divider />
+                            </div>
+                        )}
                     {defined(
                         dataset.distributions &&
                             dataset.distributions.length > 0

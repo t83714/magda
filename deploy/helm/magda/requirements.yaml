@@ -1,117 +1,91 @@
 dependencies:
-  - name: admin-api
-    version: 0.1.0
+  - name: apidocs-server
     tags:
       - all
-      - admin-api
+      - apidocs-server
   - name: authorization-api
-    version: 0.1.0
     tags:
       - all
       - authorization-api
   - name: authorization-db
-    version: 0.1.0
     tags:
       - all
       - authorization-db
   - name: combined-db
-    version: 0.1.0
     tags:
       - all
       - combined-db
-  - name: discussions-api
-    version: 0.1.0
+  - name: content-api
     tags:
       - all
-      - discussions-api
-  - name: discussions-db
-    version: 0.1.0
+      - content-api
+  - name: content-db
     tags:
       - all
-      - discussions-db
+      - content-db
+  - name: correspondence-api
+    tags:
+      - all
+      - correspondence-api
   - name: elasticsearch
-    version: 0.1.0
     tags:
       - all
       - elasticsearch
-  - name: feedback-api
-    version: 0.1.0
-    tags:
-      - all
-      - feedback-api
   - name: gateway
-    version: 0.1.0
     tags:
       - all
       - gateway
   - name: indexer
-    version: 0.1.0
     tags:
       - all
       - indexer
   - name: preview-map
-    version: 0.1.0
     tags:
       - all
       - preview-map
   - name: registry-api
-    version: 0.1.0
     tags:
       - all
       - registry-api
   - name: registry-db
-    version: 0.1.0
     tags:
       - all
       - registry-db
   - name: search-api
-    version: 0.1.0
     tags:
       - all
       - search-api
   - name: session-db
-    version: 0.1.0
     tags:
       - all
       - session-db
   - name: web-server
-    version: 0.1.0
     tags:
       - all
       - web-server
-  - name: correspondence-api
-    version: 0.1.0
+  - name: connectors
     tags:
       - all
-      - correspondence-api
-
-# Sleuthers
-  - name: sleuther-format
-    version: 0.1.0
-    tags:
-      - sleuther-format
-  - name: sleuther-broken-link
-    version: 0.1.0
-    tags:
-      - sleuther-broken-link
-  - name: sleuther-visualization
-    version: 0.1.0
-    tags:
-      - sleuther-visualization
-  - name: sleuther-linked-data-rating
-    version: 0.1.0
-    tags:
-      - sleuther-linked-data-rating
-
-# One-namespace-per-PR dev ingress setup
-  - name: dev-ingress
-    version: 0.1.0
-    tags:
-      - dev-ingress
-  - name: kn-web-app
-    version: 0.1.0
+      - connectors
+  - name: admin-api
     tags:
       - all
-      - kn-web-app
+      - admin-api
 
+# Minions
+  - name: minion-broken-link
+    tags:
+      - minion-broken-link
+  - name: minion-format
+    tags:
+      - minion-format
+  - name: minion-linked-data-rating
+    tags:
+      - minion-linked-data-rating
+  - name: minion-visualization
+    tags:
+      - minion-visualization
 
+  - name: ingress
+    tags:
+      - ingress

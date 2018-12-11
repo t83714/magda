@@ -1,13 +1,25 @@
 import React, { Component } from "react";
-import { Medium } from "./Responsive";
+import { Small } from "./Responsive";
 import Spinner from "../Components/Spinner";
 import ChartDatasetEncoder from "../helpers/ChartDatasetEncoder";
 import ChartConfig from "./ChartConfig";
+import downArrowIcon from "../assets/downArrow.svg";
+import upArrowIcon from "../assets/upArrow.svg";
+import AUpageAlert from "../pancake/react/page-alerts";
+import memoize from "memoize-one";
 import "./DataPreviewChart.css";
 
 let ReactEcharts = null;
 
 const defaultChartType = "bar";
+
+// we only do the auto redirect in the first time,
+// subsequent tab switching does not trigger redirect
+const switchTabOnFirstGo = memoize(
+    props => props.onChangeTab("table"),
+    (prev, next) =>
+        prev.distribution.identifier === next.distribution.identifier
+);
 
 class DataPreviewChart extends Component {
     constructor(props) {
@@ -17,10 +29,14 @@ class DataPreviewChart extends Component {
             isLoading: true,
             chartTitle: this.props.distribution.title
                 ? this.props.distribution.title
-                : ""
+                : "",
+            isExpanded: true
         });
         this.chartDatasetEncoder = null;
         this.onChartConfigChanged = this.onChartConfigChanged.bind(this);
+        this.onToggleButtonClick = this.onToggleButtonClick.bind(this);
+        this.onDismissError = this.onDismissError.bind(this);
+        this.isCancelled = false;
     }
 
     getResetState(extraOptions = null) {
@@ -64,24 +80,23 @@ class DataPreviewChart extends Component {
 
                 if (!chartType) chartType = defaultChartType;
                 this.chartDatasetEncoder.setChartType(chartType);
-                const chartOption = this.chartDatasetEncoder.getChartOption(
-                    this.state.chartTitle
-                );
+                const chartOption = this.chartDatasetEncoder.getChartOption("");
 
-                this.setState({
-                    error: null,
-                    isLoading: false,
-                    avlXCols: this.chartDatasetEncoder.getAvailableXCols(),
-                    avlYCols: this.chartDatasetEncoder.getAvailableYCols(),
-                    xAxis: this.chartDatasetEncoder.xAxis,
-                    yAxis: this.chartDatasetEncoder.yAxis,
-                    chartType,
-                    chartOption
-                });
-                if (console && console.log) console.log(chartOption);
+                if (!this.isCancelled) {
+                    this.setState({
+                        error: null,
+                        isLoading: false,
+                        avlXCols: this.chartDatasetEncoder.getAvailableXCols(),
+                        avlYCols: this.chartDatasetEncoder.getAvailableYCols(),
+                        xAxis: this.chartDatasetEncoder.xAxis,
+                        yAxis: this.chartDatasetEncoder.yAxis,
+                        chartType,
+                        chartOption
+                    });
+                }
             }
         } catch (e) {
-            console.log(e);
+            console.error(e);
             throw e; //--- not capture here; only for debug
         }
     }
@@ -92,16 +107,15 @@ class DataPreviewChart extends Component {
                 ReactEcharts = (await import("echarts-for-react")).default;
             await this.initChartData();
         } catch (e) {
-            console.log(
-                this.getResetState({
-                    error: e
-                })
-            );
-            this.setState(
-                this.getResetState({
-                    error: e
-                })
-            );
+            if (!this.isCancelled) {
+                this.setState(
+                    this.getResetState({
+                        error: e
+                    })
+                );
+                // if there is error, automatically switch to table view
+                switchTabOnFirstGo(this.props);
+            }
         }
     }
 
@@ -116,7 +130,8 @@ class DataPreviewChart extends Component {
                     prevState.chartTitle !== this.state.chartTitle ||
                     prevState.chartType !== this.state.chartType ||
                     prevState.xAxis !== this.state.xAxis ||
-                    prevState.yAxis !== this.state.yAxis)
+                    prevState.yAxis !== this.state.yAxis) &&
+                !this.isCancelled
             ) {
                 this.setState(
                     this.getResetState({
@@ -126,30 +141,51 @@ class DataPreviewChart extends Component {
                 await this.initChartData();
             }
         } catch (e) {
-            console.log(
-                this.getResetState({
-                    error: e
-                })
-            );
-            this.setState(
-                this.getResetState({
-                    error: e
-                })
-            );
+            // we do not automatically switch to table view here because chart has already successfully rendered.
+            // for subsequent error cause the chart to not render, we will just display an error message
+            if (!this.isCancelled) {
+                this.setState(
+                    this.getResetState({
+                        error: e
+                    })
+                );
+            }
         }
+    }
+
+    componentWillUnmount() {
+        this.isCancelled = true;
     }
 
     onChartConfigChanged(key, value) {
         this.setState({ [key]: value });
     }
 
+    onToggleButtonClick(e) {
+        e.preventDefault();
+        this.setState({
+            isExpanded: !this.state.isExpanded
+        });
+    }
+
+    onDismissError() {
+        // switch to table tab on dismiss error
+        this.props.onChangeTab("table");
+    }
+
     render() {
         if (this.state.error)
             return (
-                <div className="error">
-                    <h3>{this.state.error.name}</h3>
-                    {this.state.error.message}
-                </div>
+                <AUpageAlert as="error" className="notification__inner">
+                    <h3>Oops</h3>
+                    <p>Chart preview not available, please try table preview</p>
+                    <button
+                        onClick={this.onDismissError}
+                        className="switch-tab-btn"
+                    >
+                        Switch to table preview
+                    </button>
+                </AUpageAlert>
             );
         if (this.state.isLoading) return <Spinner height="420px" />;
         if (!ReactEcharts)
@@ -162,7 +198,8 @@ class DataPreviewChart extends Component {
                     this.chartWidthDiv = chartWidthDiv;
                 }}
             >
-                <div className="col-md-8">
+                <div className="col-sm-8 chart-panel-container">
+                    <h4 className="chart-title">{this.state.chartTitle}</h4>
                     <ReactEcharts
                         className="data-preview-chart-container"
                         style={{ height: "450px", color: "yellow" }}
@@ -171,8 +208,8 @@ class DataPreviewChart extends Component {
                         theme="au_dga"
                     />
                 </div>
-                <Medium>
-                    <div className="col-md-4 config-panel-container">
+                <div className="col-sm-4 config-panel-container">
+                    {this.state.isExpanded ? (
                         <ChartConfig
                             chartType={this.state.chartType}
                             chartTitle={this.state.chartTitle}
@@ -182,8 +219,27 @@ class DataPreviewChart extends Component {
                             yAxisOptions={this.state.avlYCols}
                             onChange={this.onChartConfigChanged}
                         />
-                    </div>
-                </Medium>
+                    ) : null}
+                    <Small>
+                        {this.state.isExpanded ? (
+                            <button
+                                className="toggle-button"
+                                onClick={e => this.onToggleButtonClick(e)}
+                            >
+                                <span>Hide chart options</span>
+                                <img src={upArrowIcon} alt="upArrowIcon" />
+                            </button>
+                        ) : (
+                            <button
+                                className="toggle-button"
+                                onClick={e => this.onToggleButtonClick(e)}
+                            >
+                                <span>Show chart options</span>
+                                <img src={downArrowIcon} alt="downArrow" />
+                            </button>
+                        )}
+                    </Small>
+                </div>
             </div>
         );
     }

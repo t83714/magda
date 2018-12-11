@@ -3,7 +3,6 @@ import { connect } from "react-redux";
 import { withRouter } from "react-router-dom";
 import queryString from "query-string";
 import AUbuttons from "../../pancake/react/buttons";
-import { resetRegion } from "../../actions/datasetSearchActions";
 import removePassiveIcon from "../../assets/remove-passive.svg";
 
 const ClearAllButton = ({ location, history, dispatch }) => {
@@ -25,14 +24,10 @@ const ClearAllButton = ({ location, history, dispatch }) => {
                         as="secondary"
                         className="btn-facet"
                         onClick={() => {
-                            console.log(location);
                             const query = queryString.parse(location.search);
                             const qStr = queryString.stringify({
                                 q: query.q ? query.q : ""
                             });
-                            //--- unfortunately, active Region needs to be reset
-                            //--- to reset region header state
-                            dispatch(resetRegion());
                             history.push({
                                 pathname: "/search",
                                 search: `?${qStr}`

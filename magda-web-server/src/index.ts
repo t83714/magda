@@ -3,12 +3,12 @@ import * as path from "path";
 import * as URI from "urijs";
 import * as yargs from "yargs";
 import * as morgan from "morgan";
-import * as helmet from "helmet";
-import * as request from "request";
+import request from "@magda/typescript-common/dist/request";
 
 import Registry from "@magda/typescript-common/dist/registry/RegistryClient";
 
 import buildSitemapRouter from "./buildSitemapRouter";
+import getIndexFileContent from "./getIndexFileContent";
 
 const argv = yargs
     .config()
@@ -23,11 +23,16 @@ const argv = yargs
         type: "boolean",
         default: false
     })
+    .option("useLocalStyleSheet", {
+        describe:
+            "True to use prebuilt static stylesheet from web-client module.",
+        type: "boolean",
+        default: false
+    })
     .option("baseExternalUrl", {
         describe:
             "The absolute base URL of the Magda site, when accessed externally. Used for building sitemap URLs which must be absolute.",
         type: "string",
-        default: "http://localhost:6100/",
         required: true
     })
     .option("registryApiBaseUrlInternal", {
@@ -57,6 +62,16 @@ const argv = yargs
             "The base URL of the MAGDA Search API.  If not specified, the URL is built from the apiBaseUrl.",
         type: "string"
     })
+    .option("contentApiBaseUrl", {
+        describe:
+            "The base _EXTERNAL_ URL of the MAGDA Content API.  If not specified, the URL is built from the apiBaseUrl.",
+        type: "string"
+    })
+    .option("contentApiBaseUrlInternal", {
+        describe:
+            "The base _INTERNAL_ URL of the MAGDA Content API.  If not specified, the URL is built from the apiBaseUrl.",
+        type: "string"
+    })
     .option("registryApiBaseUrl", {
         describe:
             "The base URL of the MAGDA Registry API.  If not specified, the URL is built from the apiBaseUrl.",
@@ -67,62 +82,23 @@ const argv = yargs
             "The base URL of the MAGDA Auth API.  If not specified, the URL is built from the apiBaseUrl.",
         type: "string"
     })
-    .option("discussionsApiBaseUrl", {
-        describe:
-            "The base URL of the MAGDA Discussions API.  If not specified, the URL is built from the apiBaseUrl.",
-        type: "string"
-    })
     .option("adminApiBaseUrl", {
         describe:
             "The base URL of the MAGDA admin API.  If not specified, the URL is built from the apiBaseUrl.",
         type: "string"
     })
-    .option("cspReportUri", {
+    .option("fallbackUrl", {
         describe:
-            "The URI to send Content Security Policy violation reports to.",
+            "An older system to fall back to - this url will be shown in a banner that says 'you can still go back to old site'.",
         type: "string"
+    })
+    .option("gapiIds", {
+        describe: "Google Analytics ID(s)",
+        type: "array",
+        default: []
     }).argv;
 
 var app = express();
-
-app.use(
-    helmet({
-        hsts: {
-            maxAge: 31536000,
-            includeSubdomains: true,
-            preload: true
-        }
-    })
-);
-
-const cspDirectives = {
-    scriptSrc: [
-        "'self'",
-        "'unsafe-inline'", // for VWO until... we get rid of that? :(
-        "data:", // ditto
-        "browser-update.org",
-        "dev.visualwebsiteoptimizer.com",
-        "platform.twitter.com",
-        "www.googletagmanager.com",
-        "www.google-analytics.com",
-        "rum-static.pingdom.net",
-        "https://cdnjs.cloudflare.com/ajax/libs/rollbar.js/2.3.9/rollbar.min.js",
-        "https://tagmanager.google.com/debug"
-    ],
-    objectSrc: ["'none'"],
-    sandbox: ["allow-scripts", "allow-same-origin", "allow-popups"]
-} as helmet.IHelmetContentSecurityPolicyDirectives;
-
-if (argv.cspReportUri) {
-    cspDirectives.reportUri = argv.cspReportUri;
-}
-
-app.use(
-    helmet.contentSecurityPolicy({
-        directives: cspDirectives,
-        browserSniff: false
-    })
-);
 
 app.use(morgan("combined"));
 
@@ -137,80 +113,90 @@ const clientRoot = path.resolve(
 const clientBuild = path.join(clientRoot, "build");
 console.log("Client: " + clientBuild);
 
-// const adminRoot = require.resolve("@magda/web-admin");
-// const adminBuild = path.join(adminRoot, "build");
-// console.log("Admin: " + adminBuild);
-
 const apiBaseUrl = addTrailingSlash(
     argv.apiBaseUrl || new URI(argv.baseUrl).segment("api").toString()
 );
 
+const webServerConfig = {
+    disableAuthenticationFeatures: argv.disableAuthenticationFeatures,
+    baseUrl: addTrailingSlash(argv.baseUrl),
+    apiBaseUrl: apiBaseUrl,
+    contentApiBaseUrl: addTrailingSlash(
+        argv.contentApiBaseUrl ||
+            new URI(apiBaseUrl)
+                .segment("v0")
+                .segment("content")
+                .toString()
+    ),
+    searchApiBaseUrl: addTrailingSlash(
+        argv.searchApiBaseUrl ||
+            new URI(apiBaseUrl)
+                .segment("v0")
+                .segment("search")
+                .toString()
+    ),
+    registryApiBaseUrl: addTrailingSlash(
+        argv.registryApiBaseUrl ||
+            new URI(apiBaseUrl)
+                .segment("v0")
+                .segment("registry")
+                .toString()
+    ),
+    authApiBaseUrl: addTrailingSlash(
+        argv.authApiBaseUrl ||
+            new URI(apiBaseUrl)
+                .segment("v0")
+                .segment("auth")
+                .toString()
+    ),
+    adminApiBaseUrl: addTrailingSlash(
+        argv.adminApiBaseUrl ||
+            new URI(apiBaseUrl)
+                .segment("v0")
+                .segment("admin")
+                .toString()
+    ),
+    previewMapBaseUrl: addTrailingSlash(
+        argv.previewMapBaseUrl ||
+            new URI(apiBaseUrl)
+                .segment("..")
+                .segment("preview-map")
+                .toString()
+    ),
+    correspondenceApiBaseUrl: addTrailingSlash(
+        argv.correspondenceApiBaseUrl ||
+            new URI(apiBaseUrl)
+                .segment("v0")
+                .segment("correspondence")
+                .toString()
+    ),
+    fallbackUrl: argv.fallbackUrl,
+    gapiIds: argv.gapiIds
+};
+
 app.get("/server-config.js", function(req, res) {
-    const config = {
-        disableAuthenticationFeatures: argv.disableAuthenticationFeatures,
-        baseUrl: addTrailingSlash(argv.baseUrl),
-        apiBaseUrl: apiBaseUrl,
-        baseExternalUrl: addTrailingSlash(argv.baseExternalUrl),
-        searchApiBaseUrl: addTrailingSlash(
-            argv.searchApiBaseUrl ||
-                new URI(apiBaseUrl)
-                    .segment("v0")
-                    .segment("search")
-                    .toString()
-        ),
-        registryApiBaseUrl: addTrailingSlash(
-            argv.registryApiBaseUrl ||
-                new URI(apiBaseUrl)
-                    .segment("v0")
-                    .segment("registry")
-                    .toString()
-        ),
-        authApiBaseUrl: addTrailingSlash(
-            argv.authApiBaseUrl ||
-                new URI(apiBaseUrl)
-                    .segment("v0")
-                    .segment("auth")
-                    .toString()
-        ),
-        discussionsApiBaseUrl: addTrailingSlash(
-            argv.discussionsApiBaseUrl ||
-                new URI(apiBaseUrl)
-                    .segment("v0")
-                    .segment("discussions")
-                    .toString()
-        ),
-        adminApiBaseUrl: addTrailingSlash(
-            argv.adminApiBaseUrl ||
-                new URI(apiBaseUrl)
-                    .segment("v0")
-                    .segment("admin")
-                    .toString()
-        ),
-        previewMapBaseUrl: addTrailingSlash(
-            argv.previewMapBaseUrl ||
-                new URI(apiBaseUrl)
-                    .segment("..")
-                    .segment("preview-map")
-                    .toString()
-        ),
-        feedbackApiBaseUrl: addTrailingSlash(
-            argv.feedbackApiBaseUrl ||
-                new URI(apiBaseUrl)
-                    .segment("v0")
-                    .segment("feedback")
-                    .segment("user")
-                    .toString()
-        ),
-        correspondenceApiBaseUrl: addTrailingSlash(
-            argv.correspondenceApiBaseUrl ||
-                new URI(apiBaseUrl)
-                    .segment("v0")
-                    .segment("correspondence")
-                    .toString()
-        )
-    };
     res.type("application/javascript");
-    res.send("window.magda_server_config = " + JSON.stringify(config) + ";");
+    res.send(
+        "window.magda_server_config = " + JSON.stringify(webServerConfig) + ";"
+    );
+});
+
+/**
+ * Get the index file content according to the passed in settings. Because getIndexFileContent
+ * is throttled, it'll only actually be invoked once every 60 seconds
+ */
+function getIndexFileContentZeroArgs() {
+    return getIndexFileContent(
+        clientRoot,
+        argv.useLocalStyleSheet,
+        argv.contentApiBaseUrlInternal
+    );
+}
+
+app.get(["/", "/index.html*"], async function(req, res) {
+    const indexFileContent = await getIndexFileContentZeroArgs();
+
+    res.send(indexFileContent);
 });
 
 // app.use("/admin", express.static(adminBuild));
@@ -232,20 +218,21 @@ const topLevelRoutes = [
     "profile",
     "publishers", // Renamed to "/organisations" but we still want to redirect it in the web client
     "organisations",
-    "suggest"
+    "suggest",
+    "error"
 ];
 
 topLevelRoutes.forEach(topLevelRoute => {
-    app.get("/" + topLevelRoute, function(req, res) {
-        res.sendFile(path.join(clientBuild, "index.html"));
+    app.get("/" + topLevelRoute, async function(req, res) {
+        res.send(await getIndexFileContentZeroArgs());
     });
-    app.get("/" + topLevelRoute + "/*", function(req, res) {
-        res.sendFile(path.join(clientBuild, "index.html"));
+    app.get("/" + topLevelRoute + "/*", async function(req, res) {
+        res.send(await getIndexFileContentZeroArgs());
     });
 });
 
-app.get("/page/*", function(req, res) {
-    res.sendFile(path.join(clientBuild, "index.html"));
+app.get("/page/*", async function(req, res) {
+    res.send(await getIndexFileContentZeroArgs());
 });
 
 // app.get("/admin", function(req, res) {
@@ -274,13 +261,43 @@ if (argv.devProxy) {
     });
 }
 
+const robotsTxt = `User-agent: *
+Crawl-delay: 100
+Disallow: /auth
+Disallow: /search
+
+Sitemap: ${argv.baseExternalUrl}/sitemap.xml
+`;
+
+app.use("/robots.txt", (_, res) => {
+    res.status(200).send(robotsTxt);
+});
+
 app.use(
-    "/sitemap",
     buildSitemapRouter({
         baseExternalUrl: argv.baseExternalUrl,
-        registry: new Registry({ baseUrl: argv.registryApiBaseUrlInternal })
+        registry: new Registry({
+            baseUrl: argv.registryApiBaseUrlInternal,
+            maxRetries: 0
+        })
     })
 );
+
+// Proxy any other URL to 404 error page
+const maxErrorDataUrlLength = 1500;
+app.use("/", function(req, res) {
+    let redirectUri: any = new URI("/error");
+    const url =
+        req.originalUrl.length > maxErrorDataUrlLength
+            ? req.originalUrl.substring(0, maxErrorDataUrlLength)
+            : req.originalUrl;
+    const errorData = {
+        errorCode: 404,
+        url: url
+    };
+    redirectUri = redirectUri.escapeQuerySpace(false).search(errorData);
+    res.redirect(303, redirectUri.toString());
+});
 
 app.listen(argv.listenPort);
 console.log("Listening on port " + argv.listenPort);

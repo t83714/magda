@@ -2,6 +2,7 @@ import {} from "mocha";
 import { ApiRouterOptions } from "../createApiRouter";
 import { SMTPMailer, Message, Attachment } from "../SMTPMailer";
 import * as fs from "fs";
+import * as path from "path";
 
 import createApiRouter from "../createApiRouter";
 
@@ -11,13 +12,51 @@ import * as supertest from "supertest";
 import * as express from "express";
 import * as nock from "nock";
 import RegistryClient from "@magda/typescript-common/dist/registry/RegistryClient";
+import ContentApiDirMapper from "../ContentApiDirMapper";
+import EmailTemplateRender from "../EmailTemplateRender";
 
 const REGISTRY_URL: string = "https://registry.example.com";
+const CONTENT_API_URL: string = "https://content-api.example.com";
 const registry: RegistryClient = new RegistryClient({
     baseUrl: REGISTRY_URL,
     maxRetries: 0,
     secondsBetweenRetries: 0
 });
+
+const contentMapper = new ContentApiDirMapper(
+    CONTENT_API_URL,
+    "userId",
+    "secrets"
+);
+const templateRender = new EmailTemplateRender(contentMapper);
+const assetsFiles = [
+    "emailTemplates/request.html",
+    "emailTemplates/question.html",
+    "emailTemplates/feedback.html",
+    "emailTemplates/assets/top-left-logo.jpg",
+    "emailTemplates/assets/centered-logo.jpg"
+];
+
+sinon.stub(contentMapper, "fileExist").callsFake(function(localPath: string) {
+    if (assetsFiles.findIndex(file => file === localPath) !== -1) return true;
+    throw new Error(`Tried to access non-exist file: ${localPath}`);
+});
+
+sinon
+    .stub(contentMapper, "getFileContent")
+    .callsFake(function(localPath: string) {
+        if (assetsFiles.findIndex(file => file === localPath) === -1) {
+            throw new Error(`Tried to access non-exist file: ${localPath}`);
+        }
+        if (path.extname(localPath) === ".html") {
+            return fs.readFileSync(
+                path.join(__dirname, "..", "..", localPath),
+                "utf-8"
+            );
+        } else {
+            return fs.readFileSync(path.join(__dirname, "..", "..", localPath));
+        }
+    });
 
 const stubbedSMTPMailer: SMTPMailer = {
     checkConnectivity() {
@@ -41,6 +80,7 @@ const DEFAULT_DATASET_ID =
 const ENCODED_DEFAULT_DATASET_ID = encodeURIComponent(DEFAULT_DATASET_ID);
 const DEFAULT_DATASET_TITLE = "thisisatitle";
 const DEFAULT_DATASET_PUBLISHER = "publisher";
+const DEFAULT_DATASET_CONTACT_POINT = "contactpoint@example.com";
 const EXTERNAL_URL = "datagov.au.example.com";
 
 describe("send dataset request mail", () => {
@@ -54,7 +94,12 @@ describe("send dataset request mail", () => {
 
         app = express();
         app.use(require("body-parser").json());
-        app.use("/", createApiRouter(resolveRouterOptions(stubbedSMTPMailer)));
+        app.use(
+            "/",
+            createApiRouter(
+                resolveRouterOptions(stubbedSMTPMailer, templateRender)
+            )
+        );
 
         registryScope = nock(REGISTRY_URL);
     });
@@ -135,67 +180,112 @@ describe("send dataset request mail", () => {
         checkEmailErrorCases("/public/send/dataset/request");
     });
 
-    describe("/public/send/dataset/:datasetId/report", () => {
+    describe("/public/send/dataset/:datasetId/question", () => {
         it("should respond with an 200 response if everything was successful", () => {
-            sendStub.returns(Promise.resolve());
+            return sendQuestion().then(() => {
+                const args: Message = sendStub.firstCall.args[0];
 
-            stubGetRecordCall();
+                expect(args.to).to.equal(DEFAULT_DATASET_CONTACT_POINT);
+                expect(args.from).to.contain(DEFAULT_SENDER_NAME);
+                expect(args.from).to.contain(DEFAULT_RECIPIENT);
+                expect(args.replyTo).to.contain(DEFAULT_SENDER_EMAIL);
 
-            return supertest(app)
-                .post(
-                    `/public/send/dataset/${ENCODED_DEFAULT_DATASET_ID}/report`
-                )
-                .set({
-                    "Content-Type": "application/json"
-                })
-                .send({
-                    senderName: DEFAULT_SENDER_NAME,
-                    senderEmail: DEFAULT_SENDER_EMAIL,
-                    message: DEFAULT_MESSAGE_TEXT
-                })
-                .expect(200)
-                .then(() => {
-                    const args: Message = sendStub.firstCall.args[0];
+                expect(args.text).to.contain(DEFAULT_MESSAGE_TEXT);
+                expect(args.text).to.contain(DEFAULT_DATASET_PUBLISHER);
+                expect(args.text).to.contain(
+                    EXTERNAL_URL + "/dataset/" + ENCODED_DEFAULT_DATASET_ID
+                );
+                expect(args.text).to.contain("question");
 
-                    expect(args.to).to.equal(DEFAULT_RECIPIENT);
-                    expect(args.from).to.contain(DEFAULT_SENDER_NAME);
-                    expect(args.from).to.contain(DEFAULT_RECIPIENT);
-                    expect(args.replyTo).to.contain(DEFAULT_SENDER_EMAIL);
+                expect(args.html).to.contain(DEFAULT_MESSAGE_HTML);
+                expect(args.html).to.contain(DEFAULT_DATASET_PUBLISHER);
+                expect(args.html).to.contain(
+                    EXTERNAL_URL + "/dataset/" + ENCODED_DEFAULT_DATASET_ID
+                );
+                expect(args.html).to.contain("question");
 
-                    expect(args.text).to.contain(DEFAULT_MESSAGE_TEXT);
-                    expect(args.text).to.contain(DEFAULT_DATASET_PUBLISHER);
-                    expect(args.text).to.contain(
-                        EXTERNAL_URL + "/dataset/" + ENCODED_DEFAULT_DATASET_ID
-                    );
-                    expect(args.text).to.contain("feedback");
+                expect(args.subject).to.contain(DEFAULT_DATASET_TITLE);
 
-                    expect(args.html).to.contain(DEFAULT_MESSAGE_HTML);
-                    expect(args.html).to.contain(DEFAULT_DATASET_PUBLISHER);
-                    expect(args.html).to.contain(
-                        EXTERNAL_URL + "/dataset/" + ENCODED_DEFAULT_DATASET_ID
-                    );
-                    expect(args.html).to.contain("feedback");
+                checkAttachments(args.attachments);
+            });
+        });
 
-                    expect(args.subject).to.contain(DEFAULT_DATASET_TITLE);
+        it("should fall back to default recipient if forced via options", () => {
+            // Create a new app with different options
+            app = express();
+            app.use(require("body-parser").json());
+            const options = resolveRouterOptions(
+                stubbedSMTPMailer,
+                templateRender
+            );
+            options.alwaysSendToDefaultRecipient = true;
 
-                    checkAttachments(args.attachments);
-                });
+            app.use("/", createApiRouter(options));
+
+            return sendQuestion().then(() => {
+                const args: Message = sendStub.firstCall.args[0];
+
+                expect(args.to).to.equal(DEFAULT_RECIPIENT);
+                expect(args.subject).to.contain(
+                    "for " + DEFAULT_DATASET_CONTACT_POINT
+                );
+            });
+        });
+
+        it("should fall back to default recipient if there's no contact point", () => {
+            return sendQuestion({
+                contactPoint: undefined
+            }).then(() => {
+                const args: Message = sendStub.firstCall.args[0];
+
+                expect(args.to).to.equal(DEFAULT_RECIPIENT);
+            });
+        });
+
+        it("should fall back to default recipient if dataset contact point is a phone number", () => {
+            return sendQuestion({
+                contactPoint: "02 9411 1111"
+            }).then(() => {
+                const args: Message = sendStub.firstCall.args[0];
+
+                expect(args.to).to.equal(DEFAULT_RECIPIENT);
+            });
+        });
+
+        it("should fall back to default recipient if dataset contact point is a malformed email address", () => {
+            return sendQuestion({
+                contactPoint: "hello@blah"
+            }).then(() => {
+                const args: Message = sendStub.firstCall.args[0];
+
+                expect(args.to).to.equal(DEFAULT_RECIPIENT);
+            });
+        });
+
+        it("should fall back to default recipient if dataset contact point is a bunch of nonsense", () => {
+            return sendQuestion({
+                contactPoint:
+                    "You can contact me on my mobile phone between the hours of 9am and 5pm"
+            }).then(() => {
+                const args: Message = sendStub.firstCall.args[0];
+
+                expect(args.to).to.equal(DEFAULT_RECIPIENT);
+            });
         });
 
         checkEmailErrorCases(
-            `/public/send/dataset/${ENCODED_DEFAULT_DATASET_ID}/report`,
+            `/public/send/dataset/${ENCODED_DEFAULT_DATASET_ID}/question`,
             true
         );
 
         checkRegistryErrorCases(
-            `/public/send/dataset/${ENCODED_DEFAULT_DATASET_ID}/report`
+            `/public/send/dataset/${ENCODED_DEFAULT_DATASET_ID}/question`
         );
-    });
-    describe("/public/send/dataset/:datasetId/question", () => {
-        it("should respond with an 200 response if everything was successful", () => {
+
+        function sendQuestion(overrideDataset: {} = {}) {
             sendStub.returns(Promise.resolve());
 
-            stubGetRecordCall();
+            stubGetRecordCall(overrideDataset);
 
             return supertest(app)
                 .post(
@@ -209,46 +299,11 @@ describe("send dataset request mail", () => {
                     senderEmail: DEFAULT_SENDER_EMAIL,
                     message: DEFAULT_MESSAGE_TEXT
                 })
-                .expect(200)
-                .then(() => {
-                    const args: Message = sendStub.firstCall.args[0];
-
-                    expect(args.to).to.equal(DEFAULT_RECIPIENT);
-                    expect(args.from).to.contain(DEFAULT_SENDER_NAME);
-                    expect(args.from).to.contain(DEFAULT_RECIPIENT);
-                    expect(args.replyTo).to.contain(DEFAULT_SENDER_EMAIL);
-
-                    expect(args.text).to.contain(DEFAULT_MESSAGE_TEXT);
-                    expect(args.text).to.contain(DEFAULT_DATASET_PUBLISHER);
-                    expect(args.text).to.contain(
-                        EXTERNAL_URL + "/dataset/" + ENCODED_DEFAULT_DATASET_ID
-                    );
-                    expect(args.text).to.contain("question");
-
-                    expect(args.html).to.contain(DEFAULT_MESSAGE_HTML);
-                    expect(args.html).to.contain(DEFAULT_DATASET_PUBLISHER);
-                    expect(args.html).to.contain(
-                        EXTERNAL_URL + "/dataset/" + ENCODED_DEFAULT_DATASET_ID
-                    );
-                    expect(args.html).to.contain("question");
-
-                    expect(args.subject).to.contain(DEFAULT_DATASET_TITLE);
-
-                    checkAttachments(args.attachments);
-                });
-        });
-
-        checkEmailErrorCases(
-            `/public/send/dataset/${ENCODED_DEFAULT_DATASET_ID}/question`,
-            true
-        );
-
-        checkRegistryErrorCases(
-            `/public/send/dataset/${ENCODED_DEFAULT_DATASET_ID}/question`
-        );
+                .expect(200);
+        }
     });
 
-    function stubGetRecordCall() {
+    function stubGetRecordCall(overrideObject: {} = {}) {
         registryScope
             .get(
                 `/records/${ENCODED_DEFAULT_DATASET_ID}?aspect=dcat-dataset-strings&dereference=false`
@@ -258,7 +313,9 @@ describe("send dataset request mail", () => {
                 aspects: {
                     "dcat-dataset-strings": {
                         title: DEFAULT_DATASET_TITLE,
-                        publisher: DEFAULT_DATASET_PUBLISHER
+                        publisher: DEFAULT_DATASET_PUBLISHER,
+                        contactPoint: DEFAULT_DATASET_CONTACT_POINT,
+                        ...overrideObject
                     }
                 }
             });
@@ -390,18 +447,24 @@ describe("send dataset request mail", () => {
     function checkAttachments(attachments: Array<Attachment>) {
         attachments.forEach(attachment => {
             expect(
-                fs.existsSync(attachment.path),
-                attachment.path + " to exist"
+                attachment.content instanceof Buffer ||
+                    typeof attachment.content === "string",
+                "attachment.content to exist"
             ).to.be.true;
         });
     }
 
-    function resolveRouterOptions(smtpMailer: SMTPMailer): ApiRouterOptions {
+    function resolveRouterOptions(
+        smtpMailer: SMTPMailer,
+        templateRender: EmailTemplateRender
+    ): ApiRouterOptions {
         return {
+            templateRender,
             defaultRecipient: DEFAULT_RECIPIENT,
             smtpMailer: smtpMailer,
             registry,
-            externalUrl: EXTERNAL_URL
+            externalUrl: EXTERNAL_URL,
+            alwaysSendToDefaultRecipient: false
         };
     }
 });

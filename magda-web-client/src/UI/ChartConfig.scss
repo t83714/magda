@@ -1,28 +1,41 @@
+@import "../_variables.scss";
 .chart-config {
     .chart-config_icon-select {
+        .button-group {
+            display: flex;
+        }
         button {
             background: transparent;
             border: 0;
             box-shadow: 0;
-            margin-right: 2px;
+            margin-right: 8px;
             border: 1px solid rgba(0, 0, 0, 0);
             padding: 4px;
-            &.isActive,
+            border: 2px solid $AU-color-foreground-action;
+            border-radius: 2px;
+            padding: 0.6rem;
+            &.isActive {
+                background: $AU-color-foreground-action;
+                img {
+                    filter: grayscale(1) brightness(10);
+                }
+            }
             &:hover {
-                border: 1px solid rgba(0, 0, 0, 0.26);
+                outline: $AU-colordark-foreground-focus auto 5px;
+                cursor: pointer;
             }
         }
     }
-    .chart-type {
-        margin-top: 1em;
-    }
-    .chart-title {
-        margin-top: 1em;
-    }
-    .x-axis {
-        margin-top: 1em;
-    }
+    .chart-type,
+    .chart-title,
+    .x-axis,
     .y-axis {
         margin-top: 1em;
+        max-width: 400px;
+    }
+
+    label {
+        display: block;
+        margin-bottom: 0.5rem;
     }
 }

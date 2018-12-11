@@ -3,13 +3,21 @@ import { Maybe } from "tsmonad";
 
 import Database from "./Database";
 import { PublicUser } from "@magda/typescript-common/dist/authorization-api/model";
-import { getUserIdHandling } from "@magda/typescript-common/dist/session/GetUserId";
+import {
+    getUserIdHandling,
+    getUserId
+} from "@magda/typescript-common/dist/session/GetUserId";
+import GenericError from "@magda/typescript-common/dist/authorization-api/GenericError";
 import AuthError from "@magda/typescript-common/dist/authorization-api/AuthError";
 
 export interface ApiRouterOptions {
     database: Database;
     jwtSecret: string;
 }
+
+/**
+ * @apiDefine Auth Authorization API
+ */
 
 export default function createApiRouter(options: ApiRouterOptions) {
     const database = options.database;
@@ -34,7 +42,7 @@ export default function createApiRouter(options: ApiRouterOptions) {
             .then(() => res.end());
     }
 
-    router.all("/private/*", function(req, res, next) {
+    const MUST_BE_ADMIN = function(req: any, res: any, next: any) {
         //--- private API requires admin level access
 
         getUserIdHandling(
@@ -54,6 +62,7 @@ export default function createApiRouter(options: ApiRouterOptions) {
                             "Only admin users are authorised to access this API",
                             403
                         );
+                    req.user = user;
                     next();
                 } catch (e) {
                     console.warn(e);
@@ -63,7 +72,9 @@ export default function createApiRouter(options: ApiRouterOptions) {
                 }
             }
         );
-    });
+    };
+
+    router.all("/private/*", MUST_BE_ADMIN);
 
     router.get("/private/users/lookup", function(req, res) {
         const source = req.query.source;
@@ -90,15 +101,92 @@ export default function createApiRouter(options: ApiRouterOptions) {
         res.end();
     });
 
-    router.get("/public/users/whoami", function(req, res) {
-        getUserIdHandling(req, res, options.jwtSecret, (userId: string) =>
-            handlePromise(res, database.getUser(userId))
-        );
+    /**
+     * @apiGroup Auth
+     * @api {get} /v0/auth/users/whoami Get Current User
+     * @apiDescription Returns current user
+     *
+     * @apiSuccessExample {any} 200
+     *    {
+     *        "id":"...",
+     *        "displayName":"Fred Nerk",
+     *        "email":"fred.nerk@data61.csiro.au",
+     *        "photoURL":"...",
+     *        "source":"google",
+     *        "isAdmin": true
+     *    }
+     *
+     * @apiErrorExample {json} 200
+     *    {
+     *      "isError": true,
+     *      "errorCode": 401, //--- or 404, 500 depends on error type
+     *      "errorMessage": "Not authorized"
+     *    }
+     */
+
+    router.get("/public/users/whoami", async function(req, res) {
+        try {
+            res.set({
+                "Cache-Control": "no-cache, no-store, must-revalidate",
+                Pragma: "no-cache",
+                Expires: "0"
+            });
+            const userId = getUserId(req, options.jwtSecret).valueOr(null);
+            if (!userId) {
+                throw new AuthError();
+            }
+            const user = (await database.getUser(userId)).valueOr(null);
+            if (!user) {
+                throw new GenericError("Not Found User", 404);
+            }
+            res.json(user);
+        } catch (e) {
+            if (e instanceof GenericError) {
+                res.json(e.toData());
+            } else {
+                console.error(
+                    `Error happened when processed \`/public/users/whoami\`: ${e}`
+                );
+                res.status(500).send("Internal Server Error.");
+            }
+        }
     });
 
-    router.get("/public/users/:userId", (req, res) => {
-        const userId = req.params.userId;
+    router.get("/public/users/all", MUST_BE_ADMIN, async (req, res) => {
+        const items = await database.getUsers();
+        res.status(200)
+            .json({
+                items
+            })
+            .end();
+    });
 
+    /**
+     * @apiGroup Auth
+     * @api {get} /v0/auth/users/:userId Get User By Id
+     * @apiDescription Returns user by id
+     *
+     * @apiParam {string} userId id of user
+     *
+     * @apiSuccessExample {any} 200
+     *    {
+     *        "id":"...",
+     *        "displayName":"Fred Nerk",
+     *        "photoURL":"...",
+     *        "isAdmin": true
+     *    }
+     *
+     *
+     * @apiErrorExample {json} 500
+     *    Nothing
+     */
+    router.get("/public/users/:userId", (req, res) => {
+        res.set({
+            "Cache-Control": "no-cache, no-store, must-revalidate",
+            Pragma: "no-cache",
+            Expires: "0"
+        });
+        const userId = req.params.userId;
         const getPublicUser = database.getUser(userId).then(userMaybe =>
             userMaybe.map(user => {
                 const publicUser: PublicUser = {
@@ -113,6 +201,24 @@ export default function createApiRouter(options: ApiRouterOptions) {
         );
 
         handlePromise(res, getPublicUser);
+    });
+
+    router.put("/public/users/:userId", MUST_BE_ADMIN, async (req, res) => {
+        const userId = req.params.userId;
+        if (userId === req.user.id) {
+            throw new AuthError(
+                "Cannot change your own details through this endpoint",
+                403
+            );
+        }
+        // extract fields
+        const { isAdmin } = req.body;
+        const update = { isAdmin };
+        // update
+        await database.updateUser(userId, update);
+        res.status(200).json({
+            result: "SUCCESS"
+        });
     });
 
     // This is for getting a JWT in development so you can do fake authenticated requests to a local server.

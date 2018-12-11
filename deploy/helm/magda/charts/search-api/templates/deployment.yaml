@@ -20,13 +20,20 @@ spec:
           - "/app/bin/magda-search-api"
           - "-Dhttp.port=80"
           - "-Dakka.loglevel={{ .Values.global.logLevel }}"
-          - "-DelasticSearch.serverUrl=elasticsearch://elasticsearch:9300"
+          - "-DelasticSearch.serverUrl=elasticsearch://elasticsearch:9200"
 {{- if .Values.datasetsIndexVersion }}
           - "-DelasticSearch.indices.datasets.version={{ .Values.datasetsIndexVersion }}"
 {{- end }}
 {{- if .Values.regionsIndexVersion }}
-          - "-DelasticSearch.indices.datasets.version={{ .Values.regionsIndexVersion }}""
+          - "-DelasticSearch.indices.regions.version={{ .Values.regionsIndexVersion }}"
 {{- end }}
+        readinessProbe:
+          httpGet:
+            path: "/v0/datasets"
+            port: 80
+          initialDelaySeconds: 10
+          periodSeconds: 10
+          timeoutSeconds: 10
 {{- if .Values.global.enableLivenessProbes }}
         livenessProbe:
           httpGet:

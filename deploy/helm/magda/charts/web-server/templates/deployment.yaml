@@ -19,9 +19,19 @@ spec:
             "--config", "/etc/config/config.json",
             "--listenPort", "80",
             "--baseExternalUrl", {{ .Values.global.externalUrl | quote }},
+            "--useLocalStyleSheet", {{ .Values.global.useLocalStyleSheet | default .Values.useLocalStyleSheet | quote }},
             "--registryApiBaseUrlInternal", "http://registry-api/v0",
-            "--cspReportUri", {{ .Values.cspReportUri | quote }}
+            {{- range .Values.gapiIds }}
+            "--gapiIds", {{ . | quote }},
+            {{- end }}
         ]
+        readinessProbe:
+          httpGet:
+            path: "/"
+            port: 80
+          initialDelaySeconds: 10
+          periodSeconds: 10
+          timeoutSeconds: 10
 {{- if .Values.global.enableLivenessProbes }}
         livenessProbe:
           httpGet:

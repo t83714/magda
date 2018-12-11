@@ -79,13 +79,17 @@ export default abstract class JsonTransformer {
             jsonOrganization,
             this.sourceId
         );
+
         const name = this.getNameFromJsonOrganization(jsonOrganization);
-        return this.jsonToRecord(
+
+        const theRecord = this.jsonToRecord(
             id,
             name,
             jsonOrganization,
             this.organizationAspects
         );
+
+        return this.reviseOrganizationRecord(theRecord);
     }
 
     datasetJsonToRecord(jsonDataset: object): Record {
@@ -167,6 +171,10 @@ export default abstract class JsonTransformer {
         jsonDataset: any
     ): string;
 
+    reviseOrganizationRecord(record: Record): Record {
+        return record;
+    }
+
     private jsonToRecord(
         id: ConnectorRecordId,
         name: string,
@@ -217,7 +225,8 @@ export default abstract class JsonTransformer {
         }
 
         return {
-            id: id.toString(),
+            // If the id is undefined it'll be rejected by the JsonConnector
+            id: id && id.toString(),
             name: name,
             aspects: generatedAspects,
             sourceTag: undefined

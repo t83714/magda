@@ -1,27 +1,133 @@
-import React from "react";
-import { Medium, Small } from "../../UI/Responsive";
+import React, { Component } from "react";
 import { Link } from "react-router-dom";
-import govtLogo from "../../assets/au-govt-logo.svg";
+import PropTypes from "prop-types";
 import HeaderNav from "./HeaderNav";
-import HeaderMobile from "./HeaderMobile";
 import "./Header.css";
+import { config } from "../../config";
+import { Small, Medium } from "../../UI/Responsive";
+import MagdaNamespacesConsumer from "../../Components/i18n/MagdaNamespacesConsumer";
+import { needsContent } from "../../helpers/content";
 
-const Header = props => {
-    return (
-        <div className="top-header-container">
-            <Small>
-                <HeaderMobile />
-            </Small>
-            <Medium>
-                <div className="desktop-nav container">
-                    <Link to="/" className="logo">
-                        <img src={govtLogo} alt="Coat of Arms" />
-                    </Link>
-                    <HeaderNav />
-                </div>
-            </Medium>
-        </div>
-    );
+class Header extends Component {
+    constructor(props) {
+        super(props);
+        this.state = {
+            isMobileMenuOpen: false
+        };
+    }
+
+    componentDidMount() {
+        this.context.router.history.listen(() => {
+            this.setState({
+                isMobileMenuOpen: false
+            });
+        });
+    }
+
+    toggleMenu() {
+        this.setState({
+            isMobileMenuOpen: !this.state.isMobileMenuOpen
+        });
+    }
+
+    render() {
+        return (
+            <MagdaNamespacesConsumer ns={["global"]}>
+                {translate => {
+                    const applicationName = translate(["appName", "Magda"]);
+
+                    return (
+                        <div className="header">
+                            <div className="au-header">
+                                <div className="container">
+                                    <div className="row">
+                                        <div className="col-md-4 col-xs-12">
+                                            <Link
+                                                to="/"
+                                                className="au-header__brand"
+                                            >
+                                                <Small>
+                                                    <img
+                                                        src={
+                                                            config.headerMobileLogoUrl
+                                                        }
+                                                        alt={applicationName}
+                                                        className="au-header__logo"
+                                                    />
+                                                </Small>
+                                                <Medium>
+                                                    <img
+                                                        src={
+                                                            config.headerLogoUrl
+                                                        }
+                                                        alt={applicationName}
+                                                        className="au-header__logo"
+                                                    />
+                                                </Medium>
+                                            </Link>
+                                        </div>
+                                        <div className="col-md-8 col-xs-12">
+                                            <button
+                                                id="menu-toggle"
+                                                className={`menu-toggle au-btn au-btn--block au-btn--tertiary icon au-accordion--${
+                                                    this.state.isMobileMenuOpen
+                                                        ? "open"
+                                                        : "closed"
+                                                }`}
+                                                onClick={() =>
+                                                    this.toggleMenu()
+                                                }
+                                            >
+                                                {this.state.isMobileMenuOpen
+                                                    ? "Close menu"
+                                                    : "Open menu"}
+                                            </button>
+                                        </div>
+                                        <div className="col-md-8 col-xs-12">
+                                            <div
+                                                className={`au-accordion__body au-accordion--${
+                                                    this.state.isMobileMenuOpen
+                                                        ? "open"
+                                                        : "closed"
+                                                } menu`}
+                                                aria-hidden={
+                                                    !this.state.isMobileMenuOpen
+                                                }
+                                            >
+                                                <Small>
+                                                    <div className="mobile-nav">
+                                                        <HeaderNav
+                                                            isMobile={true}
+                                                            headerNavigation={
+                                                                this.props
+                                                                    .headerNavigation
+                                                            }
+                                                        />
+                                                    </div>
+                                                </Small>
+                                                <Medium>
+                                                    <HeaderNav
+                                                        headerNavigation={
+                                                            this.props
+                                                                .headerNavigation
+                                                        }
+                                                    />
+                                                </Medium>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    );
+                }}
+            </MagdaNamespacesConsumer>
+        );
+    }
+}
+
+Header.contextTypes = {
+    router: PropTypes.object.isRequired
 };
 
-export default Header;
+export default needsContent("headerNavigation")(Header);

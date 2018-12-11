@@ -1,5 +1,6 @@
 import React, { Component } from "react";
 import PropTypes from "prop-types";
+import memoize from "memoize-one";
 import "./DataPreviewMap.css";
 import DataPreviewMapOpenInNationalMapButton from "./DataPreviewMapOpenInNationalMapButton";
 import { config } from "../config";
@@ -12,7 +13,8 @@ export const defaultDataSourcePreference = [
     "GeoJSON",
     "WFS",
     "csv-geo-au",
-    "KML"
+    "KML",
+    "KMZ"
 ];
 
 export const isSupportedFormat = function(format) {
@@ -23,80 +25,86 @@ export const isSupportedFormat = function(format) {
     );
 };
 
+// React 16.3 advice for replacing prop -> state updates for computations
+const determineDistribution = memoize(function determineDistribution(
+    distributions,
+    dataSourcePreference
+) {
+    if (!distributions || !distributions.length) return null;
+    if (!dataSourcePreference || !dataSourcePreference.length) {
+        dataSourcePreference = defaultDataSourcePreference;
+    }
+    dataSourcePreference = dataSourcePreference.map(item => item.toLowerCase());
+    let selectedDis = null,
+        preferenceOrder = -1;
+    distributions
+        .filter(
+            item =>
+                (item.linkStatusAvailable && item.linkActive) ||
+                !item.linkStatusAvailable
+        )
+        .forEach(dis => {
+            const format = dis.format.toLowerCase();
+            const distributionPreferenceOrder = dataSourcePreference.indexOf(
+                format
+            );
+            if (distributionPreferenceOrder === -1) return;
+            if (
+                preferenceOrder === -1 ||
+                distributionPreferenceOrder < preferenceOrder
+            ) {
+                preferenceOrder = distributionPreferenceOrder;
+                selectedDis = dis;
+                return;
+            }
+        });
+    return selectedDis;
+});
+
 class DataPreviewMap extends Component {
     constructor(props) {
         super(props);
         this.state = {
-            isInitLoading: true,
-            isMapLoading: false,
-            isMapPreviewAvailable: false,
-            selectedDistribution: null
+            loaded: false,
+            isMapInteractive: false
         };
         this.onIframeMessageReceived = this.onIframeMessageReceived.bind(this);
-        this.iframeRef = null;
-    }
-
-    createStateFromProps(props) {
-        this.iframeRef = null;
-
-        if (!props.distributions || !props.distributions.length) {
-            this.setState({
-                isInitLoading: true,
-                isMapLoading: false,
-                isMapPreviewAvailable: false,
-                selectedDistribution: null
-            });
-            return;
-        }
-        const selectedDistribution = this.determineDistribution(props);
-        if (!selectedDistribution) {
-            this.setState({
-                isInitLoading: false,
-                isMapPreviewAvailable: false,
-                selectedDistribution: null
-            });
-            return;
-        } else {
-            if (console && console.log) {
-                console.log("map preview distribution selection: ");
-                console.log(selectedDistribution);
-            }
-            this.setState({
-                isInitLoading: false,
-                isMapLoading: true,
-                isMapPreviewAvailable: true,
-                selectedDistribution: selectedDistribution
-            });
-        }
-    }
-
-    componentWillMount() {
-        this.createStateFromProps(this.props);
+        this.iframeRef = React.createRef();
+        this.handleMapClick = evt => {
+            this.setState({ isMapInteractive: true });
+        };
+        this.handleMapMouseLeave = evt => {
+            this.setState({ isMapInteractive: false });
+        };
     }
 
     componentDidMount() {
         window.addEventListener("message", this.onIframeMessageReceived);
+    }
+    componentDidUpdate(prevProps, prevState) {
+        if (this.props.distributions !== prevProps.distributions) {
+            if (!this.props.distributions || !this.props.distributions.length) {
+                this.setState({
+                    loaded: false
+                });
+            }
+        }
     }
 
     componentWillUnmount() {
         window.removeEventListener("message", this.onIframeMessageReceived);
     }
 
-    componentWillReceiveProps(props) {
-        this.createStateFromProps(props);
-    }
-
-    createCatalogItemFromDistribution() {
+    createCatalogItemFromDistribution(selectedDistribution) {
         return {
             initSources: [
                 {
                     catalog: [
                         {
-                            name: this.state.selectedDistribution.title,
+                            name: selectedDistribution.title,
                             type: "magda-item",
                             url: config.baseUrl,
-                            distributionId: this.state.selectedDistribution
-                                .identifier,
+                            distributionId: selectedDistribution.identifier,
                             isEnabled: true,
                             zoomOnEnable: true
                         }
@@ -113,75 +121,40 @@ class DataPreviewMap extends Component {
         };
     }
 
-    determineDistribution(props) {
-        const distributions = props.distributions;
-        let dataSourcePreference = props.dataSourcePreference;
-        if (!dataSourcePreference || !dataSourcePreference.length)
-            dataSourcePreference = defaultDataSourcePreference;
-        dataSourcePreference = dataSourcePreference.map(item =>
-            item.toLowerCase()
-        );
-        if (!distributions || !distributions.length) return null;
-        let selectedDis = null,
-            perferenceOrder = -1;
-        distributions
-            .filter(
-                item =>
-                    (item.linkStatusAvailable && item.linkActive) ||
-                    !item.linkStatusAvailable
-            )
-            .forEach(dis => {
-                const format = dis.format.toLowerCase();
-                const distributionPerferenceOrder = dataSourcePreference.indexOf(
-                    format
-                );
-                if (distributionPerferenceOrder === -1) return;
-                if (
-                    perferenceOrder === -1 ||
-                    distributionPerferenceOrder < perferenceOrder
-                ) {
-                    perferenceOrder = distributionPerferenceOrder;
-                    selectedDis = dis;
-                    return;
-                }
-            });
-        return selectedDis;
-    }
-
     onIframeMessageReceived(e) {
-        if (
-            this.state.isInitLoading ||
-            !this.state.isMapPreviewAvailable ||
-            !this.iframeRef
-        )
-            return;
-        const iframeWindow = this.iframeRef.contentWindow;
+        const selectedDistribution = determineDistribution(
+            this.props.distributions,
+            this.props.dataSourcePreference
+        );
+
+        if (!selectedDistribution || !this.iframeRef.current) return;
+        const iframeWindow = this.iframeRef.current.contentWindow;
         if (iframeWindow !== e.source) return;
         if (e.data === "ready") {
             iframeWindow.postMessage(
-                this.createCatalogItemFromDistribution(),
+                this.createCatalogItemFromDistribution(selectedDistribution),
                 "*"
             );
             this.setState({
-                isMapLoading: true
+                loaded: false
             });
             if (this.props.onLoadingStart) {
                 try {
                     this.props.onLoadingStart();
                 } catch (e) {
-                    console.log(e);
+                    console.error(e);
                 }
             }
             return;
         } else if (e.data === "loading complete") {
             this.setState({
-                isMapLoading: false
+                loaded: true
             });
             if (this.props.onLoadingEnd) {
                 try {
                     this.props.onLoadingEnd();
                 } catch (e) {
-                    console.log(e);
+                    console.error(e);
                 }
             }
             return;
@@ -189,88 +162,69 @@ class DataPreviewMap extends Component {
     }
 
     render() {
-        if (!this.state.isInitLoading && !this.state.isMapPreviewAvailable)
-            return null; //-- requested by Tash: hide the section if no data available
+        const selectedDistribution = determineDistribution(
+            this.props.distributions,
+            this.props.dataSourcePreference
+        );
 
-        // 3 states:
-        // - loading component (isInitLoading === true) -> Show spinner
-        // - loading terria (isMapLoading === true) -> Continue showing spinner and start loading map hidden
-        // - everything loaded (neither true) -> No spinner, show map
+        if (!selectedDistribution) return null; // hide the section if no data available
 
-        let iframe = null;
-        if (!this.state.isInitLoading) {
-            iframe = (
-                <div style={{ position: "relative" }}>
-                    <DataPreviewMapOpenInNationalMapButton
-                        distribution={this.state.selectedDistribution}
-                        style={{
-                            position: "absolute",
-                            right: "10px",
-                            top: "10px",
-                            visibility: this.state.isMapLoading
-                                ? "hidden"
-                                : "visible"
-                        }}
-                    />
-                    <Medium>
-                        <iframe
-                            title={this.state.selectedDistribution.title}
-                            width="100%"
-                            height="420px"
-                            frameBorder="0"
-                            src={
-                                config.previewMapUrl +
-                                "#mode=preview&hideExplorerPanel=1"
-                            }
-                            ref={f => (this.iframeRef = f)}
-                            style={
-                                this.state.isMapLoading
-                                    ? {
-                                          visibility: "hidden",
-                                          position: "absolute"
-                                      }
-                                    : {}
-                            }
-                        />
-                    </Medium>
-                    <Small>
-                        <iframe
-                            title={this.state.selectedDistribution.title}
-                            width="100%"
-                            height="200px"
-                            frameBorder="0"
-                            src={
-                                config.previewMapUrl +
-                                "#mode=preview&hideExplorerPanel=1&clean"
-                            }
-                            ref={f => (this.iframeRef = f)}
-                            style={
-                                this.state.isMapLoading
-                                    ? {
-                                          visibility: "hidden",
-                                          position: "absolute"
-                                      }
-                                    : {}
-                            }
-                        />
-                    </Small>
-                </div>
-            );
-        }
         return (
-            <div className="data-preview-map">
-                <h3>Map Preview</h3>
-                {(this.state.isInitLoading || this.state.isMapLoading) && (
-                    <div>
-                        <Medium>
+            <div>
+                <h3 className="section-heading">Map Preview</h3>
+                <Small>
+                    <DataPreviewMapOpenInNationalMapButton
+                        distribution={selectedDistribution}
+                        style={{
+                            position: "relative",
+                            top: "10px",
+                            visibility: "visible"
+                        }}
+                        buttonText="View in NationalMap"
+                    />
+                </Small>
+                <Medium>
+                    <div
+                        className="data-preview-map"
+                        onClick={this.handleMapClick}
+                        onMouseLeave={this.handleMapMouseLeave}
+                    >
+                        {!this.state.loaded && (
                             <Spinner width="100%" height="420px" />
-                        </Medium>
-                        <Small>
-                            <Spinner width="100%" height="200px" />
-                        </Small>
+                        )}
+                        <DataPreviewMapOpenInNationalMapButton
+                            distribution={selectedDistribution}
+                            buttonText="Open in NationalMap"
+                            style={{
+                                position: "absolute",
+                                right: "10px",
+                                top: "10px"
+                            }}
+                        />
+                        {selectedDistribution.identifier != null && (
+                            <iframe
+                                key={selectedDistribution.identifier}
+                                title={selectedDistribution}
+                                width="100%"
+                                height="420px"
+                                frameBorder="0"
+                                src={
+                                    config.previewMapUrl +
+                                    "#mode=preview&hideExplorerPanel=1"
+                                }
+                                ref={this.iframeRef}
+                                className={[
+                                    !this.state.loaded &&
+                                        "data-preview-map-iframe_loading",
+                                    !this.state.isMapInteractive &&
+                                        "data-preview-map-iframe_no-scroll"
+                                ]
+                                    .filter(c => !!c)
+                                    .join(" ")}
+                            />
+                        )}
                     </div>
-                )}
-                {iframe}
+                </Medium>
             </div>
         );
     }

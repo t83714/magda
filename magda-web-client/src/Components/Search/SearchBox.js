@@ -2,7 +2,6 @@ import "./SearchBox.css";
 import { connect } from "react-redux";
 import { bindActionCreators } from "redux";
 import propTypes from "prop-types";
-import { config } from "../../config";
 import debounce from "lodash.debounce";
 import defined from "../../helpers/defined";
 import React, { Component } from "react";
@@ -14,6 +13,9 @@ import PropTypes from "prop-types";
 import queryString from "query-string";
 import SearchSuggestionBox from "./SearchSuggestionBox";
 import { Small, Medium } from "../../UI/Responsive";
+import stripFiltersFromQuery from "./stripFiltersFromQuery";
+import { withRouter } from "react-router-dom";
+import MagdaNamespacesConsumer from "../../Components/i18n/MagdaNamespacesConsumer";
 
 class SearchBox extends Component {
     constructor(props) {
@@ -31,53 +33,61 @@ class SearchBox extends Component {
         // it needs to be undefined here, so the default value should be from the url
         // once this value is set, the value should always be from the user input
         this.state = {
-            searchText: undefined,
+            searchText: null,
             width: 0,
             height: 0,
             isFocus: false
         };
         this.searchInputFieldRef = null;
+        props.history.listen(location => {
+            this.debounceUpdateSearchQuery.cancel();
+            this.setState({
+                searchText: null
+            });
+        });
     }
 
     debounceUpdateSearchQuery = debounce(this.updateSearchText, 3000);
 
-    componentWillMount() {
+    componentDidMount() {
         this.props.fetchRegionMapping();
     }
 
-    componentWillReceiveProps(nextProps) {
-        this.setState({
-            searchText: nextProps.location.search.q
-        });
-    }
-
-    onSearchTextChange(event) {
+    onSearchTextChange(event, keepFilters) {
         const text = event.target.value;
         this.setState({
             searchText: text
         });
-        this.debounceUpdateSearchQuery(text);
+        this.debounceUpdateSearchQuery(text, keepFilters);
     }
 
     /**
-     * update only the search text, remove all facets
+     * update only the search text
      */
-    updateSearchText(text) {
+    updateSearchText(text, keepFilters) {
         if (text === "") text = "*";
         // dismiss keyboard on mobile when new search initiates
         if (this.searchInputFieldRef) this.searchInputFieldRef.blur();
-        this.updateQuery({
+
+        const query = {
             q: text,
             page: undefined
+        };
+
+        this.updateQuery(keepFilters ? query : stripFiltersFromQuery(query));
+        this.setState({
+            searchText: null
         });
     }
 
-    handleSearchFieldEnterKeyPress(event) {
+    handleSearchFieldEnterKeyPress(event, keepFilters) {
         // when user hit enter, no need to submit the form
         if (event.charCode === 13) {
             event.preventDefault();
-            this.debounceUpdateSearchQuery(this.getSearchBoxValue());
-            this.debounceUpdateSearchQuery.flush();
+            this.debounceUpdateSearchQuery.flush(
+                this.getSearchBoxValue(),
+                keepFilters
+            );
         }
     }
 
@@ -85,7 +95,6 @@ class SearchBox extends Component {
      * If the search button is clicked, we do the search immediately
      */
     onClickSearch() {
-        this.debounceUpdateSearchQuery(this.getSearchBoxValue());
         this.debounceUpdateSearchQuery.flush();
     }
 
@@ -122,25 +131,18 @@ class SearchBox extends Component {
         this.updateSearchText("");
     }
 
-    componentDidMount() {
-        // if(this.state.height !== this.container.offsetHeight || this.state.width !== this.container.offsetWidth){
-        //   this.setState({
-        //     width: this.container.offsetWidth,
-        //     height: this.container.offsetHeight
-        //   })
-        // }
-    }
-
-    render() {
-        const input = (
+    inputBox(keepFilters) {
+        return (
             <input
                 type="text"
                 name="search"
                 id="search"
                 placeholder="Search for open data"
                 value={this.getSearchBoxValue()}
-                onChange={this.onSearchTextChange}
-                onKeyPress={this.handleSearchFieldEnterKeyPress}
+                onChange={e => this.onSearchTextChange(e, keepFilters)}
+                onKeyPress={e =>
+                    this.handleSearchFieldEnterKeyPress(e, keepFilters)
+                }
                 autoComplete="off"
                 ref={el => (this.searchInputFieldRef = el)}
                 onFocus={() => this.setState({ isFocus: true })}
@@ -151,7 +153,9 @@ class SearchBox extends Component {
                 }
             />
         );
+    }
 
+    render() {
         const suggestionBox = (
             <SearchSuggestionBox
                 searchText={this.getSearchBoxValue()}
@@ -160,36 +164,43 @@ class SearchBox extends Component {
             />
         );
 
-        const icon =
-            this.props.isHome || this.props.isMobile ? searchDark : searchLight;
+        const icon = this.props.isHome ? searchDark : searchLight;
         return (
-            <div className="searchBox">
-                <label htmlFor="search">
-                    <span className="sr-only">
-                        {"Search " + config.appName}
-                    </span>
-                    <Medium>
-                        <div style={{ position: "relative" }}>
-                            {input}
-                            {suggestionBox}
-                        </div>
-                    </Medium>
-                    <Small>{input}</Small>
-                    <span className="search-input__highlight">
-                        {this.getSearchBoxValue()}
-                    </span>
-                    <button
-                        onClick={this.onClickSearch}
-                        className="search-btn"
-                        type="button"
-                    >
-                        <img src={icon} alt="search button" />
-                        <span className="sr-only">submit search</span>
-                    </button>
-                </label>
+            <MagdaNamespacesConsumer ns={["global"]}>
+                {translate => (
+                    <div className="searchBox">
+                        <label htmlFor="search">
+                            <span className="sr-only">
+                                {"Search " + translate(["appName", ""])}
+                            </span>
+                            <Medium>
+                                <div style={{ position: "relative" }}>
+                                    {this.inputBox(true)}
+                                    {suggestionBox}
+                                </div>
+                            </Medium>
+                            <Small>{this.inputBox(false)}</Small>
+                            <span className="search-input__highlight">
+                                {this.getSearchBoxValue()}
+                            </span>
+                            <button
+                                onClick={this.onClickSearch}
+                                className={`search-btn ${
+                                    this.getSearchBoxValue().length > 0
+                                        ? "not-empty"
+                                        : "empty"
+                                }`}
+                                type="button"
+                            >
+                                <img src={icon} alt="search button" />
+                                <span className="sr-only">submit search</span>
+                            </button>
+                        </label>
 
-                <Small>{suggestionBox}</Small>
-            </div>
+                        <Small>{suggestionBox}</Small>
+                    </div>
+                )}
+            </MagdaNamespacesConsumer>
         );
     }
 }
@@ -201,7 +212,8 @@ SearchBox.contextTypes = {
 const mapStateToProps = (state, ownProps) => {
     let { datasetSearch } = state;
     return {
-        freeText: datasetSearch.freeText
+        freeText: datasetSearch.freeText,
+        strings: state.content.strings
     };
 };
 
@@ -213,7 +225,9 @@ const mapDispatchToProps = dispatch =>
         dispatch
     );
 
+const SearchBoxWithRouter = withRouter(props => <SearchBox {...props} />);
+
 export default connect(
     mapStateToProps,
     mapDispatchToProps
-)(SearchBox);
+)(SearchBoxWithRouter);

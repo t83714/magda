@@ -2,55 +2,77 @@ import React, { Component } from "react";
 import DatasetSummary from "../../Components/Dataset/DatasetSummary";
 import "./SearchResults.css";
 import SearchPageSuggest from "./SearchPageSuggest";
-import { enableSuggestDatasetPage } from "../../config";
+import { needsContent } from "../../helpers/content";
+
+function SuggestionBox() {
+    return (
+        <li
+            key="suggestion-box"
+            className="search-results__result correspondence-dropdown-search"
+        >
+            <SearchPageSuggest />
+        </li>
+    );
+}
 
 class SearchResults extends Component {
-    getSummaryText() {
-        if (this.props.searchResults.length) {
-            if (this.props.strategy === "match-part") {
-                return (
-                    <div className="search-recomendations__count">
-                        The following {this.props.totalNumberOfResults} datasets
-                        match some but not all of your search criteria
-                    </div>
-                );
+    getSuggestionBoxIndex = () => {
+        if (this.props.suggestionBoxAtEnd && this.props.isFirstPage) {
+            return this.props.configuration.searchResultsPerPage;
+        }
+
+        const scores = this.props.searchResults.map(result => result.score);
+
+        for (let i = 0; i < scores.length; i++) {
+            if (
+                scores[i] <
+                this.props.configuration.datasetSearchSuggestionScoreThreshold
+            ) {
+                return i;
             }
         }
-        return null;
-    }
+
+        return -1;
+    };
 
     render() {
+        const suggestionBoxIndex = this.props.configuration
+            .datasetSearchSuggestionScoreThreshold
+            ? this.getSuggestionBoxIndex()
+            : -1;
+
+        // The searchResults will usually pass us one more search result than we actually want to display, so we know
+        // whether to put the suggest box at the end.
+        const shownSearchResults = this.props.searchResults.slice(
+            0,
+            this.props.configuration.searchResultsPerPage
+        );
+
         return (
             <div className="search-results">
-                {this.getSummaryText()}
                 <ul className="list--unstyled">
-                    {this.props.searchResults.map(
-                        (result, i) =>
-                            //show the request dataset form only after the first result
-                            enableSuggestDatasetPage && i === 0 ? (
-                                <React.Fragment key={i}>
-                                    <li className="search-results__result">
-                                        <DatasetSummary
-                                            dataset={result}
-                                            searchText={this.props.searchText}
-                                        />
-                                    </li>
-                                    <li
-                                        key={i - 5}
-                                        className="search-results__result"
-                                    >
-                                        <SearchPageSuggest />
-                                    </li>
-                                </React.Fragment>
-                            ) : (
-                                <li key={i} className="search-results__result">
-                                    <DatasetSummary
-                                        dataset={result}
-                                        searchText={this.props.searchText}
-                                    />
-                                </li>
-                            )
-                    )}
+                    {/* Only show the suggestion box before the first result if we're on the first page - if we're not
+                    on the first page then presumably it was already shown as the last result on the previous page */}
+                    {suggestionBoxIndex === 0 &&
+                        this.props.isFirstPage && <SuggestionBox />}
+
+                    {shownSearchResults.map((result, i) => (
+                        //show the request dataset form only after the first result
+                        <React.Fragment key={i}>
+                            <li
+                                key={`result-${i}`}
+                                className="search-results__result"
+                            >
+                                <DatasetSummary
+                                    dataset={result}
+                                    searchText={this.props.searchText}
+                                    searchResultNumber={i}
+                                />
+                            </li>
+
+                            {i + 1 === suggestionBoxIndex && <SuggestionBox />}
+                        </React.Fragment>
+                    ))}
                 </ul>
             </div>
         );
@@ -59,4 +81,4 @@ class SearchResults extends Component {
 
 SearchResults.defaultProps = { searchResults: [] };
 
-export default SearchResults;
+export default needsContent("configuration")(SearchResults);

@@ -1,10 +1,10 @@
 import "./Search.css";
 import { connect } from "react-redux";
-import { config } from "../../config";
+import { Redirect } from "react-router-dom";
 import defined from "../../helpers/defined";
 import Pagination from "../../UI/Pagination";
 import Notification from "../../UI/Notification";
-import ReactDocumentTitle from "react-document-title";
+import MagdaDocumentTitle from "../../Components/i18n/MagdaDocumentTitle";
 import React, { Component } from "react";
 import SearchFacets from "../../Components/SearchFacets/SearchFacets";
 import SearchResults from "../SearchResults/SearchResults";
@@ -16,6 +16,7 @@ import {
 } from "../../actions/datasetSearchActions";
 import queryString from "query-string";
 import ProgressBar from "../../UI/ProgressBar";
+import stripFiltersFromQuery from "./stripFiltersFromQuery";
 
 // eslint-disable-next-line
 import PropTypes from "prop-types";
@@ -42,16 +43,16 @@ class Search extends Component {
         };
     }
 
-    componentWillMount() {
+    componentDidMount() {
         this.props.resetDatasetSearch();
         this.props.fetchSearchResultsIfNeeded(
             queryString.parse(this.props.location.search)
         );
     }
 
-    componentWillReceiveProps(nextProps) {
-        nextProps.fetchSearchResultsIfNeeded(
-            queryString.parse(nextProps.location.search)
+    componentDidUpdate() {
+        this.props.fetchSearchResultsIfNeeded(
+            queryString.parse(this.props.location.search)
         );
     }
 
@@ -70,16 +71,11 @@ class Search extends Component {
      * update only the search text, remove all facets
      */
     updateSearchText(text: string) {
-        this.updateQuery({
-            q: text,
-            publisher: [],
-            regionId: undefined,
-            regionType: undefined,
-            dateFrom: undefined,
-            dateTo: undefined,
-            format: [],
-            page: undefined
-        });
+        this.updateQuery(
+            stripFiltersFromQuery({
+                q: text
+            })
+        );
     }
 
     /**
@@ -132,12 +128,49 @@ class Search extends Component {
         });
     }
 
+    /**
+     * counts the number of filters that have active values
+     * this is then appended to the results text on the search page
+     */
+    filterCount = () => {
+        let count = 0;
+        if (this.props.activePublishers.length > 0) {
+            count++;
+        }
+        if (this.props.activeFormats.length > 0) {
+            count++;
+        }
+
+        if (this.props.activeRegion.regionId) {
+            count++;
+        }
+
+        if (this.props.activeDateFrom || this.props.activeDateTo) {
+            count++;
+        }
+        if (count !== 0) {
+            const filterText = count === 1 ? " filter" : " filters";
+            return " with " + count + filterText;
+        } else {
+            return "";
+        }
+    };
+
     render() {
         const searchText =
             queryString.parse(this.props.location.search).q || "";
+        const currentPage =
+            +queryString.parse(this.props.location.search).page || 1;
+        const isBlankSearch = searchText === "*" || searchText === "";
+        const searchResultsPerPage = this.props.configuration
+            .searchResultsPerPage;
+
         return (
-            <ReactDocumentTitle
-                title={`Searching for ${searchText} | ${config.appName}`}
+            <MagdaDocumentTitle
+                prefixes={[
+                    `Datasets search: ${searchText}`,
+                    `Page ${currentPage}`
+                ]}
             >
                 <div>
                     {this.props.isFetching && <ProgressBar />}
@@ -151,19 +184,31 @@ class Search extends Component {
                                 !this.props.error && (
                                     <div className="sub-heading">
                                         {" "}
-                                        results ( {this.props.hitCount} )
+                                        results {this.filterCount()} (
+                                        {this.props.hitCount})
                                     </div>
                                 )}
                             {!this.props.isFetching &&
                                 !this.props.error && (
                                     <div>
-                                        {!this.searchBoxEmpty() && (
-                                            <MatchingStatus
-                                                datasets={this.props.datasets}
-                                                strategy={this.props.strategy}
-                                            />
-                                        )}
+                                        <MatchingStatus
+                                            datasets={this.props.datasets}
+                                            strategy={this.props.strategy}
+                                        />
 
+                                        {// redirect if we came from a 404 error and there is only one result
+                                        queryString.parse(
+                                            this.props.location.search
+                                        ).notfound &&
+                                            this.props.datasets.length ===
+                                                1 && (
+                                                <Redirect
+                                                    to={`/dataset/${encodeURI(
+                                                        this.props.datasets[0]
+                                                            .identifier
+                                                    )}/details`}
+                                                />
+                                            )}
                                         <SearchResults
                                             strategy={this.props.strategy}
                                             searchResults={this.props.datasets}
@@ -177,19 +222,16 @@ class Search extends Component {
                                                 ).open
                                             }
                                             searchText={searchText}
+                                            isFirstPage={currentPage === 1}
+                                            suggestionBoxAtEnd={isBlankSearch}
                                         />
                                         {this.props.hitCount >
-                                            config.resultsPerPage && (
+                                            searchResultsPerPage && (
                                             <Pagination
-                                                currentPage={
-                                                    +queryString.parse(
-                                                        this.props.location
-                                                            .search
-                                                    ).page || 1
-                                                }
+                                                currentPage={currentPage}
                                                 maxPage={Math.ceil(
                                                     this.props.hitCount /
-                                                        config.resultsPerPage
+                                                        searchResultsPerPage
                                                 )}
                                                 onPageChange={this.onPageChange}
                                                 totalItems={this.props.hitCount}
@@ -208,7 +250,7 @@ class Search extends Component {
                         </div>
                     </div>
                 </div>
-            </ReactDocumentTitle>
+            </MagdaDocumentTitle>
         );
     }
 }
@@ -230,12 +272,18 @@ function mapStateToProps(state, ownProps) {
     let { datasetSearch } = state;
     return {
         datasets: datasetSearch.datasets,
+        activeFormats: datasetSearch.activeFormats,
+        activePublishers: datasetSearch.activePublishers,
+        activeRegion: datasetSearch.activeRegion,
+        activeDateFrom: datasetSearch.activeDateFrom,
+        activeDateTo: datasetSearch.activeDateTo,
         hitCount: datasetSearch.hitCount,
         isFetching: datasetSearch.isFetching,
-        progress: datasetSearch.progress,
         strategy: datasetSearch.strategy,
         error: datasetSearch.error,
-        freeText: datasetSearch.freeText
+        freeText: datasetSearch.freeText,
+        strings: state.content.strings,
+        configuration: state.content.configuration
     };
 }
 

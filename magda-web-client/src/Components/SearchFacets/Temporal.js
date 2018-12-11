@@ -6,14 +6,17 @@ import {
 } from "../../actions/datasetSearchActions";
 import { connect } from "react-redux";
 import defined from "../../helpers/defined";
-import FacetTemporal from "./FacetTemporal";
 import React, { Component } from "react";
+import TemporalWrapper from "./TemporalWrapper";
 
 class Temporal extends Component {
     constructor(props) {
         super(props);
         this.onResetTemporalFacet = this.onResetTemporalFacet.bind(this);
         this.onToggleTemporalOption = this.onToggleTemporalOption.bind(this);
+        this.state = {
+            disableApplyTemporal: false
+        };
     }
 
     onToggleTemporalOption(datesArray) {
@@ -35,32 +38,41 @@ class Temporal extends Component {
             dateTo: undefined,
             page: undefined
         });
-        this.props.closeFacet();
         // dispatch event
         this.props.dispatch(resetDateFrom());
         this.props.dispatch(resetDateTo());
+        this.props.closeFacet();
+        this.setState(() => {
+            return {
+                disableApplyTemporal: false
+            };
+        });
     }
 
     render() {
-        return (
-            <FacetTemporal
-                title="date range"
-                id="temporal"
-                hasQuery={
-                    defined(this.props.activeDateFrom) ||
-                    defined(this.props.activeDateTo)
-                }
-                activeDates={[
-                    this.props.activeDateFrom,
-                    this.props.activeDateTo
-                ]}
-                onToggleOption={this.onToggleTemporalOption}
-                onResetFacet={this.onResetTemporalFacet}
-                toggleFacet={this.props.toggleFacet}
-                isOpen={this.props.isOpen}
-                temporalRange={this.props.temporalRange}
-            />
-        );
+        if (defined(this.props.temporalRange)) {
+            return (
+                <TemporalWrapper
+                    title="date range"
+                    id="temporal"
+                    hasQuery={
+                        defined(this.props.activeDateFrom) ||
+                        defined(this.props.activeDateTo)
+                    }
+                    activeDates={[
+                        this.props.activeDateFrom,
+                        this.props.activeDateTo
+                    ]}
+                    onToggleOption={this.onToggleTemporalOption}
+                    onResetFacet={this.onResetTemporalFacet}
+                    toggleFacet={this.props.toggleFacet}
+                    isOpen={this.props.isOpen}
+                    temporalRange={this.props.temporalRange}
+                    disableApply={this.state.disableApplyTemporal}
+                />
+            );
+        }
+        return null;
     }
 }
 

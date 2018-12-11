@@ -1,6 +1,5 @@
 import "./FacetTemporal.css";
 import React, { Component } from "react";
-import FacetHeader from "./FacetHeader";
 import defined from "../../helpers/defined";
 import MonthPicker from "../../UI/MonthPicker";
 import range from "../../assets/range.svg";
@@ -15,35 +14,103 @@ class FacetTemporal extends Component {
         this.selectEndYear = this.selectEndYear.bind(this);
         this.selectStartMonth = this.selectStartMonth.bind(this);
         this.selectEndMonth = this.selectEndMonth.bind(this);
-        this.toggleDisableApplyButton = this.toggleDisableApplyButton.bind(
-            this
-        );
+        this.resetTemporalFacet = this.resetTemporalFacet.bind(this);
         this.state = {
             startYear: undefined,
             startMonth: undefined,
             endYear: undefined,
-            endMonth: undefined,
-            applyButtonDisabled: true
+            endMonth: undefined
         };
     }
 
-    componentWillReceiveProps(nextProps) {
-        if (nextProps.temporalRange) {
-            const dateFrom = defined(nextProps.activeDates[0])
-                ? new Date(nextProps.activeDates[0])
-                : new Date(nextProps.temporalRange[0]);
-            const dateTo = defined(nextProps.activeDates[1])
-                ? new Date(nextProps.activeDates[1])
-                : new Date(nextProps.temporalRange[1]);
-            this.setState({
-                startYear: dateFrom.getUTCFullYear(),
-                startMonth: dateFrom.getUTCMonth(),
-                endYear: dateTo.getUTCFullYear(),
-                endMonth: dateTo.getUTCMonth(),
-                applyButtonDisabled: !this.props.hasQuery
-            });
+    static getDerivedStateFromProps(props, state) {
+        // only copy props to state if state has not been set
+        // basically beofre any manual UI change.
+        // Once user starts changing UI, it reflects that changed state
+        if (
+            !state.startYear &&
+            !state.endYear &&
+            !state.startMonth &&
+            !state.endMonth
+        ) {
+            if (props.temporalRange) {
+                const dateFrom = defined(props.activeDates[0])
+                    ? new Date(props.activeDates[0])
+                    : new Date(props.temporalRange[0]);
+                const dateTo = defined(props.activeDates[1])
+                    ? new Date(props.activeDates[1])
+                    : new Date(props.temporalRange[1]);
+                return {
+                    startYear: dateFrom.getUTCFullYear(),
+                    startMonth: dateFrom.getUTCMonth(),
+                    endYear: dateTo.getUTCFullYear(),
+                    endMonth: dateTo.getUTCMonth()
+                };
+            } else {
+                return {
+                    startYear: defined(props.activeDates[0])
+                        ? new Date(props.activeDates[0])
+                        : undefined,
+                    startMonth: undefined,
+                    endYear: undefined,
+                    endMonth: undefined
+                };
+            }
         }
+        return null;
     }
+
+    /**
+     * only apply filter if the year is defined/selected
+     * in the case that temporalWrapper is open, if the FacetHeader 'x' buttton
+     * is clicked, it calls the ToggleReset, which calls the closeFacet() method,
+     * which in turns applies the selected dates. So we need to see if the 'x' has
+     * been clicked in the facetHeader. If it has, then don't applyFilter.
+     */
+    componentWillUnmount() {
+        if (this.canApply() && !this.props.disableApply) {
+            this.onApplyFilter();
+        }
+        this.props.toggleDateReset();
+    }
+
+    canApply() {
+        // we need to check those values are not
+        // null
+        // undefined
+        // NaN
+        // month can be 0, while year cannot be 0
+        return (
+            this.state.startYear &&
+            this.state.endYear &&
+            defined(this.state.startMonth) &&
+            !isNaN(this.state.startMonth) &&
+            defined(this.state.endMonth) &&
+            !isNaN(this.state.endMonth)
+        );
+    }
+
+    /**
+     * Makes sure that when clear button is called,
+     * start year and end years are reset.
+     */
+    resetTemporalFacet = () => {
+        this.setState(
+            () => {
+                return {
+                    startYear: undefined,
+                    startMonth: undefined,
+                    endYear: undefined,
+                    endMonth: undefined
+                };
+            },
+            //make sure the dates are cleared
+            // before calling reset and close
+            () => {
+                this.props.onResetFacet();
+            }
+        );
+    };
 
     onClearDates() {
         let datesArray = [undefined, undefined];
@@ -57,6 +124,7 @@ class FacetTemporal extends Component {
             this.state.startMonth + 1
         );
         const dateTo = new Date(this.state.endYear, this.state.endMonth + 1);
+
         this.props.onToggleOption([
             dateFrom.toISOString(),
             dateTo.toISOString()
@@ -67,33 +135,23 @@ class FacetTemporal extends Component {
         this.setState({
             startYear
         });
-        this.toggleDisableApplyButton(false);
     }
 
     selectEndYear(endYear) {
         this.setState({
             endYear
         });
-        this.toggleDisableApplyButton(false);
     }
 
     selectStartMonth(startMonth) {
         this.setState({
             startMonth
         });
-        this.toggleDisableApplyButton(false);
     }
 
     selectEndMonth(endMonth) {
         this.setState({
             endMonth
-        });
-        this.toggleDisableApplyButton(false);
-    }
-
-    toggleDisableApplyButton(disabled) {
-        this.setState({
-            applyButtonDisabled: disabled
         });
     }
 
@@ -110,7 +168,6 @@ class FacetTemporal extends Component {
         return (
             <div className="facet-temporal-month-picker">
                 <MonthPicker
-                    onInvalidInput={this.toggleDisableApplyButton}
                     showingDefault={!this.props.hasQuery}
                     year={this.state.startYear}
                     month={this.state.startMonth}
@@ -126,7 +183,6 @@ class FacetTemporal extends Component {
                     <img src={range} alt="date range" />
                 </div>
                 <MonthPicker
-                    onInvalidInput={this.toggleDisableApplyButton}
                     showingDefault={!this.props.hasQuery}
                     year={this.state.endYear}
                     month={this.state.endMonth}
@@ -143,45 +199,31 @@ class FacetTemporal extends Component {
     }
 
     render() {
-        if (this.props.temporalRange) {
-            return (
-                <div className="facet-wrapper">
-                    <FacetHeader
-                        onResetFacet={this.props.onResetFacet}
-                        title={this.props.title}
-                        id={this.props.id}
-                        activeOptions={this.props.activeDates}
-                        hasQuery={this.props.hasQuery}
-                        onClick={this.props.toggleFacet}
-                        isOpen={this.props.isOpen}
-                    />
-                    {this.props.isOpen && (
-                        <div className="clearfix facet-temporal facet-body">
-                            {this.renderDatePicker()}
-                            <div className="facet-footer">
-                                <button
-                                    className="au-btn au-btn--secondary"
-                                    disabled={this.state.applyButtonDisabled}
-                                    onClick={this.props.onResetFacet}
-                                >
-                                    {" "}
-                                    Clear{" "}
-                                </button>
-                                <button
-                                    className="au-btn au-btn--primary"
-                                    disabled={this.state.applyButtonDisabled}
-                                    onClick={this.onApplyFilter}
-                                >
-                                    {" "}
-                                    Apply{" "}
-                                </button>
-                            </div>
-                        </div>
-                    )}
+        return (
+            <div>
+                <div className="clearfix facet-temporal facet-body">
+                    {this.renderDatePicker()}
+                    <div className="facet-footer">
+                        <button
+                            className="au-btn au-btn--secondary"
+                            disabled={!this.canApply()}
+                            onClick={this.resetTemporalFacet}
+                        >
+                            {" "}
+                            Clear{" "}
+                        </button>
+                        <button
+                            className="au-btn au-btn--primary"
+                            disabled={!this.canApply()}
+                            onClick={this.onApplyFilter}
+                        >
+                            {" "}
+                            Apply{" "}
+                        </button>
+                    </div>
                 </div>
-            );
-        }
-        return null;
+            </div>
+        );
     }
 }
 

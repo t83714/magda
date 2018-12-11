@@ -1,22 +1,24 @@
 import React from "react";
 import { Route, Switch, Redirect } from "react-router-dom";
+import { connect } from "react-redux";
 import Search from "../Components/Search/Search";
 import Account from "../Components/Account/Account";
 import Login from "../Components/Account/Login";
 import SignInRedirect from "../Components/Account/SignInRedirect";
 import RecordHandler from "../Components/RecordHandler";
-import ProjectsViewer from "../Components/Project/ProjectsViewer";
-import ProjectDetails from "../Components/Project/ProjectDetails";
-import CreateProject from "../Components/Project/CreateProject";
 import PublishersViewer from "../Components/Publisher/PublishersViewer";
 import PublisherDetails from "../Components/Publisher/PublisherDetails";
-import { staticPageRegister } from "../content/register";
+import StaticPage from "../Components/StaticPage";
 import RouteNotFound from "../Components/RouteNotFound";
+import Loading from "../Components/Loading";
+import ErrorPage from "../Components/ErrorPage/index";
 import SuggestDataset from "../Components/RequestDataset/SuggestDataset";
 import Header from "../Components/Header/Header";
 import SearchBoxSwitcher from "../Components/SearchBox/SearchBoxSwitcher";
-import { enableSuggestDatasetPage } from "../config";
-const renderBody = () => {
+
+import "./OtherPages.css";
+
+const renderBody = (loading, pages) => {
     return (
         <Switch>
             <Route exact path="/search" component={Search} />
@@ -28,13 +30,7 @@ const renderBody = () => {
                 component={RecordHandler}
             />
             <Route path="/dataset/:datasetId" component={RecordHandler} />
-            <Route exact path="/projects" component={ProjectsViewer} />
-            <Route exact path="/projects/new" component={CreateProject} />
-            <Route path="/projects/:projectId" component={ProjectDetails} />
-            {/* hide in prod */}
-            {enableSuggestDatasetPage && (
-                <Route exact path="/suggest" component={SuggestDataset} />
-            )}
+            <Route exact path="/suggest" component={SuggestDataset} />
             <Route exact path="/organisations" component={PublishersViewer} />
             <Route
                 exact
@@ -53,15 +49,14 @@ const renderBody = () => {
                 path="/organisations/:publisherId"
                 component={PublisherDetails}
             />
-            {staticPageRegister.map(item => (
-                <Route
-                    path={`/page/:id`}
-                    key={item.path}
-                    component={item.component}
-                />
-            ))}
+            <Route path="/page/:pageId" component={StaticPage} />
             <Route exact path="/404" component={RouteNotFound} />
-            <Route path="/*" component={RouteNotFound} />
+            <Route exact path="/error" component={ErrorPage} />
+            {loading ? (
+                <Loading />
+            ) : (
+                <Route path="/*" component={RouteNotFound} />
+            )}
         </Switch>
     );
 };
@@ -76,11 +71,36 @@ const OtherPages = props => {
                     theme="none-home"
                 />
             )}
-            <div className="container app-container" id="content">
-                {renderBody()}
+            <div
+                className={`container app-container ${
+                    props.finishedFetching ? "loaded" : "loading"
+                }`}
+                id="content"
+            >
+                {renderBody(props.loading, props.pages)}
             </div>
         </div>
     );
 };
 
-export default OtherPages;
+const mapStateToProps = (state, ownProps) => {
+    const datasetIsFetching = state.record.datasetIsFetching;
+    const distributionIsFetching = state.record.distributionIsFetching;
+    const publishersAreFetching = state.publisher.isFetchingPublishers;
+    const datasetSearchIsFetching = state.datasetSearch.isFetching;
+    const publisherIsFetching = state.publisher.isFetchingPublisher;
+    const pages = state.content.pages;
+    const loading = !state.content.isFetched;
+    return {
+        finishedFetching:
+            !datasetIsFetching &&
+            !publishersAreFetching &&
+            !datasetSearchIsFetching &&
+            !distributionIsFetching &&
+            !publisherIsFetching,
+        pages,
+        loading
+    };
+};
+
+export default connect(mapStateToProps)(OtherPages);

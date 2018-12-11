@@ -24,8 +24,22 @@
             "request": "launch",
             "protocol": "inspector",
             "name": "Launch Project Open Data Connector",
-            "program":
-                "${workspaceRoot}/magda-project-open-data-connector/bin/index.js",
+            "runtimeExecutable": "${workspaceRoot}/node_modules/.bin/ts-node",
+            "windows": {
+                "runtimeExecutable":
+                    "${workspaceRoot}/node_modules/.bin/ts-node.cmd"
+            },
+            "args": [
+                "-r",
+                "tsconfig-paths/register",
+                "src/index.ts",
+                "--config",
+                "${workspaceRoot}/deploy/connector-config/moreton-bay-regional-council-data-portal.json",
+                "--userId",
+                "00000000-0000-4000-8000-000000000000",
+                "--jwtSecret",
+                "squirrel"
+            ],
             "cwd": "${workspaceRoot}/magda-project-open-data-connector"
         },
         {
@@ -33,16 +47,17 @@
             "request": "launch",
             "protocol": "inspector",
             "name": "Launch CSW Connector",
-            "runtimeExecutable":
-                "${workspaceRoot}/scripts/node_modules/.bin/ts-node",
+            "runtimeExecutable": "${workspaceRoot}/node_modules/.bin/ts-node",
             "windows": {
                 "runtimeExecutable":
-                    "${workspaceRoot}/scripts/node_modules/.bin/ts-node.cmd"
+                    "${workspaceRoot}/node_modules/.bin/ts-node.cmd"
             },
-            "runtimeArgs": ["-r", "tsconfig-paths/register", "src/index.ts"],
             "args": [
+                "-r",
+                "tsconfig-paths/register",
+                "src/index.ts",
                 "--config",
-                "${workspaceRoot}/deploy/connector-config/australian-bureau-of-meteorology.json",
+                "${workspaceRoot}/deploy/connector-config/environment.json",
                 "--userId",
                 "00000000-0000-4000-8000-000000000000",
                 "--jwtSecret",
@@ -54,7 +69,7 @@
             "type": "node",
             "request": "launch",
             "protocol": "inspector",
-            "name": "Sleuther Format",
+            "name": "Minion Format",
             "runtimeExecutable":
                 "${workspaceRoot}/scripts/node_modules/.bin/ts-node",
             "windows": {
@@ -70,7 +85,7 @@
                 "--userId",
                 "00000000-0000-4000-8000-000000000000"
             ],
-            "cwd": "${workspaceRoot}/magda-sleuther-format"
+            "cwd": "${workspaceRoot}/magda-minion-format"
         },
         {
             "type": "node",
@@ -101,9 +116,9 @@
             "type": "node",
             "request": "launch",
             "protocol": "inspector",
-            "name": "Sleuther Framework tests",
+            "name": "Minion Framework tests",
             "program": "${workspaceRoot}/node_modules/mocha/bin/_mocha",
-            "cwd": "${workspaceRoot}/magda-sleuther-framework",
+            "cwd": "${workspaceRoot}/magda-minion-framework",
             "args": [
                 "--compilers",
                 "ts:ts-node/register",
@@ -116,9 +131,9 @@
             "type": "node",
             "request": "launch",
             "protocol": "inspector",
-            "name": "format sleuther api tests",
+            "name": "format minion api tests",
             "program": "${workspaceRoot}/node_modules/mocha/bin/_mocha",
-            "cwd": "${workspaceRoot}/magda-sleuther-format",
+            "cwd": "${workspaceRoot}/magda-minion-format",
             "args": [
                 "--compilers",
                 "ts:ts-node/register",
@@ -131,10 +146,10 @@
             "type": "node",
             "request": "launch",
             "protocol": "inspector",
-            "name": "sleuther-linked-data-rating",
+            "name": "minion-linked-data-rating",
             "program":
-                "${workspaceRoot}/magda-sleuther-linked-data-rating/node_modules/mocha/bin/_mocha",
-            "cwd": "${workspaceRoot}/magda-sleuther-linked-data-rating",
+                "${workspaceRoot}/magda-minion-linked-data-rating/node_modules/mocha/bin/_mocha",
+            "cwd": "${workspaceRoot}/magda-minion-linked-data-rating",
             "args": [
                 "--compilers",
                 "ts:@magda/scripts/node_modules/ts-node/register",
@@ -147,15 +162,29 @@
             "type": "node",
             "request": "launch",
             "protocol": "inspector",
-            "name": "sleuther-broken-link test",
-            "program":
-                "${workspaceRoot}/magda-sleuther-broken-link/node_modules/mocha/bin/_mocha",
-            "cwd": "${workspaceRoot}/magda-sleuther-broken-link",
+            "name": "minion-broken-link test",
+            "program": "${workspaceRoot}/node_modules/mocha/bin/_mocha",
+            "cwd": "${workspaceRoot}/magda-minion-broken-link",
             "args": [
                 "--compilers",
-                "ts:@magda/scripts/node_modules/ts-node/register",
+                "ts:${workspaceRoot}/node_modules/ts-node/register",
                 "--require",
-                "@magda/scripts/node_modules/tsconfig-paths/register",
+                "${workspaceRoot}/node_modules/tsconfig-paths/register",
+                "src/test/**/*.spec.ts"
+            ]
+        },
+        {
+            "type": "node",
+            "request": "launch",
+            "protocol": "inspector",
+            "name": "Gatewat Test Cases",
+            "program": "${workspaceRoot}/node_modules/mocha/bin/_mocha",
+            "cwd": "${workspaceRoot}/magda-gateway",
+            "args": [
+                "--compilers",
+                "ts:ts-node/register",
+                "--require",
+                "tsconfig-paths/register",
                 "src/test/**/*.spec.ts"
             ]
         },
@@ -164,15 +193,14 @@
             "request": "launch",
             "protocol": "inspector",
             "name": "Launch Gateway",
-            "runtimeExecutable":
-                "${workspaceRoot}/scripts/node_modules/.bin/ts-node",
+            "runtimeExecutable": "${workspaceRoot}/node_modules/.bin/ts-node",
             "windows": {
                 "runtimeExecutable":
-                    "${workspaceRoot}/scripts/node_modules/.bin/ts-node.cmd"
+                    "${workspaceRoot}/node_modules/.bin/ts-node.cmd"
             },
             "args": [
                 "-r",
-                "@magda/scripts/node_modules/tsconfig-paths/register",
+                "${workspaceRoot}/node_modules/tsconfig-paths/register",
                 "src/index.ts",
                 "--jwtSecret",
                 "squirrel",
@@ -189,7 +217,9 @@
                 "--facebookClientSecret",
                 "secret",
                 "--userId",
-                "00000000-0000-4000-8000-000000000000"
+                "00000000-0000-4000-8000-000000000000",
+                "--enableAuthEndpoint",
+                "true"
             ],
             "env": {
                 "PGUSER": "client"
@@ -201,17 +231,16 @@
             "request": "launch",
             "protocol": "inspector",
             "name": "Launch Web Server",
-            "runtimeExecutable":
-                "${workspaceRoot}/scripts/node_modules/.bin/ts-node",
+            "runtimeExecutable": "${workspaceRoot}/node_modules/.bin/ts-node",
             "windows": {
                 "runtimeExecutable":
-                    "${workspaceRoot}/scripts/node_modules/.bin/ts-node.cmd"
+                    "${workspaceRoot}/node_modules/.bin/ts-node.cmd"
             },
             "args": [
                 "-r",
                 "tsconfig-paths/register",
                 "src/index.ts"
-                //"--devProxy","http://magda-dev.terria.io/api/"
+                //"--devProxy","https://dev.magda.io/api/"
             ],
             "cwd": "${workspaceRoot}/magda-web-server"
         },
@@ -282,6 +311,29 @@
                 "${workspaceRoot}/scripts/create-docker-context-for-node-component.js",
             "cwd": "${workspaceRoot}/magda-gateway",
             "args": ["--output", "foo.tar.gz"]
+        },
+        {
+            "type": "node",
+            "request": "launch",
+            "protocol": "inspector",
+            "name": "Ckan Connector",
+            "runtimeExecutable": "${workspaceRoot}/node_modules/.bin/ts-node",
+            "windows": {
+                "runtimeExecutable":
+                    "${workspaceRoot}/node_modules/.bin/ts-node.cmd"
+            },
+            "args": [
+                "-r",
+                "tsconfig-paths/register",
+                "src/index.ts",
+                "--config",
+                "${workspaceRoot}/deploy/connector-config/data-gov-au.json",
+                "--userId",
+                "00000000-0000-4000-8000-000000000000",
+                "--jwtSecret",
+                "squirrel"
+            ],
+            "cwd": "${workspaceRoot}/magda-ckan-connector"
         }
     ]
 }

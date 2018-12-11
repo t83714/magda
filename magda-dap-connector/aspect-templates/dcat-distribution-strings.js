@@ -7,8 +7,11 @@ return {
     mediaType: distribution.mediaType || undefined,
     format: distribution.format || undefined,
     description: distribution.description || undefined,
-    issued: '',
+    issued: "",
     modified: distribution.lastUpdated
-    ? moment.unix(distribution.lastUpdated).utc().format()
-    : undefined,
+        ? moment
+              .unix(distribution.lastUpdated)
+              .utc()
+              .format()
+        : undefined
 };

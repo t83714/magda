@@ -1,16 +1,12 @@
 import React, { Component } from "react";
 import TemporalAspectViewer from "../../UI/TemporalAspectViewer";
 import DatasetPreview from "./DatasetPreview";
-import DescriptionBox from "../../UI/DescriptionBox";
 import MarkdownViewer from "../../UI/MarkdownViewer";
-import QualityIndicator from "../../UI/QualityIndicator";
-import TagsBox from "../../UI/TagsBox";
 import { connect } from "react-redux";
 import DistributionRow from "../DistributionRow";
 import queryString from "query-string";
 import "./RecordDetails.css";
 import "./DatasetDetails.css";
-import { Small, Medium } from "../../UI/Responsive";
 
 class DatasetDetails extends Component {
     state = {
@@ -18,33 +14,15 @@ class DatasetDetails extends Component {
     };
     render() {
         const dataset = this.props.dataset;
-        const datasetId = this.props.match.params.datasetId;
         const searchText =
             queryString.parse(this.props.location.search).q || "";
-        const source = `This dataset was originally found on [${
-            this.props.dataset.source
-        }](${dataset.landingPage})`;
-
+        const source = this.props.dataset.source
+            ? `This dataset was originally found on [${
+                  this.props.dataset.source
+              }](${dataset.landingPage})`
+            : "";
         return (
             <div className="dataset-details">
-                <div className="dataset-details-overview">
-                    <Small>
-                        <DescriptionBox
-                            content={dataset.description}
-                            truncateLength={200}
-                        />
-                    </Small>
-                    <Medium>
-                        <DescriptionBox
-                            content={dataset.description}
-                            truncateLength={500}
-                        />
-                    </Medium>
-                </div>
-                <div className="quality-rating-box">
-                    <QualityIndicator quality={dataset.linkedDataRating} />
-                </div>
-                <TagsBox tags={dataset.tags} />
                 <div className="dataset-preview">
                     <DatasetPreview
                         location={this.props.location}
@@ -55,42 +33,44 @@ class DatasetDetails extends Component {
                 <div className="row">
                     <div className="col-sm-12">
                         <div className="dataset-details-files-apis">
-                            <h2 className="clearfix">
+                            <h3 className="clearfix section-heading">
                                 <span className="section-heading">
                                     Files and APIs
                                 </span>
-                            </h2>
+                            </h3>
                             <div className="clearfix">
                                 {dataset.distributions.map(s => (
                                     <DistributionRow
                                         key={s.identifier}
                                         distribution={s}
-                                        datasetId={datasetId}
+                                        dataset={dataset}
                                         searchText={searchText}
                                     />
                                 ))}
                             </div>
                         </div>
-                        <div className="dataset-details-source">
-                            <h2 className="section-heading">Data Source</h2>
-                            <MarkdownViewer
-                                markdown={source}
-                                truncate={false}
-                            />
-                            <a
-                                className="landing-page"
-                                href={dataset.landingPage}
-                            >
-                                {dataset.landingPage}
-                            </a>
-                        </div>
+                        {source && (
+                            <div className="dataset-details-source">
+                                <h3 className="section-heading">Data Source</h3>
+                                <MarkdownViewer
+                                    markdown={source}
+                                    truncate={false}
+                                />
+                                <a
+                                    className="landing-page"
+                                    href={dataset.landingPage}
+                                >
+                                    {dataset.landingPage}
+                                </a>
+                            </div>
+                        )}
                         <div
                             className="dataset-details-temporal-coverage"
                             style={{ display: "none" }}
                         >
-                            <h2 className="section-heading">
+                            <h3 className="section-heading">
                                 Temporal coverage
-                            </h2>
+                            </h3>
                             <TemporalAspectViewer
                                 data={dataset.temporalCoverage}
                             />

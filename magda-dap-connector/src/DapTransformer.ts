@@ -23,7 +23,11 @@ export default class DapTransformer extends JsonTransformer {
         jsonDataset: any,
         sourceId: string
     ): ConnectorRecordId {
-        return new ConnectorRecordId(jsonDataset.id.identifier, "Dataset", sourceId);
+        return new ConnectorRecordId(
+            jsonDataset.id.identifier,
+            "Dataset",
+            sourceId
+        );
     }
 
     getIdFromJsonDistribution(
@@ -32,17 +36,14 @@ export default class DapTransformer extends JsonTransformer {
         sourceId: string
     ): ConnectorRecordId {
         return new ConnectorRecordId(
-            jsonDistribution.id||jsonDistribution.name,
+            jsonDistribution.id || jsonDistribution.name,
             "Distribution",
             sourceId
         );
     }
 
     getNameFromJsonOrganization(jsonOrganization: any): string {
-        return (
-            jsonOrganization.name ||
-            jsonOrganization.title
-        );
+        return jsonOrganization.name || jsonOrganization.title;
     }
 
     getNameFromJsonDataset(jsonDataset: any): string {

@@ -1,9 +1,12 @@
-import "isomorphic-fetch";
 import * as cors from "cors";
 import * as express from "express";
 import * as path from "path";
 import * as yargs from "yargs";
 import * as ejs from "ejs";
+import * as helmet from "helmet";
+import * as _ from "lodash";
+import * as compression from "compression";
+import * as basicAuth from "express-basic-auth";
 
 import addJwtSecretFromEnvVar from "@magda/typescript-common/dist/session/addJwtSecretFromEnvVar";
 
@@ -11,11 +14,15 @@ import Authenticator from "./Authenticator";
 import createApiRouter from "./createApiRouter";
 import createAuthRouter from "./createAuthRouter";
 import createGenericProxy from "./createGenericProxy";
+import createCkanRedirectionRouter from "./createCkanRedirectionRouter";
+import defaultConfig from "./defaultConfig";
 
 // Tell typescript about the semi-private __express field of ejs.
 declare module "ejs" {
     var __express: any;
 }
+
+const coerceJson = (path?: string) => path && require(path);
 
 const argv = addJwtSecretFromEnvVar(
     yargs
@@ -41,10 +48,37 @@ const argv = addJwtSecretFromEnvVar(
             type: "number",
             default: 5432
         })
-        .option("proxyRoutesPath", {
-            describe: "Path of the json that defines routes to proxy",
+        .option("proxyRoutesJson", {
+            describe:
+                "Path of the json that defines routes to proxy. These will be merged with the defaults specified in defaultConfig.ts.",
             type: "string",
-            default: "../local-routes.json"
+            coerce: coerceJson
+        })
+        .option("helmetJson", {
+            describe:
+                "Path of the json that defines node-helmet options, as per " +
+                "https://helmetjs.github.io/docs/. Node that this _doesn't_ " +
+                "include csp options as these are a separate module. These will " +
+                "be merged with the defaults specified in defaultConfig.ts.",
+
+            type: "string",
+            coerce: coerceJson
+        })
+        .option("cspJson", {
+            describe:
+                "Path of the json that defines node-helmet options, as per " +
+                "https://helmetjs.github.io/docs/. These will " +
+                "be merged with the defaults specified in defaultConfig.ts.",
+            type: "string",
+            coerce: coerceJson
+        })
+        .option("corsJson", {
+            describe:
+                "Path of the json that defines CORS options, as per " +
+                "https://www.npmjs.com/package/cors. These will " +
+                "be merged with the defaults specified in defaultConfig.ts.",
+            type: "string",
+            coerce: coerceJson
         })
         .option("authorizationApi", {
             describe: "The base URL of the authorization API.",
@@ -77,37 +111,87 @@ const argv = addJwtSecretFromEnvVar(
         })
         .option("facebookClientId", {
             describe: "The client ID to use for Facebook OAuth.",
-            type: "string"
+            type: "string",
+            default:
+                process.env.FACEBOOK_CLIENT_ID ||
+                process.env.npm_package_config_facebookClientId
         })
         .option("facebookClientSecret", {
             describe:
                 "The secret to use for Facebook OAuth.  This can also be specified with the FACEBOOK_CLIENT_SECRET environment variable.",
             type: "string",
-            default: process.env.FACEBOOK_CLIENT_SECRET
+            default:
+                process.env.FACEBOOK_CLIENT_SECRET ||
+                process.env.npm_package_config_facebookClientSecret
         })
         .option("googleClientId", {
             describe: "The client ID to use for Google OAuth.",
-            type: "string"
+            type: "string",
+            default:
+                process.env.GOOGLE_CLIENT_ID ||
+                process.env.npm_package_config_googleClientId
         })
         .option("googleClientSecret", {
             describe:
                 "The secret to use for Google OAuth.  This can also be specified with the GOOGLE_CLIENT_SECRET environment variable.",
             type: "string",
-            default: process.env.GOOGLE_CLIENT_SECRET
+            default:
+                process.env.GOOGLE_CLIENT_SECRET ||
+                process.env.npm_package_config_googleClientSecret
         })
         .option("aafClientUri", {
             describe: "The client ID to use for AAF Auth.",
-            type: "string"
+            type: "string",
+            default:
+                process.env.AAF_CLIENT_URI ||
+                process.env.npm_package_config_aafClientUri
         })
         .option("aafClientSecret", {
             describe:
                 "The secret to use for AAF Auth.  This can also be specified with the AAF_CLIENT_SECRET environment variable.",
             type: "string",
-            default: process.env.AAF_CLIENT_SECRET
+            default:
+                process.env.AAF_CLIENT_SECRET ||
+                process.env.npm_package_config_aafClientSecret
         })
         .options("ckanUrl", {
             describe: "The URL of a CKAN server to use for authentication.",
             type: "string"
+        })
+        .options("enableAuthEndpoint", {
+            describe: "Whether enable the AuthEndpoint",
+            type: "boolean",
+            default: false
+        })
+        .option("ckanRedirectionDomain", {
+            describe:
+                "The target domain for redirecting ckan Urls. If not specified, default value `ckan.data.gov.au` will be used.",
+            type: "string",
+            default: "ckan.data.gov.au"
+        })
+        .option("ckanRedirectionPath", {
+            describe:
+                "The target path for redirecting ckan Urls. If not specified, default value `` will be used.",
+            type: "string",
+            default: ""
+        })
+        .option("enableWebAccessControl", {
+            describe:
+                "Whether users are required to enter a username & password to access the magda web interface",
+            type: "boolean",
+            default: false
+        })
+        .option("webAccessUsername", {
+            describe:
+                "The web access username required for all users to access Magda web interface if `enableWebAccessControl` is true.",
+            type: "string",
+            default: process.env.WEB_ACCESS_USERNAME
+        })
+        .option("webAccessPassword", {
+            describe:
+                "The web access password required for all users to access Magda web interface if `enableWebAccessControl` is true.",
+            type: "string",
+            default: process.env.WEB_ACCESS_PASSWORD
         })
         .option("userId", {
             describe:
@@ -127,13 +211,20 @@ const authenticator = new Authenticator({
 
 // Create a new Express application.
 var app = express();
+
+// GZIP responses where appropriate
+app.use(compression());
+
+// Set sensible secure headers
 app.disable("x-powered-by");
+app.use(helmet(_.merge({}, defaultConfig.helmet, argv.helmetJson)));
+console.log(_.merge({}, defaultConfig.csp, argv.cspJson));
+app.use(
+    helmet.contentSecurityPolicy(_.merge({}, defaultConfig.csp, argv.cspJson))
+);
 
-const configuredCors = cors({
-    origin: true,
-    credentials: true
-});
-
+// Set up CORS headers for all requests
+const configuredCors = cors(_.merge({}, defaultConfig.cors, argv.corsJson));
 app.options("*", configuredCors);
 app.use(configuredCors);
 
@@ -142,29 +233,52 @@ app.set("views", path.join(__dirname, "..", "views"));
 app.set("view engine", "ejs");
 app.engine(".ejs", ejs.__express); // This stops express trying to do its own require of 'ejs'
 app.use(require("morgan")("combined"));
-app.use(
-    "/auth",
-    createAuthRouter({
-        authenticator: authenticator,
-        jwtSecret: argv.jwtSecret,
-        facebookClientId: argv.facebookClientId || '',
-        facebookClientSecret: argv.facebookClientSecret || '',
-        googleClientId: argv.googleClientId || '1049152486192-csgrnu1jcp9u8qoja90rbn3s5fpot5mh.apps.googleusercontent.com',
-        googleClientSecret: argv.googleClientSecret || 'BfcVqUZWmD_eUhqiDyVpJ_7w',
-        aafClientUri: argv.aafClientUri || 'https://rapid.test.aaf.edu.au/jwt/authnrequest/research/IeiWdzrJ47-eSowf3rfLTQ',
-        aafClientSecret: argv.aafClientSecret || 'BfcVqUZWmD_eUhqiDyVpJ_7w',
-        ckanUrl: argv.ckanUrl,
-        authorizationApi: argv.authorizationApi,
-        externalUrl: argv.externalUrl,
-        userId: argv.userId
-    })
-);
+
+app.get("/v0/healthz", function(req, res) {
+    res.status(200).send("OK");
+});
+
+// --- enable http basic authentication for all users
+if (argv.enableWebAccessControl) {
+    app.use(
+        basicAuth({
+            users: {
+                [argv.webAccessUsername]: argv.webAccessPassword
+            },
+            challenge: true,
+            unauthorizedResponse: `You cannot access the system unless provide correct username & password.`
+        })
+    );
+}
+
+if (argv.enableAuthEndpoint) {
+    app.use(
+        "/auth",
+        createAuthRouter({
+            authenticator: authenticator,
+            jwtSecret: argv.jwtSecret,
+            facebookClientId: argv.facebookClientId,
+            facebookClientSecret: argv.facebookClientSecret,
+            googleClientId: argv.googleClientId,
+            googleClientSecret: argv.googleClientSecret,
+            aafClientUri: argv.aafClientUri,
+            aafClientSecret: argv.aafClientSecret,
+            ckanUrl: argv.ckanUrl,
+            authorizationApi: argv.authorizationApi,
+            externalUrl: argv.externalUrl,
+            userId: argv.userId
+        })
+    );
+}
+
+const routes = _.merge({}, defaultConfig.proxyRoutes, argv.proxyRoutesJson);
+
 app.use(
     "/api/v0",
     createApiRouter({
         authenticator: authenticator,
         jwtSecret: argv.jwtSecret,
-        routes: require(argv.proxyRoutesPath)
+        routes
     })
 );
 app.use("/preview-map", createGenericProxy(argv.previewMap));

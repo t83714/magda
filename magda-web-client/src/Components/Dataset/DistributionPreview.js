@@ -23,7 +23,7 @@ const DataPreviewNone = () => "This distribution cannot be previewed";
 class DistributionPreview extends Component {
     renderByState() {
         // Decide which visualisation to use using visualization-info
-        // Compatibility is decided by backend "visualization sleuther"
+        // Compatibility is decided by backend "visualization minion"
         const compatiblePreviews = this.props.distribution.compatiblePreviews;
         let DataPreviewComponent = DataPreviewNone;
         if (compatiblePreviews.map) {
@@ -51,7 +51,7 @@ class DistributionPreview extends Component {
         return (
             <div className="data-previewer">
                 <h3 className="section-heading">
-                    <a href={url} target="_blank">
+                    <a href={url} target="_blank" rel="noopener noreferrer">
                         {url && url.substring(url.lastIndexOf("/") + 1)}
                     </a>
                 </h3>

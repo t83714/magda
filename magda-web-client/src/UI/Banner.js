@@ -4,7 +4,6 @@ import Cookies from "js-cookie";
 import React from "react";
 import { connect } from "react-redux";
 import "./Banner.css";
-import close from "../assets/close-light.svg";
 import { closeTopBanner } from "../actions/topBanner";
 
 class Banner extends React.Component {
@@ -35,7 +34,7 @@ class Banner extends React.Component {
             });
         }
 
-        window.location = "https://data.gov.au";
+        window.location = this.props.fallbackUrl;
     };
 
     render() {
@@ -46,7 +45,7 @@ class Banner extends React.Component {
                         A new look for Australia&apos;s data portal: our updated
                         site makes it easier for you to find relevant open data.
                         You can still{" "}
-                        <a onClick={this.goBack} href="https://data.gov.au/">
+                        <a onClick={this.goBack} href={this.props.fallbackUrl}>
                             go back to the old site
                         </a>
                     </span>
@@ -57,9 +56,7 @@ class Banner extends React.Component {
                             this.setState({ isOpen: false });
                             this.props.closeTopBanner();
                         }}
-                    >
-                        <img alt="close banner" src={close} />
-                    </button>
+                    />
                 </div>
             );
         }
