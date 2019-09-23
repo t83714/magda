@@ -63,3 +63,4 @@ resource "google_container_node_pool" "primary_magda_node_pool" {
     ]
   }
 }
+
