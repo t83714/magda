@@ -19,12 +19,12 @@ provider "kubernetes" {
 }
 
 module "external_ip" {
-  source = "./google-reserved-ip"
+  source = "../google-reserved-ip"
   project = var.project
 }
 
 module "cluster" {
-  source = "./google-cluster"
+  source = "../google-cluster"
   project = var.project
   region = var.region
 }
