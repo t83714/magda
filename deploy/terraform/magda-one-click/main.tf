@@ -1,5 +1,5 @@
 provider "google-beta" {
-  version     = "~> 2.7.0"
+  version     = ">= 2.11.0"
   project     = var.project
   region      = var.region
   credentials = "${file(var.credential_file_path)}"
