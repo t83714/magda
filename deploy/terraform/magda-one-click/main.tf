@@ -22,7 +22,6 @@ provider "kubernetes" {
 
 module "external_ip" {
   source  = "../google-reserved-ip"
-  project = var.project
 }
 
 module "cluster" {
