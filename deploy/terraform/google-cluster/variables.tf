@@ -45,5 +45,5 @@ variable "node_pool_name" {
 variable "cluster_name" {
   type  = string
   description = "the name of the cluster pool. Auto generate if not supplied"
-  default = null
+  default = "main-magda-cluster"
 }

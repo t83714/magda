@@ -17,3 +17,9 @@ variable "namespace" {
   type = string
   description = "The namespace to host the deployed Magda"
 }
+
+variable "credential_file_path" {
+  type = string
+  description = "Google service account key file path"
+}
+

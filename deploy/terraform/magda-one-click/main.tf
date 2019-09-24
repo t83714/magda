@@ -1,11 +1,13 @@
 provider "google-beta" {
-  version = "~> 2.7.0"
-  project = var.project
-  region  = var.region
+  version     = "~> 2.7.0"
+  project     = var.project
+  region      = var.region
+  credentials = "${file(var.credential_file_path)}"
 }
 
 locals {
   kube_cert_json = "{\"apiVersion\":\"networking.gke.io/v1beta1\",\"kind\":\"ManagedCertificate\",\"metadata\":{\"name\":\"magda-certificate\"},\"spec\":{\"domains\":[\"${module.external_ip.address}.xip.io\"]}}"
+  ingress_json   = "{\"apiVersion\":\"apiVersion: extensions/v1beta1\",\"kind\":\"Ingress\",\"metadata\":{\"name\":\"magda-ingress\",\"annotations\":{\"kubernetes.io/ingress.global-static-ip-name\":\"${module.external_ip.address}.xip.io\",\"networking.gke.io/managed-certificates\":\"magda-certificate\"}},\"spec\":{\"backend\":{\"serviceName\":\"gateway\",\"servicePort\":\"http\"}}}"
 }
 
 terraform {
@@ -15,54 +17,66 @@ terraform {
 }
 
 provider "kubernetes" {
-    
+
 }
 
 module "external_ip" {
-  source = "../google-reserved-ip"
+  source  = "../google-reserved-ip"
   project = var.project
 }
 
 module "cluster" {
-  source = "../google-cluster"
+  source  = "../google-cluster"
   project = var.project
-  region = var.region
+  region  = var.region
 }
 
 resource "kubernetes_namespace" "magda_namespace" {
   metadata {
     name = "${var.namespace}"
   }
+  depends_on = [
+    module.cluster
+  ]
 }
 
-resource "helm_release" "magda" {
-    name      = "magda"
-    repository = "https://charts.magda.io/"
-    chart     = "magda"
+resource "helm_release" "magda_helm_release" {
+  name       = "magda"
+  repository = "https://charts.magda.io/"
+  chart      = "magda"
 
-    namespace = "${kubernetes_namespace.magda_namespace.name}"
+  namespace = "${var.namespace}"
 
-    values = [
-        "${file("../../helm/magda-dev.yaml")}"
-    ]
+  values = [
+    "${file("../../helm/magda-dev.yml")}"
+  ]
 
-    set {
-        name  = "externalUrl"
-        value = "http://${module.external_ip.address}.xip.io/"
-    }
+  set {
+    name  = "externalUrl"
+    value = "http://${module.external_ip.address}.xip.io/"
+  }
+
+  depends_on = [
+    module.cluster
+  ]
 }
 
-resource "kubernetes_ingress" "magda_default_ingress" {
-    provisioner "local-exec" {
-        command = "echo '${local.kube_cert_json}' | kubectl apply"
-        on_failure = "fail"
-    }
-    metadata {
-        name = "magda-default-ingress"
-        annotations = {
-            "kubernetes.io/ingress.global-static-ip-name" = "${module.external_ip.address}.xip.io"
-            "networking.gke.io/managed-certificates" = "magda-certificate"
-        }
-    }
+# We need this hack only because k8s terraform provider can't support the latest API
+resource "null_resource" "after_helm_deployment" {
+  # When to trigger the cmd
+  depends_on = [
+    helm_release.magda_helm_release
+  ]
+
+  provisioner "local-exec" {
+    command    = "echo '${local.kube_cert_json}' | kubectl apply"
+    on_failure = "fail"
+  }
+
+  provisioner "local-exec" {
+    command    = "echo '${local.ingress_json}' | kubectl apply"
+    on_failure = "fail"
+  }
+
 }
 

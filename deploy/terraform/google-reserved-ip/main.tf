@@ -1,7 +1,4 @@
-provider "google-beta" {
-  version = "~> 2.7.0"
-  project = var.project
-}
+
 
 terraform {
   # The modules used in this example have been updated with 0.12 syntax, which means the example is no longer

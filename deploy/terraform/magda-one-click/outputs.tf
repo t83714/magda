@@ -2,12 +2,7 @@
 # MASTER OUTPUTS
 # ------------------------------------------------------------------------------
 
-output "status" {
-  description = "The status of the helm deployment"
-  value       = "${kubernetes_ingress.magda_default_ingress.status}"
-}
-
-output "values" {
-  description = "The status of the helm deployment"
-  value = "${kubernetes_ingress.magda_default_ingress.values}"
+output "metadata" {
+  description = "The metadata of the helm deployment"
+  value       = "${helm_release.magda_helm_release.metadata}"
 }

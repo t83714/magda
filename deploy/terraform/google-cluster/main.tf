@@ -1,8 +1,3 @@
-provider "google-beta" {
-  version = "~> 2.7.0"
-  project = var.project
-  region  = var.region
-}
 
 terraform {
   # The modules used in this example have been updated with 0.12 syntax, which means the example is no longer
@@ -24,7 +19,7 @@ resource "google_container_cluster" "primary_magda_cluster" {
   # It's important to do so as we will have a direct maping in the terraform `state` and make it possible to migrate existing cluster. 
   # e.g. Reuse the existing node pools that has been created
   remove_default_node_pool = true
-  initial_node_count = 1
+  initial_node_count       = 1
 
   master_auth {
     # Disable basic auth
@@ -38,23 +33,22 @@ resource "google_container_cluster" "primary_magda_cluster" {
 }
 
 resource "google_container_node_pool" "primary_magda_node_pool" {
-  provider = "google-beta"
+  provider   = "google-beta"
   name       = var.node_pool_name
   location   = var.region
   cluster    = google_container_cluster.primary_magda_cluster.name
   node_count = 1
 
+  management {
+    auto_upgrade = var.auto_upgrade
+  }
+
   node_config {
     preemptible  = var.preemptible
     machine_type = var.machine_type
-    
 
     metadata = {
       disable-legacy-endpoints = "true"
-    }
-
-    management = {
-      auto_upgrade = var.auto_upgrade
     }
 
     oauth_scopes = [
