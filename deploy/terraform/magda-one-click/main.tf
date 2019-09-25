@@ -126,12 +126,12 @@ resource "null_resource" "after_helm_deployment" {
   ]
 
   provisioner "local-exec" {
-    command    = "echo '${local.kube_cert_json}' | kubectl apply"
+    command    = "echo '${local.kube_cert_json}' | kubectl apply --namespace ${var.namespace} -f -"
     on_failure = "fail"
   }
 
   provisioner "local-exec" {
-    command    = "echo '${local.ingress_json}' | kubectl apply"
+    command    = "echo '${local.ingress_json}' | kubectl apply --namespace ${var.namespace} -f -"
     on_failure = "fail"
   }
 

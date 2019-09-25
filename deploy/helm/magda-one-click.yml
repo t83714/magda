@@ -10,12 +10,34 @@ global:
   enableMultiTenants: false
 
 tags:
-  all: true
+  priorities: true
+  all: false
+  apidocs-server: true
+  admin-api: true
+  authorization-api: true
+  opa: true
+  authorization-db: true
+  combined-db: true
+  content-api: true
+  content-db: true
   correspondence-api: false
+  elasticsearch: true
+  gateway: true
+  indexer: true
+  preview-map: true
+  registry-api: true
+  registry-db: true
+  search-api: true
+  session-db: true
   minion-broken-link: true
   minion-linked-data-rating: true
   minion-visualization: true
   minion-format: true
+  web-server: true
+  ingress: false
+  connectors: true
+  tenant-api: false
+  tenant-db: false
 
 gateway:
   ckanRedirectionPath: ""

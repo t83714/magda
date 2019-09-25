@@ -6,9 +6,9 @@ terraform {
 }
 
 locals {
-  db_password    = "${var.db_password == null ? "" : random_password.db_password.result}"
-  jwt_secret     = "${var.jwt_secret == null ? "" : random_password.jwt_secret.result}"
-  session_secret = "${var.session_secret == null ? "" : random_password.session_secret.result}"
+  db_password    = "${var.db_password == null ? random_password.db_password.result : var.db_password}"
+  jwt_secret     = "${var.jwt_secret == null ? random_password.jwt_secret.result : var.jwt_secret}"
+  session_secret = "${var.session_secret == null ? random_password.session_secret.result : var.session_secret}"
   should_create_oauth_secret = (var.facebook_client_secret == null &&
     var.google_client_secret == null &&
     var.arcgis_client_secret == null &&
