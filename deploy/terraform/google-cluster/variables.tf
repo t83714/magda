@@ -30,12 +30,6 @@ variable "preemptible" {
   default     = false
 }
 
-variable "auto_upgrade" {
-  description = "Whether allow goolge to auto upgrade your cluster"
-  type        = bool
-  default     = true
-}
-
 variable "node_pool_name" {
   type  = string
   description = "the name of the node pool. Auto generate if not supplied"
