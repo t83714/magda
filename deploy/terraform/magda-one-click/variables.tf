@@ -23,3 +23,57 @@ variable "credential_file_path" {
   description = "Google service account key file path"
 }
 
+variable "db_password" {
+  description = "The db password; Will auto created if not specfied"
+  type        = string
+  default     = null
+}
+
+variable "jwt_secret" {
+  description = "The jwt_secret; Will auto created if not specfied"
+  type        = string
+  default     = null
+}
+
+variable "session_secret" {
+  description = "The session_secret; Will auto created if not specfied"
+  type        = string
+  default     = null
+}
+
+variable "facebook_client_secret" {
+  description = "facebook SSO client secret; Will not create if not specfied"
+  type        = string
+  default     = null
+}
+
+variable "google_client_secret" {
+  description = "google SSO client secret; Will not create if not specfied"
+  type        = string
+  default     = null
+}
+
+variable "arcgis_client_secret" {
+  description = "arcgis SSO client secret; Will not create if not specfied"
+  type        = string
+  default     = null
+}
+
+variable "vanguard_certificate" {
+  description = "vanguard SSO certificate; Will not create if not specfied"
+  type        = string
+  default     = null
+}
+
+variable "smtp_username" {
+  description = "smtp server username; Will not create if not specfied"
+  type        = string
+  default     = null
+}
+
+variable "smtp_password" {
+  description = "smtp server password; Will not create if not specfied"
+  type        = string
+  default     = null
+}
+

@@ -41,7 +41,7 @@ module "cluster" {
 resource "null_resource" "kube_config" {
   # When to trigger the cmd
   depends_on = [
-    module.cluster,
+    module.cluster.node_pool_name
   ]
 
   provisioner "local-exec" {
@@ -88,12 +88,6 @@ resource "kubernetes_namespace" "magda_namespace" {
   depends_on = [
     kubernetes_cluster_role_binding.default_service_acc_role_binding
   ]
-}
-
-module "magda_secrets" {
-  source  = "../magda-secrets"
-  namespace = var.namespace
-  provisioner_id = "${kubernetes_cluster_role_binding.default_service_acc_role_binding.id}"
 }
 
 resource "helm_release" "magda_helm_release" {
