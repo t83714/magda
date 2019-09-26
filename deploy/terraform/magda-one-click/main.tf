@@ -53,9 +53,10 @@ module "external_ip" {
 }
 
 module "cluster" {
-  source  = "../google-cluster"
-  project = var.project
-  region  = var.region
+  source               = "../google-cluster"
+  project              = var.project
+  region               = var.region
+  kubernetes_dashboard = var.kubernetes_dashboard
 }
 
 resource "kubernetes_cluster_role_binding" "default_service_acc_role_binding" {
@@ -110,6 +111,7 @@ resource "helm_release" "magda_helm_release" {
   ]
 }
 
+# this will be run after static ip is generated
 resource "google_compute_managed_ssl_certificate" "default" {
   provider = "google-beta"
 
@@ -118,12 +120,9 @@ resource "google_compute_managed_ssl_certificate" "default" {
   managed {
     domains = ["${module.external_ip.address}.xip.io"]
   }
-
-  depends_on = [
-    helm_release.magda_helm_release
-  ]
 }
 
+# Ingress will be created before helm complete as it takes time 
 resource "kubernetes_ingress" "default" {
   metadata {
     name      = "magda-primary-ingress"
@@ -142,7 +141,8 @@ resource "kubernetes_ingress" "default" {
   }
 
   depends_on = [
-    helm_release.magda_helm_release
+    kubernetes_cluster_role_binding.default_service_acc_role_binding,
+    google_compute_managed_ssl_certificate.default
   ]
 }
 

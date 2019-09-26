@@ -36,6 +36,13 @@ resource "google_container_cluster" "primary_magda_cluster" {
       issue_client_certificate = false
     }
   }
+
+  addons_config {
+    kubernetes_dashboard {
+      disabled = var.kubernetes_dashboard ? false : true
+    }
+  }
+
 }
 
 resource "google_container_node_pool" "primary_magda_node_pool" {
@@ -45,7 +52,7 @@ resource "google_container_node_pool" "primary_magda_node_pool" {
   cluster    = google_container_cluster.primary_magda_cluster.name
   node_count = 1
 
-  version       = "${data.google_container_engine_versions.available_k8s_version.latest_node_version}"
+  version = "${data.google_container_engine_versions.available_k8s_version.latest_node_version}"
 
   node_config {
     preemptible  = var.preemptible

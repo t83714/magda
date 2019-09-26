@@ -77,3 +77,9 @@ variable "smtp_password" {
   default     = null
 }
 
+variable "kubernetes_dashboard" {
+  type  = bool
+  description = "Whether turn on kubernetes_dashboard or not; Default: false"
+  default = false
+}
+

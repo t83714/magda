@@ -6,3 +6,5 @@ namespace = "magda-trial"
 
 # Replace with your key file location
 credential_file_path = "/Users/userX/test-x-project-3-0e46134a6eda.json"
+# turn on kubernetes dashboard or not; By default: false
+kubernetes_dashboard = true
