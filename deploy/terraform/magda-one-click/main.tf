@@ -135,15 +135,9 @@ resource "kubernetes_ingress" "default" {
   }
 
   spec {
-    rule {
-      http {
-        path {
-          backend {
-            service_name = "gateway"
-            service_port = 80
-          }
-        }
-      }
+    backend {
+      service_name = "gateway"
+      service_port = 80
     }
   }
 
