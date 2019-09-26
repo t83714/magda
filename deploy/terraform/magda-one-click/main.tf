@@ -16,6 +16,7 @@ locals {
   cluster_access_toekn          = "${data.google_client_config.default.access_token}"
   cluster_access_host           = "https://${module.cluster.endpoint}"
   cluster_access_ca_certificate = "${base64decode(module.cluster.master_auth.0.cluster_ca_certificate)}"
+  external_domain  = join(".", [replace(module.external_ip.address, ".", "-"), "nip.io"])
 }
 
 terraform {
@@ -118,7 +119,7 @@ resource "google_compute_managed_ssl_certificate" "default" {
   name = "magda-certificate"
 
   managed {
-    domains = ["${module.external_ip.address}.xip.io"]
+    domains = [local.external_domain]
   }
 }
 
