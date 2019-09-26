@@ -127,7 +127,7 @@ resource "google_compute_managed_ssl_certificate" "default" {
 resource "kubernetes_ingress" "default" {
   metadata {
     name      = "magda-primary-ingress"
-    namespace = "var.namespace"
+    namespace = "${var.namespace}"
     annotations = {
       "ingress.gcp.kubernetes.io/pre-shared-cert"   = google_compute_managed_ssl_certificate.default.name
       "kubernetes.io/ingress.global-static-ip-name" = module.external_ip.name
