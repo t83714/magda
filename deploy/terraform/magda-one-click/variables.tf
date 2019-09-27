@@ -43,9 +43,14 @@ variable "cert_s3_bucket" {
   description = "the s3 bucket that stores the certificate"
 }
 
-variable "cert_s3_key" {
+variable "cert_s3_folder" {
   type        = string
-  description = "the s3 key that stores the certificate"
+  description = "the s3 folder that stores the certificate data files"
+}
+
+variable "timestamp" {
+  type        = number
+  description = "unix timestamp; used to determine whether need to re-generate a new cert"
 }
 
 # ---------------------------------------------------------------------------------------------------------------------
