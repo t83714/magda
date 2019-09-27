@@ -7,6 +7,11 @@ output "common_name" {
   value       = "*.${var.external_domain_root}"
 }
 
+output "issue_date" {
+  description = "The issue date of the certificate"
+  value       = "${timestamp()}"
+}
+
 output "private_key_pem" {
   description = "The private key pem of the certificate"
   value       = local.create_new_cert ? acme_certificate.certificate[0].private_key_pem : lookup(local.cert_data, "private_key_pem", "")

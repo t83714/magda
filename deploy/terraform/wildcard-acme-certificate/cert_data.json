@@ -1,7 +1,4 @@
 {
-    "id": "",
-    "domain_root": "",
-    "expiry" : 0,
     "private_key_pem": "",
     "certificate_pem": "",
     "issuer_pem": ""
