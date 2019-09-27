@@ -5,22 +5,75 @@
 
 variable "project" {
   description = "The project ID to host the deployed Magda"
-  type = string
+  type        = string
 }
 
 variable "region" {
-  type = string
+  type        = string
   description = "The region to host the deployed Magda"
 }
 
 variable "namespace" {
-  type = string
+  type        = string
   description = "The namespace to host the deployed Magda"
 }
 
 variable "credential_file_path" {
-  type = string
+  type        = string
   description = "Google service account key file path"
+}
+
+variable "aws_access_key" {
+  type        = string
+  description = "AWS access key"
+}
+
+variable "aws_secret_key" {
+  type        = string
+  description = "AWS secret key"
+}
+
+variable "external_domain_root" {
+  type        = string
+  description = "The external domain root: e.g. if we provide `demo.magda.io` here, the final accessible domain will be xxx-xxx-xxx-xx.demo.magda.io"
+}
+
+variable "cert_s3_bucket" {
+  type        = string
+  description = "the s3 bucket that stores the certificate"
+}
+
+variable "cert_s3_key" {
+  type        = string
+  description = "the s3 key that stores the certificate"
+}
+
+# ---------------------------------------------------------------------------------------------------------------------
+# OPTIONAL PARAMETERS
+# Generally, these values won't need to be changed.
+# ---------------------------------------------------------------------------------------------------------------------
+variable "acme_server_url" {
+  type        = string
+  description = "ACME server url; Default to let's letsencrypt staging endpoint (higher limit for testing)"
+  default     = "https://acme-staging-v02.api.letsencrypt.org/directory"
+}
+
+variable "acme_email" {
+  type        = string
+  description = "ACME email; Default to contact@magda.io"
+  default     = "contact@magda.io"
+}
+
+variable "aws_default_region" {
+  type        = string
+  description = "AWS default region; Default to sydney"
+  default     = "ap-southeast-2"
+}
+
+variable "cert_min_days_remaining" {
+  type        = string
+  description = "The minimum amount of days remaining on the expiration of a certificate before a renewal is attempted. The default is 30"
+  default     = 30
 }
 
 variable "db_password" {
@@ -78,8 +131,7 @@ variable "smtp_password" {
 }
 
 variable "kubernetes_dashboard" {
-  type  = bool
+  type        = bool
   description = "Whether turn on kubernetes_dashboard or not; Default: false"
-  default = false
+  default     = false
 }
-

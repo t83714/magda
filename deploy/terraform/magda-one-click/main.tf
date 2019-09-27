@@ -1,3 +1,9 @@
+terraform {
+  # The modules used in this example have been updated with 0.12 syntax, which means the example is no longer
+  # compatible with any versions below 0.12.
+  required_version = ">= 0.12"
+}
+
 provider "google-beta" {
   version     = ">= 2.11.0"
   project     = var.project
@@ -12,17 +18,30 @@ provider "google" {
   credentials = "${var.credential_file_path}"
 }
 
+provider "aws" {
+  region     = "${var.aws_default_region}"
+  access_key = "${var.aws_access_key}"
+  secret_key = "${var.aws_secret_key}"
+}
+
+provider "acme" {
+  server_url = "${var.acme_server_url}"
+}
+
 locals {
   cluster_access_toekn          = "${data.google_client_config.default.access_token}"
   cluster_access_host           = "https://${module.cluster.endpoint}"
   cluster_access_ca_certificate = "${base64decode(module.cluster.master_auth.0.cluster_ca_certificate)}"
-  external_domain  = join(".", [replace(module.external_ip.address, ".", "-"), "nip.io"])
+  external_domain  = join(".", [replace(module.external_ip.address, ".", "-"), "${var.external_domain_root}"])
 }
 
-terraform {
-  # The modules used in this example have been updated with 0.12 syntax, which means the example is no longer
-  # compatible with any versions below 0.12.
-  required_version = ">= 0.12"
+module "certificate" {
+  source = "../wildcard-acme-certificate"
+  external_domain_root = var.external_domain_root
+  cert_s3_bucket = var.cert_s3_bucket
+  cert_s3_key = var.cert_s3_key
+  acme_email = var.acme_email
+  cert_min_days_remaining = var.cert_min_days_remaining
 }
 
 data "google_client_config" "default" {}
@@ -104,46 +123,11 @@ resource "helm_release" "magda_helm_release" {
 
   set {
     name  = "externalUrl"
-    value = "http://${module.external_ip.address}.xip.io/"
+    value = "http://${local.external_domain}/"
   }
 
   depends_on = [
     kubernetes_cluster_role_binding.default_service_acc_role_binding
-  ]
-}
-
-# this will be run after static ip is generated
-resource "google_compute_managed_ssl_certificate" "default" {
-  provider = "google-beta"
-
-  name = "magda-certificate"
-
-  managed {
-    domains = [local.external_domain]
-  }
-}
-
-# Ingress will be created before helm complete as it takes time 
-resource "kubernetes_ingress" "default" {
-  metadata {
-    name      = "magda-primary-ingress"
-    namespace = "${var.namespace}"
-    annotations = {
-      "ingress.gcp.kubernetes.io/pre-shared-cert"   = google_compute_managed_ssl_certificate.default.name
-      "kubernetes.io/ingress.global-static-ip-name" = module.external_ip.name
-    }
-  }
-
-  spec {
-    backend {
-      service_name = "gateway"
-      service_port = 80
-    }
-  }
-
-  depends_on = [
-    kubernetes_cluster_role_binding.default_service_acc_role_binding,
-    google_compute_managed_ssl_certificate.default
   ]
 }
 
