@@ -40,39 +40,28 @@ async function run(programOptions) {
     const statusData = await rp(programOptions.statusFileUrl);
     try {
         const data = JSON.parse(statusData);
-        if (typeof data !== "object" || !data.timestamp) {
-            printResult(false);
+    } catch (e) {
+        printResult(true);
+    }
+    if (typeof data !== "object" || !data.timestamp) {
+        printResult(true);
+    } else {
+        const timestamp = moment(data.timestamp);
+        if (!timestamp.isValid()) {
+            printResult(true);
         } else {
-            const timestamp = moment(data.timestamp);
-            if (!timestamp.isValid()) {
-                printResult(false);
+            if (
+                timestamp
+                    .add(programOptions.expiryDays, "days")
+                    .isSameOrBefore(moment()) ||
+                (domain && domain !== data.domain)
+            ) {
+                printResult(true);
             } else {
+                printResult(false);
             }
-            //if(data.timestamp)
         }
-    } catch (e) {}
-    console.log(statusData);
-    /*const env = getEnvByClusterType(programOptions.isMinikube === true);
-    checkIfKubectlValid(env);
-    checkNamespace(env, namespace);
-    const image = createConfigMap(env, namespace, COMPILER_CONFIG_MAP_NAME, {
-        [COMPILER_CONFIG_MAP_KEY]: JSON.stringify(vars)
-    });
-    console.log(
-        chalk.green(
-            `Successfully created config \`${COMPILER_CONFIG_MAP_NAME}\` in namespace \`${namespace}\`.`
-        )
-    );
-    console.log(
-        chalk.yellow(`Creating updating job in namespace \`${namespace}\`...`)
-    );
-    const jobId = createJob(env, namespace, image);
-    console.log(
-        chalk.green(
-            `Job \`${jobId}\` in namespace \`${namespace}\` has been created.`
-        )
-    );
-    checkingJobProgress(env, namespace, jobId);*/
+    }
 }
 
 async function getStatusData(options) {
