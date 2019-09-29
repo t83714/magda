@@ -4,15 +4,30 @@ terraform {
   required_version = ">= 0.12"
 }
 
-# apiVersion: v1
-# kind: Secret
-# metadata:
-#   name: testsecret-tls
-#   namespace: default
-# data:
-#   tls.crt: base64 encoded cert
-#   tls.key: base64 encoded key
-# type: kubernetes.io/tls
+data "aws_s3_bucket_object" "cert_data" {
+  bucket = "${var.cert_s3_bucket}"
+  key    = "${var.cert_s3_folder}/cert_data.json"
+}
+
+locals {
+  cert_data  = jsondecode(aws_s3_bucket_object.cert_data.body)
+  issuer_pem = lookup(local.cert_data, "issuer_pem", "")
+  certificate_pem = lookup(local.cert_data, "certificate_pem", "")
+  private_key_pem = lookup(local.cert_data, "private_key_pem", "")
+}
+
+data "aws_route53_zone" "external_domain_zone" {
+  name         = "${var.external_domain_root}."
+}
+
+resource "aws_route53_record" "complete_domain" {
+  zone_id = "${aws_route53_zone.external_domain_zone.zone_id}"
+  name    = "${replace(module.external_ip.address, ".", "-")}"
+  type    = "A"
+  ttl     = "300"
+  records = ["${external_ip.address}"]
+}
+
 resource "kubernetes_secret" "magda_cert_tls" {
   metadata {
     name      = "magda-cert-tls"
@@ -20,15 +35,14 @@ resource "kubernetes_secret" "magda_cert_tls" {
   }
 
   data = {
-    "tls.crt" = "${module.certificate.issuer_pem}${module.certificate.certificate_pem}"
-    "tls.key" = "${module.certificate.private_key_pem}"
+    "tls.crt" = "${local.certificate_pem}${local.issuer_pem}"
+    "tls.key" = "${local.private_key_pem}"
   }
 
   type = "kubernetes.io/tls"
 
   depends_on = [
-    kubernetes_cluster_role_binding.default_service_acc_role_binding,
-    module.certificate
+    kubernetes_cluster_role_binding.default_service_acc_role_binding
   ]
 }
 
@@ -54,7 +68,6 @@ resource "kubernetes_ingress" "default" {
 
   depends_on = [
     kubernetes_cluster_role_binding.default_service_acc_role_binding,
-    module.certificate,
     kubernetes_secret.magda_cert_tls
   ]
 }

@@ -48,11 +48,6 @@ variable "cert_s3_folder" {
   description = "the s3 folder that stores the certificate data files"
 }
 
-variable "timestamp" {
-  type        = number
-  description = "unix timestamp; used to determine whether need to re-generate a new cert"
-}
-
 # ---------------------------------------------------------------------------------------------------------------------
 # OPTIONAL PARAMETERS
 # Generally, these values won't need to be changed.

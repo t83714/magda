@@ -64,23 +64,12 @@ async function run(programOptions) {
     }
 }
 
-async function getStatusData(options) {
-    const statusData = await rp(options.statusFileUrl);
-    try {
-        const data = JSON.parse(statusData);
-        if (typeof data !== "object") {
-            printResult(false);
-        } else {
-        }
-    } catch (e) {}
-}
-
 function validateProgramOptions(options) {
     if (
         typeof options.statusFileUrl !== "string" ||
         options.statusFileUrl == ""
     ) {
-        throw new Error("Invalid `statusFileUrl` parameter.");
+        throw new Error("Invalid `--status-file-url` parameter.");
     }
     if (!options.domain) options.domain = "";
     try {
@@ -89,7 +78,7 @@ function validateProgramOptions(options) {
             throw new Error("an positive int number is required");
         options.expiryDays = expiryDays;
     } catch (e) {
-        throw new Error(`Invalid \`expiryDays\` parameter: ${e.messsage}`);
+        throw new Error(`Invalid \`--expiry-days\` parameter: ${e.messsage}`);
     }
 }
 

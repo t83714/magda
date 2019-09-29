@@ -24,25 +24,11 @@ provider "aws" {
   secret_key = "${var.aws_secret_key}"
 }
 
-provider "acme" {
-  server_url = "${var.acme_server_url}"
-}
-
 locals {
   cluster_access_toekn          = "${data.google_client_config.default.access_token}"
   cluster_access_host           = "https://${module.cluster.endpoint}"
   cluster_access_ca_certificate = "${base64decode(module.cluster.master_auth.0.cluster_ca_certificate)}"
   external_domain               = join(".", [replace(module.external_ip.address, ".", "-"), "${var.external_domain_root}"])
-}
-
-module "certificate" {
-  source                  = "../wildcard-acme-certificate"
-  external_domain_root    = var.external_domain_root
-  cert_s3_bucket          = var.cert_s3_bucket
-  cert_s3_folder          = var.cert_s3_folder
-  acme_email              = var.acme_email
-  timestamp               = var.timestamp
-  cert_min_days_remaining = var.cert_min_days_remaining
 }
 
 data "google_client_config" "default" {}
