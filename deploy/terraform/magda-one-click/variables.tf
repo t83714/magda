@@ -57,17 +57,6 @@ variable "timestamp" {
 # OPTIONAL PARAMETERS
 # Generally, these values won't need to be changed.
 # ---------------------------------------------------------------------------------------------------------------------
-variable "acme_server_url" {
-  type        = string
-  description = "ACME server url; Default to let's letsencrypt staging endpoint (higher limit for testing)"
-  default     = "https://acme-staging-v02.api.letsencrypt.org/directory"
-}
-
-variable "acme_email" {
-  type        = string
-  description = "ACME email; Default to contact@magda.io"
-  default     = "contact@magda.io"
-}
 
 variable "aws_default_region" {
   type        = string
