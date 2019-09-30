@@ -6,7 +6,8 @@ terraform {
 
 resource "null_resource" "attemp_apply_cert" {
   provisioner "local-exec" {
-    command = "cd ../wildcard-acme-certificate && ./apply.sh"
+    command     = "./apply.sh"
+    working_dir = "../wildcard-acme-certificate"
     environment = {
       TF_VAR_aws_access_key          = "${var.aws_access_key}"
       TF_VAR_aws_secret_key          = "${var.aws_secret_key}"

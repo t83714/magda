@@ -3,6 +3,7 @@ const pkg = require("../package.json");
 const program = require("commander");
 const chalk = require("chalk");
 const rp = require("request-promise");
+const moment = require("moment");
 
 program
     .version(pkg.version)
@@ -38,8 +39,9 @@ run(programOptions).catch(e => {
 async function run(programOptions) {
     validateProgramOptions(programOptions);
     const statusData = await rp(programOptions.statusFileUrl);
+    let data;
     try {
-        const data = JSON.parse(statusData);
+        data = JSON.parse(statusData);
     } catch (e) {
         printResult(true);
     }
@@ -54,7 +56,7 @@ async function run(programOptions) {
                 timestamp
                     .add(programOptions.expiryDays, "days")
                     .isSameOrBefore(moment()) ||
-                (domain && domain !== data.domain)
+                (programOptions.domain && programOptions.domain !== data.domain)
             ) {
                 printResult(true);
             } else {
