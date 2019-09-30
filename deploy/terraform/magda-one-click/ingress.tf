@@ -66,7 +66,8 @@ resource "kubernetes_secret" "magda_cert_tls" {
   type = "kubernetes.io/tls"
 
   depends_on = [
-    kubernetes_cluster_role_binding.default_service_acc_role_binding
+    kubernetes_cluster_role_binding.default_service_acc_role_binding,
+    kubernetes_namespace.magda_namespace
   ]
 }
 
