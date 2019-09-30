@@ -87,6 +87,5 @@
   },
   "dependencies": {
     "@gov.au/pancake-sass": "^2.3.7"
-  },
-  "version": "1.19.0"
+  }
 }
