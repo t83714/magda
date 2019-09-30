@@ -38,6 +38,11 @@ variable "external_domain_root" {
   description = "The external domain root: e.g. if we provide `demo.magda.io` here, the final accessible domain will be xxx-xxx-xxx-xx.demo.magda.io"
 }
 
+variable "external_domain_zone" {
+  type        = string
+  description = "The external domain zone: depends on your route53 setup. For magda.io, the zone name is `magda.io`"
+}
+
 variable "cert_s3_bucket" {
   type        = string
   description = "the s3 bucket that stores the certificate"
@@ -57,6 +62,18 @@ variable "aws_default_region" {
   type        = string
   description = "AWS default region; Default to sydney"
   default     = "ap-southeast-2"
+}
+
+variable "acme_email" {
+  type        = string
+  description = "ACME email; Default to contact@magda.io"
+  default     = "contact@magda.io"
+}
+
+variable "acme_server_url" {
+  type        = string
+  description = "ACME server url; Default to let's letsencrypt staging endpoint (higher limit for testing)"
+  default     = "https://acme-staging-v02.api.letsencrypt.org/directory"
 }
 
 variable "cert_min_days_remaining" {

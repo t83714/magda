@@ -114,7 +114,9 @@ resource "helm_release" "magda_helm_release" {
   }
 
   depends_on = [
-    kubernetes_cluster_role_binding.default_service_acc_role_binding
+    kubernetes_cluster_role_binding.default_service_acc_role_binding,
+    kubernetes_secret.auth_secrets,
+    kubernetes_secret.db_passwords
   ]
 }
 

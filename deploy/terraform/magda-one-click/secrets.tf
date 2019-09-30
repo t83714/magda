@@ -48,7 +48,8 @@ resource "kubernetes_secret" "auth_secrets" {
   type = "Opaque"
 
   depends_on = [
-    kubernetes_cluster_role_binding.default_service_acc_role_binding
+    kubernetes_cluster_role_binding.default_service_acc_role_binding,
+    kubernetes_namespace.magda_namespace
   ]
 }
 
@@ -76,7 +77,8 @@ resource "kubernetes_secret" "db_passwords" {
   type = "Opaque"
 
   depends_on = [
-    kubernetes_cluster_role_binding.default_service_acc_role_binding
+    kubernetes_cluster_role_binding.default_service_acc_role_binding,
+    kubernetes_namespace.magda_namespace
   ]
 }
 
@@ -99,7 +101,8 @@ resource "kubernetes_secret" "oauth_secrets" {
   type = "Opaque"
 
   depends_on = [
-    kubernetes_cluster_role_binding.default_service_acc_role_binding
+    kubernetes_cluster_role_binding.default_service_acc_role_binding,
+    kubernetes_namespace.magda_namespace
   ]
 }
 
@@ -120,6 +123,7 @@ resource "kubernetes_secret" "smtp_secret" {
   type = "Opaque"
 
   depends_on = [
-    kubernetes_cluster_role_binding.default_service_acc_role_binding
+    kubernetes_cluster_role_binding.default_service_acc_role_binding,
+    kubernetes_namespace.magda_namespace
   ]
 }
