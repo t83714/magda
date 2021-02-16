@@ -1,6 +1,7 @@
 #!/usr/bin/env node
 const pkg = require("../package.json");
 const program = require("commander");
+const chalk = require("chalk");
 
 program
     .version(pkg.version)
@@ -9,6 +10,7 @@ program
             `If a database connection is required, the following environment variables will be used to create a connection:\n` +
             `  POSTGRES_HOST: database host; If not available in env var, 'localhost' will be used.\n` +
             `  POSTGRES_DB: database name; If not available in env var, 'auth' will be used.\n` +
+            `  POSTGRES_PORT: database port; If not available in env var, 5432 will be used.\n` +
             `  POSTGRES_USER: database username; If not available in env var, 'postgres' will be used.\n` +
             `  POSTGRES_PASSWORD: database password; If not available in env var, '' will be used.`
     )
@@ -43,4 +45,26 @@ program
         "unassign <userNameOrId>",
         "\n\tAssign the specified user from any node"
     )
+    .on("command:*", function (cmds) {
+        if (
+            [
+                "view",
+                "create",
+                "insert",
+                "delete",
+                "move",
+                "assign",
+                "unassign"
+            ].indexOf(cmds[0]) === -1
+        ) {
+            console.error(
+                chalk.red(
+                    `Invalid command: ${program.args.join(
+                        " "
+                    )}\nSee --help for a list of available commands.`
+                )
+            );
+            process.exit(1);
+        }
+    })
     .parse(process.argv);

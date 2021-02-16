@@ -1,5 +1,33 @@
 # CHANGELOG
 
+## 0.0.60
+-   Updated Suggest A Dataset form
+
+-   Set `CRYPTOGRAPHY_DONT_BUILD_RUST` in CI to fix the docker-compose installation issue
+
+## 0.0.59
+
+-   Allow Magda API endpoints to be served at non-root path
+-   Fixed: Distribution Page may show a blank page when the distribution has no downloadUrl #3039
+-   Fixed: Date Extractor for metadata creation tool will fail to process CSV or excel with incomplete rows #3040
+-   Other Date Extractor extration accuracy improvement
+-   Admin Panel User Admin feature should set/unset both isAdmin field & admin role for compatibility purpose #3033
+-   Make GET /auth/users/all API return user role info as well
+-   Make PUT /auth/users/:userId API accept other user field rather then `isAdmin` field only
+-   Release `acs-cmd` & `org-tree` as separate NPM packages
+-   Add set admin function to `acs-cmd` commandline utility package
+-   #3024 Gateway will automatically proxy all GET requests received at `/api/v0/registry` to registry read-only nodes (excepts Hooks APIs)
+-   #3053 Disabled `faas-idler` by default
+-   For #3010:
+    -   Set `autovacuum_freeze_max_age` & `autovacuum_multixact_freeze_max_age` default value to lower value (100k & 200K) for `events` table only
+    -   Added daily DB VACUUM ANALYZE script
+    -   Allow akka.http.server `requestTimeout` & `idleTimeout` to be configured via registry api helm chart
+    -   Allow gateway proxy timeout setting to be configured via gateway helm chart
+-   Change openfaas docker image repository
+-   #3057 Fixed: API `/auth/plugins` will skip the failed loading config item and return other config items without breaking request processing
+-   #3060 Upgrade urijs to 1.19.5
+-   #3051 Make command line tools DB PORT is configurable
+
 ## 0.0.58
 
 -   Added Documentation for Magda Helm Charts (generated using [helm-docs](https://github.com/norwoodj/helm-docs))
@@ -12,6 +40,9 @@
 -   Fixed: some helm chart (gateway & web) deployment doesn't allow setting `replicas` value properly
 -   Added an opt-in for chart/map/table previews if files are large.
 -   Upgraded helm-docs to v1.2.1
+-   Upgraded minio to 7.1.2
+-   Allowed region to be specified for storage API
+-   Made storage API process `BucketAlreadyExists` error code correctly when create bucket
 -   Fixed `magda-builder-scala` docker image failed to build due to expired resource link
 -   Fixed: Registry should not create an event when failed to delete the record #2976
 -   Fixed: Time Travel API response 500 sometimes #2977

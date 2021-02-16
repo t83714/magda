@@ -1,6 +1,6 @@
 # registry-db
 
-![Version: 0.0.58-alpha.0](https://img.shields.io/badge/Version-0.0.58--alpha.0-informational?style=flat-square)
+![Version: 0.0.60-alpha.0](https://img.shields.io/badge/Version-0.0.60--alpha.0-informational?style=flat-square)
 
 A Helm chart for Kubernetes
 
@@ -12,6 +12,8 @@ Kubernetes: `>= 1.14.0-0`
 
 | Key | Type | Default | Description |
 |-----|------|---------|-------------|
+| autoVacuum.enable | bool | `true` |  |
+| autoVacuum.schedule | string | "0 19 * * *": 7:00PM UTC timezone (5:00AM in AEST Sydney timezone) daily | auto vacuum cronjob schedule string. specified using unix-cron format (in UTC timezone by default). |
 | data.storage | string | `"200Gi"` |  |
 | image | object | `{}` |  |
 | resources | object | `{}` |  |

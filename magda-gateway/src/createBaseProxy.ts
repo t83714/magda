@@ -75,10 +75,20 @@ function setHeaderValue(
 export default function createBaseProxy(
     options: GenericProxyRouterOptions
 ): httpProxy {
-    const proxy = httpProxy.createProxyServer({
-        prependUrl: false,
+    const proxyOptions: httpProxy.ServerOptions = {
+        ignorePath: true,
         changeOrigin: true
-    } as httpProxy.ServerOptions);
+    };
+
+    if (
+        typeof options.proxyTimeout === "number" &&
+        !isNaN(options.proxyTimeout)
+    ) {
+        proxyOptions.proxyTimeout = options.proxyTimeout;
+        proxyOptions.timeout = options.proxyTimeout;
+    }
+
+    const proxy = httpProxy.createProxyServer(proxyOptions);
 
     (proxy as any).before(
         "web",
@@ -102,6 +112,19 @@ export default function createBaseProxy(
     });
 
     proxy.on("proxyReq", function (proxyReq, req, res) {
+        // as we set `ignorePath`=true, we need append req.path to proxyReq.path
+        // we need to use req.url to include query string
+        if (req.url !== "/") {
+            if (
+                proxyReq.path[proxyReq.path.length - 1] === "/" &&
+                req.url[0] === "/"
+            ) {
+                proxyReq.path = proxyReq.path + req.url.substr(1);
+            } else {
+                proxyReq.path = proxyReq.path + req.url;
+            }
+        }
+
         // Presume that we've already got whatever auth details we need out of the request and so remove it now.
         // If we keep it it causes scariness upstream - like anything that goes through the TerriaJS proxy will
         // be leaking auth details to wherever it proxies to.

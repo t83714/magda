@@ -2,11 +2,11 @@ import {} from "mocha";
 import sinon from "sinon";
 import { expect } from "chai";
 import express from "express";
-import _ from "lodash";
 import { Test, Response } from "supertest";
 import request from "supertest";
 import nock from "nock";
 import fs from "fs";
+import delay from "magda-typescript-common/src/delay";
 
 const jwt = require("jsonwebtoken");
 const Minio = require("minio");
@@ -128,6 +128,25 @@ describe("Storage API tests", () => {
 
             const bucketExists = await minioClient.bucketExists(dummyBucket);
 
+            expect(bucketExists).to.be.true;
+        });
+
+        it("should create a bucket when given a region", async () => {
+            const name = "neko";
+            const region = "australia-southeast1";
+            const newOpts = Object.assign({}, minioClientOpts, {
+                region: region
+            });
+            const minioClient = new Minio.Client(newOpts);
+            await minioClient.makeBucket(name, region, (err: Error) => {
+                if (err && (err as any).code !== "BucketAlreadyOwnedByYou") {
+                    return console.log("Error creating bucket.", err);
+                }
+                console.log("Bucket created successfully in " + newOpts.region);
+            });
+            // delay 500ms in case check bucket too quick
+            await delay(500);
+            const bucketExists = await minioClient.bucketExists(name);
             expect(bucketExists).to.be.true;
         });
 

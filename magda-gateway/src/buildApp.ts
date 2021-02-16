@@ -1,7 +1,5 @@
 import cors, { CorsOptions } from "cors";
 import express from "express";
-import path from "path";
-import ejs from "ejs";
 import helmet, {
     IHelmetConfiguration,
     IHelmetContentSecurityPolicyConfiguration
@@ -14,6 +12,7 @@ import {
     installStatusRouter,
     createServiceProbe
 } from "magda-typescript-common/src/express/status";
+import getBasePathFromUrl from "magda-typescript-common/src/getBasePathFromUrl";
 import createGenericProxyRouter from "./createGenericProxyRouter";
 import createAuthRouter from "./createAuthRouter";
 import createCkanRedirectionRouter from "./createCkanRedirectionRouter";
@@ -25,11 +24,6 @@ import { ProxyTarget, DetailedProxyTarget } from "./createGenericProxyRouter";
 import setupTenantMode from "./setupTenantMode";
 import createPool from "./createPool";
 import { AuthPluginBasicConfig } from "./createAuthPluginRouter";
-
-// Tell typescript about the semi-private __express field of ejs.
-declare module "ejs" {
-    var __express: any;
-}
 
 type Route = {
     to: string;
@@ -89,10 +83,15 @@ export type Config = {
     openfaasAllowAdminOnly?: boolean;
     defaultCacheControl?: string;
     magdaAdminPortalName?: string;
+    proxyTimeout?: string;
 };
 
 export default function buildApp(app: express.Application, config: Config) {
+    const baseUrl = getBasePathFromUrl(config?.externalUrl);
     const tenantMode = setupTenantMode(config);
+    const mainRouter = express.Router();
+    const proxyTimeout = parseInt(config?.proxyTimeout);
+    console.log("proxyTimeout: ", proxyTimeout);
 
     let routes = _.isEmpty(config.proxyRoutesJson)
         ? defaultConfig.proxyRoutes
@@ -116,7 +115,8 @@ export default function buildApp(app: express.Application, config: Config) {
         sessionSecret: config.sessionSecret,
         cookieOptions: _.isEmpty(config.cookieJson) ? {} : config.cookieJson,
         authApiBaseUrl: config.authorizationApi,
-        dbPool
+        dbPool,
+        appBasePath: baseUrl
     });
 
     // Log everything
@@ -129,13 +129,13 @@ export default function buildApp(app: express.Application, config: Config) {
      * so that no prob will be setup when run locally for testing
      */
     _.forEach(routes, (value: any, key: string) => {
-        // --- skip install status probs if statusCheck == false
-        if (value && value.statusCheck === false) {
+        // --- only install status probs if statusCheck == true
+        if (value?.statusCheck !== true) {
             return;
         }
         probes[key] = createServiceProbe(value.to);
     });
-    installStatusRouter(app, { probes });
+    installStatusRouter(mainRouter, { probes });
 
     // Redirect http url to https
     app.set("trust proxy", true);
@@ -160,17 +160,13 @@ export default function buildApp(app: express.Application, config: Config) {
     app.options("*", configuredCors);
     app.use(configuredCors);
 
-    // Configure view engine to render EJS templates.
-    app.set("views", path.join(__dirname, "..", "views"));
-    app.set("view engine", "ejs");
-    app.engine(".ejs", ejs.__express); // This stops express trying to do its own require of 'ejs'
-
     const apiRouterOptions = {
         jwtSecret: config.jwtSecret,
         tenantMode,
         authenticator,
         defaultCacheControl: config.defaultCacheControl,
-        routes
+        routes,
+        proxyTimeout
     };
 
     // --- enable http basic authentication for all users
@@ -187,7 +183,7 @@ export default function buildApp(app: express.Application, config: Config) {
     }
 
     if (config.enableAuthEndpoint) {
-        app.use(
+        mainRouter.use(
             "/auth",
             createAuthRouter({
                 authenticator: authenticator,
@@ -212,7 +208,7 @@ export default function buildApp(app: express.Application, config: Config) {
     }
 
     if (config.openfaasGatewayUrl) {
-        app.use(
+        mainRouter.use(
             "/api/v0/openfaas",
             createOpenfaasGatewayProxy({
                 gatewayUrl: config.openfaasGatewayUrl,
@@ -224,10 +220,10 @@ export default function buildApp(app: express.Application, config: Config) {
         );
     }
 
-    app.use("/api/v0", createGenericProxyRouter(apiRouterOptions));
+    mainRouter.use("/api/v0", createGenericProxyRouter(apiRouterOptions));
 
     if (extraWebRoutes && Object.keys(extraWebRoutes).length) {
-        app.use(
+        mainRouter.use(
             "/",
             createGenericProxyRouter({
                 ...apiRouterOptions,
@@ -242,7 +238,7 @@ export default function buildApp(app: express.Application, config: Config) {
                 "Cannot locate routes.registry for ckan redirection!"
             );
         } else {
-            app.use(
+            mainRouter.use(
                 createCkanRedirectionRouter({
                     ckanRedirectionDomain: config.ckanRedirectionDomain,
                     ckanRedirectionPath: config.ckanRedirectionPath,
@@ -260,12 +256,18 @@ export default function buildApp(app: express.Application, config: Config) {
         defaultWebRouteConfig.to = config.web;
     }
     // Proxy any other URL to default web route, usually, magda-web
-    app.use(
+    mainRouter.use(
         createGenericProxyRouter({
             ...apiRouterOptions,
             routes: { "/": defaultWebRouteConfig }
         })
     );
+
+    if (baseUrl === "/") {
+        app.use(mainRouter);
+    } else {
+        app.use(baseUrl, mainRouter);
+    }
 
     return app;
 }

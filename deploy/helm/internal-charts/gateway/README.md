@@ -1,6 +1,6 @@
 # gateway
 
-![Version: 0.0.58-alpha.0](https://img.shields.io/badge/Version-0.0.58--alpha.0-informational?style=flat-square)
+![Version: 0.0.60-alpha.0](https://img.shields.io/badge/Version-0.0.60--alpha.0-informational?style=flat-square)
 
 The Gateway Component of Magda that routes incoming requets to other magda components.
 
@@ -49,6 +49,7 @@ Kubernetes: `>= 1.14.0-0`
 | enableWebAccessControl | bool | `false` |  |
 | helmet.frameguard | bool | `false` |  |
 | image | object | `{}` |  |
+| proxyTimeout | int | nil (120 seconds default value will be used by upstream lib internally) | How long time (in seconds) before upstream service must complete request in order to avoid request timeout error. If not set, the request will time out after 120 seconds. |
 | resources.limits.cpu | string | `"200m"` |  |
 | resources.requests.cpu | string | `"50m"` |  |
 | resources.requests.memory | string | `"40Mi"` |  |
@@ -63,7 +64,11 @@ Kubernetes: `>= 1.14.0-0`
 
 A proxy target definition that defines `defaultRoutes` or `webRoutes` above support the following fields:
 - `to`: target url
-- `methods`: array of string. "all" means all methods
+- `methods`: array of string or objects with fields "method" & "target".
+  - When the array item is a string, the string stands for the HTTP method. "all" means all methods.
+  - When the array item us an object, the object can have the following fields:
+    - "method": the HTTP method of the requests to be proxied. "all" means all methods.
+    - "target": the alternative proxy target URL
 - `auth`: whether this target requires session. Otherwise, session / password related midddleware won't run
 - `redirectTrailingSlash`: make /xxx auto redirect to /xxxx/
 - `statusCheck`: check target's live status from the gateway
@@ -77,8 +82,26 @@ defaultRoutes:
   search:
     to: http://search-api/v0
     auth: true
+  "registry/hooks":
+    to: http://registry-api/v0/hooks
+    auth: true
   registry:
     to: http://registry-api/v0
+    methods:
+    - method: get
+      target: http://registry-api-read-only/v0
+    - method: head
+      target: http://registry-api-read-only/v0
+    - method: options
+      target: http://registry-api-read-only/v0
+    - method: post
+      target: http://registry-api/v0
+    - method: put
+      target: http://registry-api/v0
+    - method: patch
+      target: http://registry-api/v0
+    - method: delete
+      target: http://registry-api/v0
     auth: true
   registry-read-only:
     to: http://registry-api-read-only/v0

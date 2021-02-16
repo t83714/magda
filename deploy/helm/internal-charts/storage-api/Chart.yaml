@@ -1,9 +1,9 @@
 apiVersion: v2
 description: A Helm chart for Kubernetes
 name: storage-api
-version: 0.0.58-alpha.0
+version: 0.0.60-alpha.0
 kubeVersion: ">= 1.14.0-0"
 dependencies:
   - name: minio
-    version: 5.0.18
-    repository: https://kubernetes-charts.storage.googleapis.com
+    version: 7.1.2
+    repository: https://helm.min.io

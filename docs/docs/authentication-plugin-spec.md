@@ -10,7 +10,7 @@ For ease of deployment, Magda requires an authentication plugin to be build as a
 
 you don't have to start from scratch to create your own authentication plugin. Instead, you can use this [Github template repo](https://github.com/magda-io/magda-auth-template) to create a blank project. Github template repo can help to generate a new repository with the same directory structure and files as an existing template repository. You can find out more details from [here](https://docs.github.com/en/free-pro-team@latest/github/creating-cloning-and-archiving-repositories/creating-a-repository-from-a-template).
 
-After a new repo is generated from the template, you can start to implement your own authentication logic and required HTTP endpoints in `src/createAuthPluginRouter.ts`. If you use [passport.js](http://www.passportjs.org/), you can find passport.js `strategies` that support different IDPs (identity providers) or authentication servers from [here](http://www.passportjs.org/packages/).
+After a new repo is generated from the template, you can start to implement your own authentication logic and required HTTP endpoints in `src/createAuthPluginRouter.ts`. If you use [passport.js](http://www.passportjs.org/), you can find passport.js `strategies` that support different IDPs (identity providers) or authentication servers from [passportjs website](http://www.passportjs.org) `Strategies` section.
 
 The template also comes with CI scripts that can automatically pushing docker image to docker hub and publish helm chart to s3. For more details, please check [magda-auth-template](https://github.com/magda-io/magda-auth-template) repo `README.md` file.
 
@@ -94,12 +94,12 @@ This endpoint is required to response the auth plugin's config information in JS
 
 The GET `/` Endpoint is supported by all authentication plugins types. When accessed by a user's web browser:
 
--   if the user has been authenticated already, the endpoint should issue a `302` redirection that redirect the user's web browser to a pre-configured url (Specified by Helm Chart value `global.authPluginRedirectUrl`).
+-   if the user has been authenticated already, the endpoint should issue a `302` redirection that redirect the user's web browser to a pre-configured url that is specified by:
+    -   either query parameter `redirect`
+    -   Or Helm Chart value `global.authPluginRedirectUrl`) when if query parameter `redirect` does not exist
 -   if the user has not been authenticated, the endpoint should:
     -   For `IDP-URI-REDIRECTION` type plugin, the endpoint should issue a `302` redirection to start the authenticaiton process accordingly.
-    -   For `PASSWORD` or `QR-CODE` type plugin, the endpoint should:
-    -   When the user has been authenticated, redirect user agent to `authPluginRedirectUrl` with `result` set to "success".
-    -   When the user has not been authenticated yet, edirect user agent to `authPluginRedirectUrl` with `result` set to "failure" and `errorMessage` set to "unauthorised".
+    -   For `PASSWORD` or `QR-CODE` type plugin, the endpoint should redirect user agent to the redirect url with `result` set to "failure" and `errorMessage` set to "unauthorised".
 
 > If you use [Passport.js](http://www.passportjs.org/) to build your auth plugin, this will be handled via [passport.authenticate() method](http://www.passportjs.org/docs/authenticate/).
 

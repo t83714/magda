@@ -148,7 +148,7 @@ Magda is also completely open-source and can be used for free - to get it runnin
 
 ## See it in action
 
-A demo site exists at [demo.dev.magda.io](https://demo.dev.magda.io). This is hosted on pre-emptible instances and may go down for short periods.  If it seems down, wait 5-10 minutes and it should come back up again. For an example of Magda in production, see [data.gov.au](https://data.gov.au).
+A demo site exists at [demo.dev.magda.io](https://demo.dev.magda.io). This is hosted on pre-emptible instances and may go down for short periods. If it seems down, wait 5-10 minutes and it should come back up again. For an example of Magda in production, see [data.gov.au](https://data.gov.au).
 
 ## Want to get it running yourself?
 
@@ -157,6 +157,10 @@ A demo site exists at [demo.dev.magda.io](https://demo.dev.magda.io). This is ho
 ## Want to build your connectors / minions?
 
 You can extend Madga's functionality by [building your own customised connectors / minions](https://magda.io/docs/how-to-build-your-own-connectors-minions).
+
+## Want to build your authentication plugins?
+
+You can add support to different authorization servers / identity providers or customise the user on-boarding process by [building your own customised authentication plugins](https://magda.io/docs/authentication-plugin-spec).
 
 ## Latest Release
 
